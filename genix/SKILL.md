@@ -10,14 +10,22 @@ metadata:
 
 # AIGC Skills
 
+## Workflow
+
+1. **Select generation method**: Choose the appropriate method based on user request. If not specified, use the first method listed for that content type
+2. **Read reference file**: Read the corresponding reference file for the selected method
+3. **Rewrite prompt**: Transform the user's input into an optimized prompt following the "Prompt Best Practices" section in the reference file
+4. **Generate**: Run the script with the optimized prompt and parameters as instructed in the reference file
+5. **Report result**: Tell the user where the generated file was saved. Do not read the generated file content
+
 ## Image Skills
 
-- [Text-to-Image generation](references/t2i.md)
-- [Image-to-Image generation](references/i2i.md)
+- [Nano Banana Pro Image generation](references/google-nano-banana.md)
+- [OpenAI GPT Image generation](references/openai-gpt-image.md)
 
 ## Audio Skills
 
-- [Text-to-Audio sound effects generation](references/t2a.md)
+- [ElevenLabs sound effects generation](references/elevenlabs.md)
 
 ## Video Skills
 
