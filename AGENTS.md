@@ -80,3 +80,8 @@ Copy `.env.template` to `.env` and configure API keys:
 
 - `README.md` / `README_CN.md` - Quick start guide
 - `docs/MANUAL.md` / `docs/MANUAL_CN.md` - Detailed user manual with advanced workflows
+
+## Versioning
+
+- **Patch releases** (e.g., v0.1.0 → v0.1.1): Do NOT update `genix/SKILL.md` version
+- **Minor releases** (e.g., v0.1.x → v0.2.0): Update `genix/SKILL.md` version to match
