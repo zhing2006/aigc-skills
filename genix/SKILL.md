@@ -34,4 +34,4 @@ metadata:
 
 ## Music Skills
 
-- TODO: Not implemented yet
+- [ElevenLabs music generation](references/elevenlabs-music.md)

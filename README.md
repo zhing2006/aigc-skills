@@ -4,6 +4,16 @@
 
 AIGC generation skills for Claude Code and similar AI tools.
 
+## Features
+
+| Category | Provider | Capability |
+| -------- | -------- | ---------- |
+| **Image** | Google Gemini | Text-to-Image, Image-to-Image |
+| **Image** | OpenAI GPT | Text-to-Image, Image Edit |
+| **Video** | Google Veo | Text-to-Video, Image-to-Video |
+| **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
+| **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
+
 ## Installation
 
 ### Step 1: Run Setup Script
@@ -78,9 +88,26 @@ AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # When USE_AZURE_OPENAI =
 
 1. Restart your AI tool (Claude Code, Cursor, etc.) to load the skills
 2. Ask the AI to generate content, for example:
-   - "Generate an image of a cute cat wearing a wizard hat"
-   - "Create a cyberpunk city landscape in 16:9 aspect ratio"
-   - "Generate sound effects of rain on a window"
+
+**Image Generation:**
+
+- "Generate an image of a cute cat wearing a wizard hat"
+- "Create a cyberpunk city landscape in 16:9 aspect ratio"
+
+**Video Generation:**
+
+- "Create a video of ocean waves at sunset, 8 seconds"
+- "Generate a video from this image with camera zoom effect"
+
+**Audio Generation:**
+
+- "Generate sound effects of rain on a window"
+- "Create a text-to-speech audio saying 'Hello World'"
+
+**Music Generation:**
+
+- "Create a calm piano melody, 30 seconds, instrumental"
+- "Generate an epic orchestral theme for a trailer"
 
 The AI will automatically use the appropriate AIGC skill based on your request.
 
