@@ -86,7 +86,7 @@ fi
 # 5. Install dependencies
 echo ""
 echo "[5/6] Installing dependencies..."
-uv add python-dotenv asyncio aiofiles elevenlabs google-genai openai pillow -U --link-mode=copy
+uv add python-dotenv asyncio aiofiles aiohttp elevenlabs google-genai openai pillow -U --link-mode=copy
 echo "Dependencies installed!"
 
 # 6. Copy genix to tool's skills directory

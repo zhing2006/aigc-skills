@@ -8,9 +8,9 @@ Supported resolutions: 720p, 1080p (1080p only with 8s + 16:9)
 """
 
 import argparse
+import asyncio
 import os
 import sys
-import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -28,7 +28,7 @@ SUPPORTED_RESOLUTIONS = ["720p", "1080p"]
 DEFAULT_MODEL = "veo-3.1-generate-001"
 
 
-def generate_video(
+async def generate_video(
     prompt: str,
     image: str | None = None,
     model_id: str = DEFAULT_MODEL,
@@ -120,28 +120,28 @@ def generate_video(
     audio_str = "with audio" if generate_audio else "no audio"
     print(f"Generating video ({mode}, {aspect_ratio}, {duration}s, {resolution}, {audio_str}, model: {model_id})...")
 
-    # Generate video
+    # Generate video (async)
     if input_image:
-        operation = client.models.generate_videos(
+        operation = await client.aio.models.generate_videos(
             model=model_id,
             prompt=prompt,
             image=input_image,
             config=config,
         )
     else:
-        operation = client.models.generate_videos(
+        operation = await client.aio.models.generate_videos(
             model=model_id,
             prompt=prompt,
             config=config,
         )
 
-    # Poll until completion
+    # Poll until completion (async)
     poll_count = 0
     while not operation.done:
         poll_count += 1
         print(f"Waiting for video generation... ({poll_count * 10}s)")
-        time.sleep(10)
-        operation = client.operations.get(operation)
+        await asyncio.sleep(10)
+        operation = await client.aio.operations.get(operation)
 
     # Save video
     video = operation.response.generated_videos[0].video
@@ -152,7 +152,7 @@ def generate_video(
     return output_file
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Generate videos using Google Veo 3.1"
     )
@@ -222,7 +222,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        generate_video(
+        await generate_video(
             prompt=args.prompt,
             image=args.image,
             model_id=args.model,
@@ -241,4 +241,4 @@ def main():
 
 if __name__ == "__main__":
     load_dotenv(override=True)
-    main()
+    asyncio.run(main())

@@ -7,6 +7,7 @@ Max input images: 14
 """
 
 import argparse
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -22,7 +23,7 @@ SUPPORTED_RESOLUTIONS = ["1K", "2K", "4K"]
 MAX_INPUT_IMAGES = 14
 
 
-def generate_image(
+async def generate_image(
     prompt: str,
     images: list[str] | None = None,
     aspect_ratio: str = "1:1",
@@ -81,8 +82,8 @@ def generate_image(
 
     output_file = Path(output_path) if output_path else Path("generated_image.png")
 
-    # Stream response for real-time output
-    for chunk in client.models.generate_content_stream(
+    # Stream response for real-time output (async)
+    async for chunk in await client.aio.models.generate_content_stream(
         model="gemini-3-pro-image-preview",
         contents=contents,
         config=config,
@@ -101,7 +102,7 @@ def generate_image(
     return output_file
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Generate images using Google Nano Banana Pro (Gemini 3 Pro Image)"
     )
@@ -140,7 +141,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        generate_image(
+        await generate_image(
             prompt=args.prompt,
             images=args.images,
             aspect_ratio=args.aspect_ratio,
@@ -154,4 +155,4 @@ def main():
 
 if __name__ == "__main__":
     load_dotenv(override=True)
-    main()
+    asyncio.run(main())
