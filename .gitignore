@@ -138,6 +138,7 @@ celerybeat.pid
 .env
 .envrc
 .venv
+.venv-genix
 env/
 venv/
 ENV/
@@ -207,7 +208,6 @@ marimo/_lsp/
 __marimo__/
 
 # Custom
-.gitkeep
 pyproject.toml
 uv.lock
 .claude/

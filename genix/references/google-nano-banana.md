@@ -5,7 +5,7 @@ Text-to-Image and Image-to-Image generation using Google's Gemini 3 Pro Image mo
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "prompt" [options]
+{python} {skill_dir}/scripts/google-nano-banana.py "prompt" [options]
 ```
 
 ## Arguments
@@ -92,37 +92,37 @@ Use this formula for best results:
 ### Cinematic Portrait
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "A weathered astronaut removing her helmet on Mars, dust particles floating in golden hour sunlight. Close-up portrait shot with 85mm lens. Dramatic rim lighting from the setting sun. Photorealistic with subtle film grain." -a 3:4 -r 2K -o astronaut.png
+{python} {skill_dir}/scripts/google-nano-banana.py "A weathered astronaut removing her helmet on Mars, dust particles floating in golden hour sunlight. Close-up portrait shot with 85mm lens. Dramatic rim lighting from the setting sun. Photorealistic with subtle film grain." -a 3:4 -r 2K -o astronaut.png
 ```
 
 ### Product Photography
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "A sleek matte black wireless earbuds case on white marble surface. Overhead product shot with soft diffused studio lighting. Clean minimal aesthetic for e-commerce listing." -a 1:1 -r 2K -o earbuds.png
+{python} {skill_dir}/scripts/google-nano-banana.py "A sleek matte black wireless earbuds case on white marble surface. Overhead product shot with soft diffused studio lighting. Clean minimal aesthetic for e-commerce listing." -a 1:1 -r 2K -o earbuds.png
 ```
 
 ### Landscape Scene
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "Ancient Japanese temple nestled in misty mountains during cherry blossom season. Wide-angle establishing shot. Soft morning light filtering through fog. Traditional ink wash painting style with subtle color accents." -a 16:9 -r 4K -o temple.png
+{python} {skill_dir}/scripts/google-nano-banana.py "Ancient Japanese temple nestled in misty mountains during cherry blossom season. Wide-angle establishing shot. Soft morning light filtering through fog. Traditional ink wash painting style with subtle color accents." -a 16:9 -r 4K -o temple.png
 ```
 
 ### Character with Text
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "A friendly robot barista with glowing blue eyes holding a coffee cup. The cup has 'HELLO HUMAN' written in white sans-serif font. Warm cafe lighting. Pixar-inspired 3D render style." -a 4:5 -r 2K -o robot_barista.png
+{python} {skill_dir}/scripts/google-nano-banana.py "A friendly robot barista with glowing blue eyes holding a coffee cup. The cup has 'HELLO HUMAN' written in white sans-serif font. Warm cafe lighting. Pixar-inspired 3D render style." -a 4:5 -r 2K -o robot_barista.png
 ```
 
 ### Style Transfer with Reference
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "Transform this photo into Studio Ghibli anime style. Keep the composition and subject exactly the same. Soft watercolor textures with vibrant but gentle colors." -i photo.jpg -a 16:9 -r 2K -o ghibli_style.png
+{python} {skill_dir}/scripts/google-nano-banana.py "Transform this photo into Studio Ghibli anime style. Keep the composition and subject exactly the same. Soft watercolor textures with vibrant but gentle colors." -i photo.jpg -a 16:9 -r 2K -o ghibli_style.png
 ```
 
 ### Character Consistency
 
 ```bash
-uv run {skill_dir}/scripts/google-nano-banana.py "The character from the reference images now sitting in a cozy library reading a book. Keep facial features exactly as shown. Warm afternoon sunlight through window. Photorealistic style." -i ref1.png ref2.png ref3.png -a 3:2 -r 2K -o character_library.png
+{python} {skill_dir}/scripts/google-nano-banana.py "The character from the reference images now sitting in a cozy library reading a book. Keep facial features exactly as shown. Warm afternoon sunlight through window. Photorealistic style." -i ref1.png ref2.png ref3.png -a 3:2 -r 2K -o character_library.png
 ```
 
 ## Environment Variables

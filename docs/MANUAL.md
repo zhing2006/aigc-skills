@@ -92,17 +92,15 @@ chmod +x install.sh   # First time only
 #### What the Install Script Does
 
 1. **Checks/Installs uv**: The `uv` package manager (by Astral) for fast Python dependency management
-2. **Creates pyproject.toml**: Initializes Python 3.14 project configuration
-3. **Creates Virtual Environment**: Isolated Python environment in `.venv/`
-4. **Creates .env File**: Copies `.env.template` to `.env` for API key configuration
-5. **Installs Dependencies**: All required Python packages
-6. **Moves Genix Skill**: Moves `genix/` folder to the AI tool's skills directory
+2. **Creates Virtual Environment**: Isolated Python environment in `.venv-genix/` (separate from your project's `.venv`)
+3. **Creates .env File**: Copies `.env.template` to `.env` for API key configuration
+4. **Installs Dependencies**: All required Python packages into `.venv-genix/`
+5. **Moves Genix Skill**: Moves `genix/` folder to the AI tool's skills directory
 
-After installation, the skills will be in:
+After installation:
 
-- Claude Code: `.claude/skills/genix/`
-- Cursor: `.cursor/skills/genix/`
-- Codex: `.codex/skills/genix/`
+- Skills location: `.claude/skills/genix/`, `.cursor/skills/genix/`, or `.codex/skills/genix/`
+- Python environment: `.venv-genix/` (does not conflict with existing `.venv`)
 
 ### Configure API Keys
 
@@ -137,6 +135,19 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 | Sound Effects | ElevenLabs | Text | Audio | Sound effects, ambient sounds |
 | Text-to-Speech | ElevenLabs | Text | Audio | Voice narration, dialogue |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
+
+---
+
+## How It Works
+
+When you make a generation request, the AI assistant will:
+
+1. **Select the appropriate skill** based on your request (image, video, audio, or music)
+2. **Optimize your prompt** following best practices for that specific API (adding cinematography terms, lighting descriptions, style modifiers, etc.)
+3. **Generate the content** using the selected skill with optimized parameters
+4. **Report the result** with the output file location
+
+You can provide simple, natural language requests - the AI will automatically enhance your prompt for best results.
 
 ---
 

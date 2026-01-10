@@ -7,6 +7,8 @@ REM Parse arguments
 set "TOOL=claude"
 if not "%~1"=="" set "TOOL=%~1"
 
+set "VENV_NAME=.venv-genix"
+
 REM Validate tool argument
 if not "%TOOL%"=="claude" if not "%TOOL%"=="cursor" if not "%TOOL%"=="codex" if not "%TOOL%"=="opencode" if not "%TOOL%"=="vscode" (
     echo Error: Invalid tool. Supported: claude, cursor, codex, opencode, vscode
@@ -25,7 +27,7 @@ echo Target tool: %TOOL%
 
 REM 1. Check/Install uv
 echo.
-echo [1/6] Checking uv installation...
+echo [1/5] Checking uv installation...
 where uv >nul 2>nul
 if %errorlevel% neq 0 (
     echo uv not found. Installing uv...
@@ -39,31 +41,20 @@ if %errorlevel% neq 0 (
     for /f "tokens=*" %%i in ('uv --version') do echo uv is already installed: %%i
 )
 
-REM 2. Create pyproject.toml if not exists
+REM 2. Create virtual environment if not exists
 echo.
-echo [2/6] Checking pyproject.toml...
-if not exist "pyproject.toml" (
-    echo Creating pyproject.toml with Python 3.14...
-    uv init --bare --python 3.14
-    echo pyproject.toml created!
-) else (
-    echo pyproject.toml already exists.
-)
-
-REM 3. Create virtual environment if not exists
-echo.
-echo [3/6] Checking virtual environment...
-if not exist ".venv" (
+echo [2/5] Checking virtual environment (%VENV_NAME%)...
+if not exist "%VENV_NAME%" (
     echo Creating Python 3.14 virtual environment...
-    uv venv --python 3.14
+    uv venv %VENV_NAME% --python 3.14
     echo Virtual environment created!
 ) else (
     echo Virtual environment already exists.
 )
 
-REM 4. Create .env from template if not exists
+REM 3. Create .env from template if not exists
 echo.
-echo [4/6] Checking .env file...
+echo [3/5] Checking .env file...
 if not exist ".env" (
     if exist ".env.template" (
         copy ".env.template" ".env" >nul
@@ -75,15 +66,15 @@ if not exist ".env" (
     echo .env already exists.
 )
 
-REM 5. Install dependencies
+REM 4. Install dependencies
 echo.
-echo [5/6] Installing dependencies...
-uv add python-dotenv asyncio aiofiles aiohttp elevenlabs google-genai openai pillow -U --link-mode=copy
+echo [4/5] Installing dependencies...
+uv pip install --python "%VENV_NAME%\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow
 echo Dependencies installed!
 
-REM 6. Move genix to tool's skills directory
+REM 5. Move genix to tool's skills directory
 echo.
-echo [6/6] Installing genix skill to %TOOL%...
+echo [5/5] Installing genix skill to %TOOL%...
 set "GENIX_TARGET=%TARGET_DIR%\genix"
 
 REM Create skills directory if not exists
@@ -104,4 +95,5 @@ echo Genix skill installed to: %GENIX_TARGET%
 
 echo.
 echo === Install Complete ===
+echo Python path: %VENV_NAME%\Scripts\python.exe
 endlocal

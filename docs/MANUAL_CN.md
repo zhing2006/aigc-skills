@@ -92,17 +92,15 @@ chmod +x install.sh   # 仅首次需要
 #### 安装脚本做了什么
 
 1. **检查/安装 uv**：Astral 的 `uv` 包管理器，用于快速 Python 依赖管理
-2. **创建 pyproject.toml**：初始化 Python 3.14 项目配置
-3. **创建虚拟环境**：在 `.venv/` 中创建隔离的 Python 环境
-4. **创建 .env 文件**：从 `.env.template` 复制到 `.env` 用于 API 密钥配置
-5. **安装依赖**：所有必需的 Python 包
-6. **移动 Genix 技能**：将 `genix/` 文件夹移动到 AI 工具的技能目录
+2. **创建虚拟环境**：在 `.venv-genix/` 中创建隔离的 Python 环境（与项目现有的 `.venv` 分开）
+3. **创建 .env 文件**：从 `.env.template` 复制到 `.env` 用于 API 密钥配置
+4. **安装依赖**：将所有必需的 Python 包安装到 `.venv-genix/`
+5. **移动 Genix 技能**：将 `genix/` 文件夹移动到 AI 工具的技能目录
 
-安装后，技能位于：
+安装后：
 
-- Claude Code：`.claude/skills/genix/`
-- Cursor：`.cursor/skills/genix/`
-- Codex：`.codex/skills/genix/`
+- 技能位置：`.claude/skills/genix/`、`.cursor/skills/genix/` 或 `.codex/skills/genix/`
+- Python 环境：`.venv-genix/`（不会与现有的 `.venv` 冲突）
 
 ### 配置 API 密钥
 
@@ -137,6 +135,19 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 | Sound Effects | ElevenLabs | 文字 | 音频 | 音效、环境音 |
 | Text-to-Speech | ElevenLabs | 文字 | 音频 | 语音旁白、对话 |
 | Music | ElevenLabs | 文字 | 音频 | 背景音乐、歌曲 |
+
+---
+
+## 工作原理
+
+当你发起生成请求时，AI 助手会：
+
+1. **选择合适的技能**：根据你的请求选择图像、视频、音频或音乐生成技能
+2. **优化你的提示词**：按照该 API 的最佳实践优化提示词（添加镜头术语、光线描述、风格修饰词等）
+3. **生成内容**：使用优化后的参数调用对应技能生成内容
+4. **报告结果**：告诉你输出文件的位置
+
+你只需要用自然语言描述需求，AI 会自动优化提示词以获得最佳效果。
 
 ---
 

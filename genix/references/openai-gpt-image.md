@@ -5,7 +5,7 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "prompt" [options]
+{python} {skill_dir}/scripts/openai-gpt-image.py "prompt" [options]
 ```
 
 ## Arguments
@@ -151,43 +151,43 @@ A [medium] of [subject] in [environment], [specific visual characteristics]. [Li
 ### Photorealistic Portrait
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "A high-resolution photograph of a young woman with freckles, standing in a sunlit wheat field during golden hour. She has windswept auburn hair, wearing a vintage floral dress. Soft warm lighting with lens flare, shallow depth of field, 85mm portrait lens aesthetic." -s 1024x1536 -q high -o portrait.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A high-resolution photograph of a young woman with freckles, standing in a sunlit wheat field during golden hour. She has windswept auburn hair, wearing a vintage floral dress. Soft warm lighting with lens flare, shallow depth of field, 85mm portrait lens aesthetic." -s 1024x1536 -q high -o portrait.png
 ```
 
 ### Product Photography
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "A sleek wireless headphone on a minimalist white surface. Professional product photography with soft diffused lighting, subtle reflections, clean background. Commercial e-commerce style." -s 1024x1024 -q high -o headphones.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A sleek wireless headphone on a minimalist white surface. Professional product photography with soft diffused lighting, subtle reflections, clean background. Commercial e-commerce style." -s 1024x1024 -q high -o headphones.png
 ```
 
 ### Landscape Scene
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "A majestic mountain range at sunrise with mist rolling through the valleys. Vibrant orange and pink sky reflected in a still alpine lake. Wide-angle composition, landscape orientation, National Geographic photography style." -s 1536x1024 -q high -o mountain.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A majestic mountain range at sunrise with mist rolling through the valleys. Vibrant orange and pink sky reflected in a still alpine lake. Wide-angle composition, landscape orientation, National Geographic photography style." -s 1536x1024 -q high -o mountain.png
 ```
 
 ### Illustration with Transparent Background
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration style, clean lines, vibrant colors, transparent PNG sticker format." -s 1024x1024 -b transparent -f png -o robot_sticker.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration style, clean lines, vibrant colors, transparent PNG sticker format." -s 1024x1024 -b transparent -f png -o robot_sticker.png
 ```
 
 ### Icon Design
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "A modern app icon for a music streaming service. Minimalist design with a stylized sound wave, gradient from purple to blue, rounded corners, flat design style." -s 1024x1024 -q high -o music_icon.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A modern app icon for a music streaming service. Minimalist design with a stylized sound wave, gradient from purple to blue, rounded corners, flat design style." -s 1024x1024 -q high -o music_icon.png
 ```
 
 ### Image Editing with References
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "Edit this photo by adding a dramatic sunset sky with orange and purple clouds. Keep the foreground subject exactly as shown." -i original_photo.jpg -s 1536x1024 -o sunset_edit.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "Edit this photo by adding a dramatic sunset sky with orange and purple clouds. Keep the foreground subject exactly as shown." -i original_photo.jpg -s 1536x1024 -o sunset_edit.png
 ```
 
 ### Multiple Image Generation
 
 ```bash
-uv run {skill_dir}/scripts/openai-gpt-image.py "A variety of colorful tropical cocktails in different glass shapes, each with unique garnishes, overhead view, summer party aesthetic." -n 4 -s 1024x1024 -o cocktails.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A variety of colorful tropical cocktails in different glass shapes, each with unique garnishes, overhead view, summer party aesthetic." -n 4 -s 1024x1024 -o cocktails.png
 ```
 
 ## Environment Variables

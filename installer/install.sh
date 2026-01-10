@@ -6,6 +6,7 @@ set -e
 
 # Parse arguments
 TOOL="${1:-claude}"
+VENV_NAME=".venv-genix"
 
 # Validate tool argument
 case "$TOOL" in
@@ -31,7 +32,7 @@ echo "Target tool: $TOOL"
 
 # 1. Check/Install uv
 echo ""
-echo "[1/6] Checking uv installation..."
+echo "[1/5] Checking uv installation..."
 if ! command -v uv &> /dev/null; then
     echo "uv not found. Installing uv..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -46,31 +47,20 @@ else
     echo "uv is already installed: $(uv --version)"
 fi
 
-# 2. Create pyproject.toml if not exists
+# 2. Create virtual environment if not exists
 echo ""
-echo "[2/6] Checking pyproject.toml..."
-if [ ! -f "pyproject.toml" ]; then
-    echo "Creating pyproject.toml with Python 3.14..."
-    uv init --bare --python 3.14
-    echo "pyproject.toml created!"
-else
-    echo "pyproject.toml already exists."
-fi
-
-# 3. Create virtual environment if not exists
-echo ""
-echo "[3/6] Checking virtual environment..."
-if [ ! -d ".venv" ]; then
+echo "[2/5] Checking virtual environment ($VENV_NAME)..."
+if [ ! -d "$VENV_NAME" ]; then
     echo "Creating Python 3.14 virtual environment..."
-    uv venv --python 3.14
+    uv venv "$VENV_NAME" --python 3.14
     echo "Virtual environment created!"
 else
     echo "Virtual environment already exists."
 fi
 
-# 4. Create .env from template if not exists
+# 3. Create .env from template if not exists
 echo ""
-echo "[4/6] Checking .env file..."
+echo "[3/5] Checking .env file..."
 if [ ! -f ".env" ]; then
     if [ -f ".env.template" ]; then
         cp ".env.template" ".env"
@@ -82,15 +72,15 @@ else
     echo ".env already exists."
 fi
 
-# 5. Install dependencies
+# 4. Install dependencies
 echo ""
-echo "[5/6] Installing dependencies..."
-uv add python-dotenv asyncio aiofiles aiohttp elevenlabs google-genai openai pillow -U --link-mode=copy
+echo "[4/5] Installing dependencies..."
+uv pip install --python "$VENV_NAME/bin/python" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow
 echo "Dependencies installed!"
 
-# 6. Move genix to tool's skills directory
+# 5. Move genix to tool's skills directory
 echo ""
-echo "[6/6] Installing genix skill to $TOOL..."
+echo "[5/5] Installing genix skill to $TOOL..."
 GENIX_TARGET="$TARGET_DIR/genix"
 
 # Create skills directory if not exists
@@ -111,3 +101,4 @@ echo "Genix skill installed to: $GENIX_TARGET"
 
 echo ""
 echo "=== Install Complete ==="
+echo "Python path: $VENV_NAME/bin/python"
