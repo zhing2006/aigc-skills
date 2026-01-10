@@ -8,13 +8,15 @@ Max input images: 16 (for image edit)
 """
 
 import argparse
+import asyncio
 import base64
 import os
 import sys
 from pathlib import Path
 
+import aiofiles
 from dotenv import load_dotenv
-from openai import OpenAI, AzureOpenAI
+from openai import AsyncOpenAI, AsyncAzureOpenAI
 
 
 SUPPORTED_MODELS = ["gpt-image-1.5", "gpt-image-1", "gpt-image-1-mini"]
@@ -25,7 +27,7 @@ SUPPORTED_BACKGROUNDS = ["auto", "transparent", "opaque"]
 MAX_INPUT_IMAGES = 16
 
 
-def generate_image(
+async def generate_image(
     prompt: str,
     images: list[str] | None = None,
     model: str = "gpt-image-1.5",
@@ -85,10 +87,10 @@ def generate_image(
     api_base = os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
     if os.environ.get("USE_AZURE_OPENAI", "false").lower() == "true":
         api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2025-04-01-preview")
-        client = AzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=api_base)
+        client = AsyncAzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=api_base)
         print("Using Azure OpenAI endpoint with KEY:", api_key)
     else:
-        client = OpenAI(api_key=api_key, base_url=api_base)
+        client = AsyncOpenAI(api_key=api_key, base_url=api_base)
         print("Using OpenAI endpoint.")
 
     # Print info before generation
@@ -107,7 +109,7 @@ def generate_image(
             image_files.append(open(path, "rb"))
 
         try:
-            response = client.images.edit(
+            response = await client.images.edit(
                 model=model,
                 image=image_files if len(image_files) > 1 else image_files[0],
                 prompt=prompt,
@@ -122,7 +124,7 @@ def generate_image(
                 f.close()
     else:
         # Text to image mode
-        response = client.images.generate(
+        response = await client.images.generate(
             model=model,
             prompt=prompt,
             size=size,
@@ -145,8 +147,8 @@ def generate_image(
             file_path = Path(f"generated_image{suffix}.{output_format}")
 
         image_bytes = base64.b64decode(image_data.b64_json)
-        with open(file_path, "wb") as f:
-            f.write(image_bytes)
+        async with aiofiles.open(file_path, "wb") as f:
+            await f.write(image_bytes)
 
         output_files.append(file_path)
         print(f"Image saved to: {file_path}")
@@ -154,7 +156,7 @@ def generate_image(
     return output_files
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser(
         description="Generate images using OpenAI GPT Image API"
     )
@@ -221,7 +223,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        generate_image(
+        await generate_image(
             prompt=args.prompt,
             images=args.images,
             model=args.model,
@@ -239,4 +241,4 @@ def main():
 
 if __name__ == "__main__":
     load_dotenv(override=True)
-    main()
+    asyncio.run(main())

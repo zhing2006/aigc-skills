@@ -25,7 +25,8 @@ metadata:
 
 ## Audio Skills
 
-- [ElevenLabs sound effects generation](references/elevenlabs.md)
+- [ElevenLabs sound effects generation](references/elevenlabs-sound-effect.md)
+- [ElevenLabs text-to-speech generation](references/elevenlabs-text-speech.md)
 
 ## Video Skills
 

@@ -74,7 +74,7 @@ if (!(Test-Path ".env")) {
 
 # 5. Install dependencies
 Write-Host "`n[5/6] Installing dependencies..." -ForegroundColor Yellow
-uv add python-dotenv asyncio elevenlabs google-genai openai pillow -U --link-mode=copy
+uv add python-dotenv asyncio aiofiles elevenlabs google-genai openai pillow -U --link-mode=copy
 Write-Host "Dependencies installed!" -ForegroundColor Green
 
 # 6. Copy genix to tool's skills directory
