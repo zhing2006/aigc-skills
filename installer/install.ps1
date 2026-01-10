@@ -7,6 +7,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+$VenvName = ".venv-genix"
+
 # Skills directory mapping for each tool
 $SkillsDirectories = @{
     "claude"   = ".claude\skills"
@@ -20,7 +22,7 @@ Write-Host "=== Genix Skills Install ===" -ForegroundColor Cyan
 Write-Host "Target tool: $Tool" -ForegroundColor Cyan
 
 # 1. Check/Install uv
-Write-Host "`n[1/6] Checking uv installation..." -ForegroundColor Yellow
+Write-Host "`n[1/5] Checking uv installation..." -ForegroundColor Yellow
 if (!(Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Host "uv not found. Installing uv..." -ForegroundColor Yellow
     Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression
@@ -38,28 +40,18 @@ if (!(Get-Command uv -ErrorAction SilentlyContinue)) {
     Write-Host "uv is already installed: $uvVersion" -ForegroundColor Green
 }
 
-# 2. Create pyproject.toml if not exists
-Write-Host "`n[2/6] Checking pyproject.toml..." -ForegroundColor Yellow
-if (!(Test-Path "pyproject.toml")) {
-    Write-Host "Creating pyproject.toml with Python 3.14..." -ForegroundColor Yellow
-    uv init --bare --python 3.14
-    Write-Host "pyproject.toml created!" -ForegroundColor Green
-} else {
-    Write-Host "pyproject.toml already exists." -ForegroundColor Green
-}
-
-# 3. Create virtual environment if not exists
-Write-Host "`n[3/6] Checking virtual environment..." -ForegroundColor Yellow
-if (!(Test-Path ".venv")) {
+# 2. Create virtual environment if not exists
+Write-Host "`n[2/5] Checking virtual environment ($VenvName)..." -ForegroundColor Yellow
+if (!(Test-Path $VenvName)) {
     Write-Host "Creating Python 3.14 virtual environment..." -ForegroundColor Yellow
-    uv venv --python 3.14
+    uv venv $VenvName --python 3.14
     Write-Host "Virtual environment created!" -ForegroundColor Green
 } else {
     Write-Host "Virtual environment already exists." -ForegroundColor Green
 }
 
-# 4. Create .env from template if not exists
-Write-Host "`n[4/6] Checking .env file..." -ForegroundColor Yellow
+# 3. Create .env from template if not exists
+Write-Host "`n[3/5] Checking .env file..." -ForegroundColor Yellow
 if (!(Test-Path ".env")) {
     if (Test-Path ".env.template") {
         Copy-Item ".env.template" ".env"
@@ -71,13 +63,13 @@ if (!(Test-Path ".env")) {
     Write-Host ".env already exists." -ForegroundColor Green
 }
 
-# 5. Install dependencies
-Write-Host "`n[5/6] Installing dependencies..." -ForegroundColor Yellow
-uv add python-dotenv asyncio aiofiles aiohttp elevenlabs google-genai openai pillow -U --link-mode=copy
+# 4. Install dependencies
+Write-Host "`n[4/5] Installing dependencies..." -ForegroundColor Yellow
+uv pip install --python "$VenvName\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow
 Write-Host "Dependencies installed!" -ForegroundColor Green
 
-# 6. Move genix to tool's skills directory
-Write-Host "`n[6/6] Installing genix skill to $Tool..." -ForegroundColor Yellow
+# 5. Move genix to tool's skills directory
+Write-Host "`n[5/5] Installing genix skill to $Tool..." -ForegroundColor Yellow
 $targetDir = $SkillsDirectories[$Tool]
 $genixTarget = Join-Path $targetDir "genix"
 
@@ -99,3 +91,4 @@ Write-Host "Genix skill installed to: $genixTarget" -ForegroundColor Green
 
 # Done
 Write-Host "`n=== Install Complete ===" -ForegroundColor Cyan
+Write-Host "Python path: $VenvName\Scripts\python.exe" -ForegroundColor Gray

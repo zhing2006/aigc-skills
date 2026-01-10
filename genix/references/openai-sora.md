@@ -5,7 +5,7 @@ Text-to-Video and Image-to-Video generation using OpenAI's Sora models.
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "prompt" [options]
+{python} {skill_dir}/scripts/openai-sora.py "prompt" [options]
 ```
 
 ## Arguments
@@ -121,43 +121,43 @@ Medium shot, a tired corporate worker, rubbing his temples in exhaustion, in fro
 ### Basic Text-to-Video (Portrait)
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "A cat walking on the beach at golden hour sunset. Soft warm lighting, gentle waves in the background. Photorealistic." -o cat_beach.mp4
+{python} {skill_dir}/scripts/openai-sora.py "A cat walking on the beach at golden hour sunset. Soft warm lighting, gentle waves in the background. Photorealistic." -o cat_beach.mp4
 ```
 
 ### Landscape Video
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "Aerial drone shot slowly flying over a misty mountain range at sunrise. Cinematic, epic scale, nature documentary style." -s 1280x720 -d 8 -o mountains.mp4
+{python} {skill_dir}/scripts/openai-sora.py "Aerial drone shot slowly flying over a misty mountain range at sunrise. Cinematic, epic scale, nature documentary style." -s 1280x720 -d 8 -o mountains.mp4
 ```
 
 ### Image-to-Video
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "The cat slowly turns its head and looks directly at the camera with a curious expression. Shallow depth of field." -i cat_photo.png -o cat_animated.mp4
+{python} {skill_dir}/scripts/openai-sora.py "The cat slowly turns its head and looks directly at the camera with a curious expression. Shallow depth of field." -i cat_photo.png -o cat_animated.mp4
 ```
 
 ### Cinematic Scene
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "Medium shot, a detective in a noir office. He looks up from his desk and exhales cigarette smoke. Rain pattering on the window. Black and white, film noir aesthetic." -s 1280x720 -d 8 -o noir_scene.mp4
+{python} {skill_dir}/scripts/openai-sora.py "Medium shot, a detective in a noir office. He looks up from his desk and exhales cigarette smoke. Rain pattering on the window. Black and white, film noir aesthetic." -s 1280x720 -d 8 -o noir_scene.mp4
 ```
 
 ### High Quality with Pro Model
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "A butterfly landing on a flower in slow motion. Macro lens, shallow depth of field, golden sunlight, nature documentary quality." -m sora-2-pro -d 4 -o butterfly.mp4
+{python} {skill_dir}/scripts/openai-sora.py "A butterfly landing on a flower in slow motion. Macro lens, shallow depth of field, golden sunlight, nature documentary quality." -m sora-2-pro -d 4 -o butterfly.mp4
 ```
 
 ### Abstract/Artistic
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "Colorful paint drops falling into water in slow motion, creating swirling abstract patterns. High-speed photography, vibrant colors." -d 8 -o paint_abstract.mp4
+{python} {skill_dir}/scripts/openai-sora.py "Colorful paint drops falling into water in slow motion, creating swirling abstract patterns. High-speed photography, vibrant colors." -d 8 -o paint_abstract.mp4
 ```
 
 ### Product Showcase
 
 ```bash
-uv run {skill_dir}/scripts/openai-sora.py "A sleek smartphone rotating on a pedestal, studio lighting with soft reflections. Clean white background, product commercial style." -s 720x1280 -d 4 -o phone_showcase.mp4
+{python} {skill_dir}/scripts/openai-sora.py "A sleek smartphone rotating on a pedestal, studio lighting with soft reflections. Clean white background, product commercial style." -s 720x1280 -d 4 -o phone_showcase.mp4
 ```
 
 ## Environment Variables

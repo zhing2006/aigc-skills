@@ -5,7 +5,7 @@ Text-to-Video and Image-to-Video generation using Google's Veo 3.1 model.
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "prompt" [options]
+{python} {skill_dir}/scripts/google-veo.py "prompt" [options]
 ```
 
 ## Arguments
@@ -162,43 +162,43 @@ Common negative prompts: `"cartoon, drawing, low quality, blurry, distorted, ama
 ### Basic Text-to-Video
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "A cat walking on the beach at golden hour sunset. Wide shot, gentle waves in the background. Photorealistic, cinematic." -o cat_beach.mp4
+{python} {skill_dir}/scripts/google-veo.py "A cat walking on the beach at golden hour sunset. Wide shot, gentle waves in the background. Photorealistic, cinematic." -o cat_beach.mp4
 ```
 
 ### Image-to-Video
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "The cat slowly turns its head and looks directly at the camera, curious expression. Shallow depth of field." -i cat_photo.png -o cat_animated.mp4
+{python} {skill_dir}/scripts/google-veo.py "The cat slowly turns its head and looks directly at the camera, curious expression. Shallow depth of field." -i cat_photo.png -o cat_animated.mp4
 ```
 
 ### Cinematic with Camera Movement
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "Crane shot starting low on a lone hiker and ascending high above, revealing they are standing on the edge of a colossal, mist-filled canyon at sunrise. Epic fantasy style, awe-inspiring, soft morning light." -a 16:9 -d 8 -r 1080p -o epic_reveal.mp4
+{python} {skill_dir}/scripts/google-veo.py "Crane shot starting low on a lone hiker and ascending high above, revealing they are standing on the edge of a colossal, mist-filled canyon at sunrise. Epic fantasy style, awe-inspiring, soft morning light." -a 16:9 -d 8 -r 1080p -o epic_reveal.mp4
 ```
 
 ### With Dialogue and Audio
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "Medium shot, a detective in a noir office. He looks up from his desk and says in a weary voice, 'Of all the offices in this town, you had to walk into mine.' SFX: Rain pattering on the window. Ambient noise: distant jazz music from a radio." -o noir_scene.mp4
+{python} {skill_dir}/scripts/google-veo.py "Medium shot, a detective in a noir office. He looks up from his desk and says in a weary voice, 'Of all the offices in this town, you had to walk into mine.' SFX: Rain pattering on the window. Ambient noise: distant jazz music from a radio." -o noir_scene.mp4
 ```
 
 ### Fast Model for Quick Preview
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "A butterfly landing on a flower in slow motion. Macro lens, shallow depth of field, golden sunlight." -m veo-3.1-fast-generate-001 -d 4 -o butterfly_preview.mp4
+{python} {skill_dir}/scripts/google-veo.py "A butterfly landing on a flower in slow motion. Macro lens, shallow depth of field, golden sunlight." -m veo-3.1-fast-generate-001 -d 4 -o butterfly_preview.mp4
 ```
 
 ### Portrait Video (9:16)
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "Close-up of a woman's face as she smiles, soft natural lighting, bokeh background with city lights. Cinematic, shallow depth of field." -a 9:16 -o portrait_smile.mp4
+{python} {skill_dir}/scripts/google-veo.py "Close-up of a woman's face as she smiles, soft natural lighting, bokeh background with city lights. Cinematic, shallow depth of field." -a 9:16 -o portrait_smile.mp4
 ```
 
 ### With Negative Prompt
 
 ```bash
-uv run {skill_dir}/scripts/google-veo.py "A peaceful mountain lake at dawn, mist rising from the water. Wide shot, drone perspective slowly descending. Photorealistic." -n "people, boats, buildings, text, watermark" -o mountain_lake.mp4
+{python} {skill_dir}/scripts/google-veo.py "A peaceful mountain lake at dawn, mist rising from the water. Wide shot, drone perspective slowly descending. Photorealistic." -n "people, boats, buildings, text, watermark" -o mountain_lake.mp4
 ```
 
 ## Environment Variables

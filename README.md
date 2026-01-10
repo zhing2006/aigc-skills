@@ -110,7 +110,7 @@ AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # When USE_AZURE_OPENAI =
 - "Create a calm piano melody, 30 seconds, instrumental"
 - "Generate an epic orchestral theme for a trailer"
 
-The AI will automatically use the appropriate AIGC skill based on your request.
+The AI will automatically select the appropriate skill and optimize your prompt following best practices for best results.
 
 ## License
 

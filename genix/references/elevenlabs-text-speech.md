@@ -5,7 +5,7 @@ Text-to-Speech generation using ElevenLabs API with voice search support.
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "text" [options]
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "text" [options]
 ```
 
 ## Arguments
@@ -45,7 +45,7 @@ uv run {skill_dir}/scripts/elevenlabs-text-speech.py "text" [options]
 Provide a voice ID directly with `-v`:
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -v JBFqnCBsd6RMkjVDRZzb
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -v JBFqnCBsd6RMkjVDRZzb
 ```
 
 ### Using Voice Search
@@ -53,8 +53,8 @@ uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -v JBFqnCBsd6RMkjVD
 Search for a voice by description with `-s`:
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -s "British male"
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -s "female narrator calm"
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -s "British male"
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Hello" -s "female narrator calm"
 ```
 
 The search looks through voice names, descriptions, and labels.
@@ -275,37 +275,37 @@ Controls speech velocity:
 ### Basic TTS with Default Voice
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Hello, welcome to our application." -o welcome.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Hello, welcome to our application." -o welcome.mp3
 ```
 
 ### TTS with Voice Search
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "The weather today is sunny with a high of 75 degrees." -s "British male news" -o weather.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "The weather today is sunny with a high of 75 degrees." -s "British male news" -o weather.mp3
 ```
 
 ### TTS with Specific Voice ID
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Once upon a time in a distant land..." -v XrExE9yKIg1WjnnlVkGX -o story.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Once upon a time in a distant land..." -v XrExE9yKIg1WjnnlVkGX -o story.mp3
 ```
 
 ### TTS with Custom Voice Settings
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "This is a very important announcement." --stability 0.8 --similarity 0.9 --speed 0.9 -o announcement.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "This is a very important announcement." --stability 0.8 --similarity 0.9 --speed 0.9 -o announcement.mp3
 ```
 
 ### Low-Latency Streaming Model
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Quick response needed." -m eleven_flash_v2_5 -o quick.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Quick response needed." -m eleven_flash_v2_5 -o quick.mp3
 ```
 
 ### High Quality Output
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-text-speech.py "Premium audio quality for professional use." -f mp3_44100_192 -o premium.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Premium audio quality for professional use." -f mp3_44100_192 -o premium.mp3
 ```
 
 ## Environment Variables

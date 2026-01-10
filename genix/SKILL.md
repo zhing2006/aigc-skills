@@ -10,6 +10,15 @@ metadata:
 
 # AIGC Skills
 
+## Python Path
+
+The `{python}` placeholder in commands refers to the Genix virtual environment Python:
+
+| Platform | Path |
+| -------- | ---- |
+| Windows | `.venv-genix/Scripts/python.exe` |
+| Linux/macOS | `.venv-genix/bin/python` |
+
 ## Workflow
 
 1. **Select generation method**: Choose the appropriate method based on user request. If not specified, use the first method listed for that content type

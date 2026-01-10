@@ -5,7 +5,7 @@ Text-to-Music generation using ElevenLabs Music API.
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "prompt" [options]
+{python} {skill_dir}/scripts/elevenlabs-music.py "prompt" [options]
 ```
 
 ## Arguments
@@ -117,49 +117,49 @@ You can describe the structure:
 ### Calm Piano
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Calm piano melody, ambient and relaxing, soft and gentle, suitable for meditation" -d 60 -i -o calm_piano.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Calm piano melody, ambient and relaxing, soft and gentle, suitable for meditation" -d 60 -i -o calm_piano.mp3
 ```
 
 ### Epic Orchestral
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Epic orchestral theme, heroic and triumphant, full orchestra with brass and strings, cinematic trailer style" -d 30 -i -o epic_theme.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Epic orchestral theme, heroic and triumphant, full orchestra with brass and strings, cinematic trailer style" -d 30 -i -o epic_theme.mp3
 ```
 
 ### Electronic Dance
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Energetic EDM track, driving beats, synth leads, festival-ready drop, high energy" -d 45 -i -o edm_track.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Energetic EDM track, driving beats, synth leads, festival-ready drop, high energy" -d 45 -i -o edm_track.mp3
 ```
 
 ### Lo-fi Hip-Hop
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Lo-fi hip-hop beat, relaxing and chill, vinyl crackle, mellow piano chords, perfect for studying" -d 60 -i -o lofi_study.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Lo-fi hip-hop beat, relaxing and chill, vinyl crackle, mellow piano chords, perfect for studying" -d 60 -i -o lofi_study.mp3
 ```
 
 ### Pop with Vocals
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Upbeat pop song about summer love, catchy melody, female vocals, bright and cheerful" -d 90 -o summer_pop.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Upbeat pop song about summer love, catchy melody, female vocals, bright and cheerful" -d 90 -o summer_pop.mp3
 ```
 
 ### Cinematic Tension
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Dark cinematic music, suspenseful and tense, deep strings, ominous atmosphere, thriller movie style" -d 30 -i -o tension.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Dark cinematic music, suspenseful and tense, deep strings, ominous atmosphere, thriller movie style" -d 30 -i -o tension.mp3
 ```
 
 ### Jazz Background
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Smooth jazz, saxophone lead, walking bass, brushed drums, elegant and sophisticated, cafe ambiance" -d 120 -i -o jazz_cafe.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Smooth jazz, saxophone lead, walking bass, brushed drums, elegant and sophisticated, cafe ambiance" -d 120 -i -o jazz_cafe.mp3
 ```
 
 ### High Quality Output
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-music.py "Acoustic guitar ballad, emotional and heartfelt, gentle fingerpicking" -d 60 -i -f mp3_44100_192 -o ballad_hq.mp3
+{python} {skill_dir}/scripts/elevenlabs-music.py "Acoustic guitar ballad, emotional and heartfelt, gentle fingerpicking" -d 60 -i -f mp3_44100_192 -o ballad_hq.mp3
 ```
 
 ## Environment Variables

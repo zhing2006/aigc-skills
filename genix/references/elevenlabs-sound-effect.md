@@ -5,7 +5,7 @@ Text-to-Sound Effect generation using ElevenLabs API.
 ## Usage
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "prompt" [options]
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "prompt" [options]
 ```
 
 ## Arguments
@@ -108,37 +108,37 @@ Use these terms to enhance your prompts:
 ### Basic Sound Effect
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "Dog barking happily" -o dog_bark.mp3
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "Dog barking happily" -o dog_bark.mp3
 ```
 
 ### Cinematic Impact
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "Cinematic braam, deep bass impact with reverb tail" -d 3 -p 0.7 -o braam.mp3
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "Cinematic braam, deep bass impact with reverb tail" -d 3 -p 0.7 -o braam.mp3
 ```
 
 ### Ambient Loop
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "Gentle rain on window with distant thunder" -d 10 -l -o rain_ambient.mp3
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "Gentle rain on window with distant thunder" -d 10 -l -o rain_ambient.mp3
 ```
 
 ### Game Sound Effect
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "8-bit coin pickup sound, retro game style" -d 0.5 -p 0.8 -o coin.mp3
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "8-bit coin pickup sound, retro game style" -d 0.5 -p 0.8 -o coin.mp3
 ```
 
 ### High Quality Output
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "Spaceship engine humming with electronic beeps" -f mp3_44100_192 -d 5 -o spaceship.mp3
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "Spaceship engine humming with electronic beeps" -f mp3_44100_192 -d 5 -o spaceship.mp3
 ```
 
 ### Horror Atmosphere
 
 ```bash
-uv run {skill_dir}/scripts/elevenlabs-sound-effect.py "Creepy whispers in an abandoned hallway, eerie and unsettling" -d 8 -p 0.5 -o horror_whispers.mp3
+{python} {skill_dir}/scripts/elevenlabs-sound-effect.py "Creepy whispers in an abandoned hallway, eerie and unsettling" -d 8 -p 0.5 -o horror_whispers.mp3
 ```
 
 ## Environment Variables
