@@ -41,13 +41,37 @@ Supported tools: `claude` (default), `cursor`, `codex`, `opencode`, `vscode`
 
 Edit the `.env` file and fill in your API keys:
 
+#### Google API
+
+| USE_VERTEX_AI | Required Variables |
+| ------------- | ------------------ |
+| `false` | `GOOGLE_CLOUD_API_KEY` |
+| `true` | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` |
+
+#### OpenAI API
+
+| USE_AZURE_OPENAI | Required Variables |
+| ---------------- | ------------------ |
+| `false` | `OPENAI_API_KEY`, `OPENAI_API_BASE` (optional) |
+| `true` | `OPENAI_API_KEY`, `OPENAI_API_BASE`, `AZURE_OPENAI_API_VERSION` |
+
+#### Example `.env` file
+
 ```env
-GOOGLE_CLOUD_API_KEY = "your_google_api_key_here"
+# Google API (choose one mode)
+USE_VERTEX_AI = "false"
+GOOGLE_CLOUD_API_KEY = "your_google_api_key_here"      # When USE_VERTEX_AI = false
+GOOGLE_CLOUD_PROJECT = "your_project_name"             # When USE_VERTEX_AI = true
+GOOGLE_CLOUD_LOCATION = "us-central1"                  # When USE_VERTEX_AI = true
+
+# ElevenLabs API
 ELEVENLABS_API_KEY = "your_elevenlabs_api_key_here"
-OPENAI_API_KEY = "your_openai_api_key_here"
-OPENAI_API_BASE = "https://api.openai.com/v1"
+
+# OpenAI API (choose one mode)
 USE_AZURE_OPENAI = "false"
-AZURE_OPENAI_API_VERSION = "2025-04-01-preview"
+OPENAI_API_KEY = "your_openai_api_key_here"
+OPENAI_API_BASE = "https://api.openai.com/v1"          # Optional for OpenAI, required for Azure
+AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # When USE_AZURE_OPENAI = true
 ```
 
 ## Usage

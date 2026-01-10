@@ -41,13 +41,37 @@ setup.bat cursor
 
 编辑 `.env` 文件，填入你的 API 密钥：
 
+#### Google API
+
+| USE_VERTEX_AI | 必需变量 |
+| ------------- | -------- |
+| `false` | `GOOGLE_CLOUD_API_KEY` |
+| `true` | `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION` |
+
+#### OpenAI API
+
+| USE_AZURE_OPENAI | 必需变量 |
+| ---------------- | -------- |
+| `false` | `OPENAI_API_KEY`, `OPENAI_API_BASE`（可选） |
+| `true` | `OPENAI_API_KEY`, `OPENAI_API_BASE`, `AZURE_OPENAI_API_VERSION` |
+
+#### `.env` 文件示例
+
 ```env
-GOOGLE_CLOUD_API_KEY = "your_google_api_key_here"
+# Google API（二选一）
+USE_VERTEX_AI = "false"
+GOOGLE_CLOUD_API_KEY = "your_google_api_key_here"      # USE_VERTEX_AI = false 时需要
+GOOGLE_CLOUD_PROJECT = "your_project_name"             # USE_VERTEX_AI = true 时需要
+GOOGLE_CLOUD_LOCATION = "us-central1"                  # USE_VERTEX_AI = true 时需要
+
+# ElevenLabs API
 ELEVENLABS_API_KEY = "your_elevenlabs_api_key_here"
-OPENAI_API_KEY = "your_openai_api_key_here"
-OPENAI_API_BASE = "https://api.openai.com/v1"
+
+# OpenAI API（二选一）
 USE_AZURE_OPENAI = "false"
-AZURE_OPENAI_API_VERSION = "2025-04-01-preview"
+OPENAI_API_KEY = "your_openai_api_key_here"
+OPENAI_API_BASE = "https://api.openai.com/v1"          # OpenAI 可选，Azure 必填
+AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # USE_AZURE_OPENAI = true 时需要
 ```
 
 ## 使用方法
