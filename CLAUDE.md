@@ -22,7 +22,19 @@ uv add <package_name>
 
 # Sync dependencies
 uv sync
+
+# Build distribution package
+.\build.ps1                         # Creates genix-skills.zip (default)
+.\build.ps1 -OutputName "custom"    # Creates custom.zip
 ```
+
+## Distribution
+
+To distribute the skills package:
+
+1. Run `.\build.ps1` to create `genix-skills.zip`
+2. The zip contains: `genix/`, `.env.template`, and install scripts
+3. Users follow `docs/MANUAL.md` for installation and usage instructions
 
 ## Architecture
 
@@ -38,16 +50,16 @@ Skills are self-contained modules installed to tool-specific directories:
 
 The project integrates with multiple AIGC APIs (configured via `.env`):
 
-- **Google Generative AI** (`google-genai`) - Image generation
-- **OpenAI** (`openai`) - Various AI capabilities
-- **ElevenLabs** (`elevenlabs`) - Text-to-audio/speech
+- **Google Generative AI** (`google-genai`) - Image and Video generation
+- **OpenAI** (`openai`) - Image and Video generation
+- **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 
 ### Current Skill Capabilities (genix)
 
-- Text-to-Image (t2i)
-- Image-to-Image (i2i)
-- Text-to-Audio (t2a)
-- Video and Music generation are planned (TODO)
+- **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT)
+- **Video**: Text-to-Video, Image-to-Video (Google Veo, OpenAI Sora)
+- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs)
+- **Music**: Text-to-Music with vocals or instrumental (ElevenLabs)
 
 ## Environment Setup
 
@@ -63,3 +75,8 @@ Copy `.env.template` to `.env` and configure API keys:
 - Python 3.14+
 - Package manager: `uv` (Astral)
 - Async/await pattern for API calls
+
+## Documentation
+
+- `README.md` / `README_CN.md` - Quick start guide
+- `docs/MANUAL.md` / `docs/MANUAL_CN.md` - Detailed user manual with advanced workflows
