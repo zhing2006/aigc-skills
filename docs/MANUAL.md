@@ -439,9 +439,9 @@ Create a complete media package for a project:
 
 #### Step 5: Cinematic Trailer
 
-> "Using the hero image, create an 8 second cinematic video. Camera slowly zooms toward the warrior as the dragon breathes fire in the background."
+> "Using the hero image, create an 8 second cinematic video. Camera slowly zooms toward the warrior as the dragon breathes fire in the background. Do not generate audio."
 
-Result: A complete set of game assets from a single creative session.
+Result: A complete set of game assets from a single creative session, ready for further refinement in post-production software.
 
 ---
 
