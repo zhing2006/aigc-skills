@@ -31,6 +31,7 @@ metadata:
 ## Video Skills
 
 - [Google Veo video generation](references/google-veo.md)
+- [OpenAI Sora video generation](references/openai-sora.md)
 
 ## Music Skills
 

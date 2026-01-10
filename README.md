@@ -11,6 +11,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Image** | Google Gemini | Text-to-Image, Image-to-Image |
 | **Image** | OpenAI GPT | Text-to-Image, Image Edit |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
+| **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
 
