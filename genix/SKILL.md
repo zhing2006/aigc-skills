@@ -30,7 +30,7 @@ metadata:
 
 ## Video Skills
 
-- TODO: Not implemented yet
+- [Google Veo video generation](references/google-veo.md)
 
 ## Music Skills
 
