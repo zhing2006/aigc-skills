@@ -11,6 +11,7 @@
 | **图像** | Google Gemini | 文生图、图生图 |
 | **图像** | OpenAI GPT | 文生图、图像编辑 |
 | **视频** | Google Veo | 文生视频、图生视频 |
+| **视频** | OpenAI Sora | 文生视频、图生视频 |
 | **音频** | ElevenLabs | 文字转语音、音效生成 |
 | **音乐** | ElevenLabs | 文生音乐（纯乐器/带人声） |
 
