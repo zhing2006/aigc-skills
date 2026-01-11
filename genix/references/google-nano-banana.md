@@ -19,9 +19,18 @@ Text-to-Image and Image-to-Image generation using Google's Gemini 3 Pro Image mo
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `-i`, `--images` | None | Input image file paths (max 14) |
+| `-m`, `--model` | `gemini-3-pro-image-preview` | Model to use |
 | `-a`, `--aspect-ratio` | `1:1` | Output aspect ratio |
 | `-r`, `--resolution` | `1K` | Output resolution |
 | `-o`, `--output` | `generated_image.png` | Output file path |
+
+## Supported Models
+
+| Model | Description |
+| ----- | ----------- |
+| `gemini-3-pro-image-preview` | Default model for image generation |
+
+**Note**: If the user does not specify model, use `gemini-3-pro-image-preview` as default.
 
 ## Supported Aspect Ratios
 

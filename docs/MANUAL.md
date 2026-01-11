@@ -325,10 +325,6 @@ Best for: Narration, dialogue, voice-overs, character voices
 
 > "Generate speech with emotional tags: '[excited] Oh my gosh, I can't believe we won!'"
 
-#### Long Narration with Custom Settings
-
-> "Create a voice narration, use warm female voice, slower speed for audiobook style"
-
 **Supported Options**:
 
 - Models:

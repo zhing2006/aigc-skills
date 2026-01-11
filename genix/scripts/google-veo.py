@@ -36,7 +36,6 @@ async def generate_video(
     duration: int = 8,
     resolution: str = "720p",
     negative_prompt: str | None = None,
-    generate_audio: bool = True,
     seed: int | None = None,
     output_path: str | None = None,
 ) -> Path:
@@ -51,7 +50,6 @@ async def generate_video(
         duration: Video duration in seconds (4, 6, or 8)
         resolution: Video resolution (720p or 1080p)
         negative_prompt: Content to avoid generating
-        generate_audio: Whether to generate audio with the video (default: True)
         seed: Seed for reproducibility
         output_path: Output file path (optional)
 
@@ -93,7 +91,6 @@ async def generate_video(
         "aspect_ratio": aspect_ratio,
         "duration_seconds": duration,
         "resolution": resolution,
-        # "generate_audio": generate_audio,
     }
 
     if negative_prompt:
@@ -117,8 +114,7 @@ async def generate_video(
     # Print generation info
     print(f"Prompt: {prompt}")
     mode = "Image-to-Video" if input_image else "Text-to-Video"
-    audio_str = "with audio" if generate_audio else "no audio"
-    print(f"Generating video ({mode}, {aspect_ratio}, {duration}s, {resolution}, {audio_str}, model: {model_id})...")
+    print(f"Generating video ({mode}, {aspect_ratio}, {duration}s, {resolution}, model: {model_id})...")
 
     # Generate video (async)
     if input_image:
@@ -202,11 +198,6 @@ async def main():
         help="Content to avoid generating",
     )
     parser.add_argument(
-        "--no-audio",
-        action="store_true",
-        help="Disable audio generation",
-    )
-    parser.add_argument(
         "--seed",
         type=int,
         default=None,
@@ -230,7 +221,6 @@ async def main():
             duration=args.duration,
             resolution=args.resolution,
             negative_prompt=args.negative_prompt,
-            generate_audio=not args.no_audio,
             seed=args.seed,
             output_path=args.output,
         )
