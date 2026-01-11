@@ -24,7 +24,6 @@ Text-to-Video and Image-to-Video generation using Google's Veo 3.1 model.
 | `-d`, `--duration` | `8` | Video duration in seconds |
 | `-r`, `--resolution` | `720p` | Video resolution |
 | `-n`, `--negative-prompt` | None | Content to avoid generating |
-| `--no-audio` | False | Disable audio generation |
 | `--seed` | None | Seed for reproducibility (0-4294967295) |
 | `-o`, `--output` | `generated_video.mp4` | Output file path |
 

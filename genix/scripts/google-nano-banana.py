@@ -18,14 +18,19 @@ from google.genai import types
 from PIL import Image
 
 
+SUPPORTED_MODELS = [
+    "gemini-3-pro-image-preview",
+]
 SUPPORTED_ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
 SUPPORTED_RESOLUTIONS = ["1K", "2K", "4K"]
 MAX_INPUT_IMAGES = 14
+DEFAULT_MODEL = "gemini-3-pro-image-preview"
 
 
 async def generate_image(
     prompt: str,
     images: list[str] | None = None,
+    model_id: str = DEFAULT_MODEL,
     aspect_ratio: str = "1:1",
     resolution: str = "1K",
     output_path: str | None = None,
@@ -36,6 +41,7 @@ async def generate_image(
     Args:
         prompt: Text prompt for image generation
         images: List of local image file paths (max 14)
+        model_id: Model to use for generation
         aspect_ratio: Aspect ratio (1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9)
         resolution: Output resolution (1K, 2K, 4K)
         output_path: Output file path (optional, defaults to generated_image.png)
@@ -43,6 +49,9 @@ async def generate_image(
     Returns:
         Path to the generated image file
     """
+    if model_id not in SUPPORTED_MODELS:
+        raise ValueError(f"Unsupported model: {model_id}. Supported: {SUPPORTED_MODELS}")
+
     if aspect_ratio not in SUPPORTED_ASPECT_RATIOS:
         raise ValueError(f"Unsupported aspect ratio: {aspect_ratio}. Supported: {SUPPORTED_ASPECT_RATIOS}")
 
@@ -52,11 +61,20 @@ async def generate_image(
     if images and len(images) > MAX_INPUT_IMAGES:
         raise ValueError(f"Too many input images: {len(images)}. Maximum: {MAX_INPUT_IMAGES}")
 
-    api_key = os.environ.get("GOOGLE_CLOUD_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_CLOUD_API_KEY environment variable is not set")
+    use_vertex_ai = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
+    if use_vertex_ai:
+        project = os.environ.get("GOOGLE_CLOUD_PROJECT")
+        if not project:
+            raise ValueError("GOOGLE_CLOUD_PROJECT environment variable is not set")
+        location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
 
-    client = genai.Client(api_key=api_key)
+        client = genai.Client(vertexai=True, project=project, location=location)
+    else:
+        api_key = os.environ.get("GOOGLE_CLOUD_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_CLOUD_API_KEY environment variable is not set")
+
+        client = genai.Client(api_key=api_key)
 
     # Build contents with prompt and optional images
     contents: list = [prompt]
@@ -78,25 +96,26 @@ async def generate_image(
 
     # Print prompt before generation
     print(f"Prompt: {prompt}")
-    print(f"Generating image ({aspect_ratio}, {resolution.upper()})...")
+    print(f"Generating image ({aspect_ratio}, {resolution.upper()}, model: {model_id})...")
 
     output_file = Path(output_path) if output_path else Path("generated_image.png")
 
-    # Stream response for real-time output (async)
-    async for chunk in await client.aio.models.generate_content_stream(
-        model="gemini-3-pro-image-preview",
+    # Use non-streaming API to avoid aiohttp "Chunk too big" error
+    # when receiving large inline image data
+    response = await client.aio.models.generate_content(
+        model=model_id,
         contents=contents,
         config=config,
-    ):
-        if chunk.parts:
-            for part in chunk.parts:
-                if part.text is not None:
-                    print(part.text, end="", flush=True)
-                elif part.inline_data is not None:
-                    image = part.as_image()
-                    image.save(output_file)
+    )
 
-    print()  # Newline after streaming text
+    if response.parts:
+        for part in response.parts:
+            if part.text is not None:
+                print(part.text)
+            elif part.inline_data is not None:
+                image = part.as_image()
+                image.save(output_file)
+
     print(f"Image saved to: {output_file}")
 
     return output_file
@@ -116,6 +135,13 @@ async def main():
         type=str,
         nargs="*",
         help=f"Input image file paths (max {MAX_INPUT_IMAGES})",
+    )
+    parser.add_argument(
+        "-m", "--model",
+        type=str,
+        default=DEFAULT_MODEL,
+        choices=SUPPORTED_MODELS,
+        help=f"Model to use (default: {DEFAULT_MODEL})",
     )
     parser.add_argument(
         "-a", "--aspect-ratio",
@@ -144,6 +170,7 @@ async def main():
         await generate_image(
             prompt=args.prompt,
             images=args.images,
+            model_id=args.model,
             aspect_ratio=args.aspect_ratio,
             resolution=args.resolution,
             output_path=args.output,
