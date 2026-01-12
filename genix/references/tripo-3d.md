@@ -55,6 +55,22 @@ Text/Image/Multi-view to 3D model generation using Tripo API.
 - Default: GLB (no conversion needed)
 - Conversion available: `GLTF`, `USDZ`, `FBX`, `OBJ`, `STL`, `3MF`
 
+## Important: File Extension Handling
+
+When moving or renaming the generated model file, **always preserve the correct file extension** based on the output format:
+
+| Format | Extension |
+| ------ | --------- |
+| GLB (default) | `.glb` |
+| GLTF | `.gltf` |
+| FBX | `.fbx` |
+| OBJ | `.obj` |
+| STL | `.stl` |
+| USDZ | `.usdz` |
+| 3MF | `.3mf` |
+
+If no `--format` is specified, the output is `.glb`. Always include the extension when renaming (e.g., `my_model.glb`, not `my_model`).
+
 ## Prompt Best Practices
 
 ### For Text-to-3D
