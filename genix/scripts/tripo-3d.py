@@ -280,7 +280,7 @@ async def main():
     parser.add_argument(
         "--negative-prompt",
         type=str,
-        default=DEFAULT_NEGATIVE_PROMPT,
+        default=None,
         help=f"Negative prompt (text-to-3d only, default: '{DEFAULT_NEGATIVE_PROMPT}')",
     )
     parser.add_argument(
@@ -344,12 +344,17 @@ async def main():
     if args.negative_prompt and not args.prompt:
         parser.error("--negative-prompt requires a prompt (text-to-3d mode)")
 
+    # Apply default negative prompt only for text-to-3d mode
+    negative_prompt = args.negative_prompt
+    if args.prompt and negative_prompt is None:
+        negative_prompt = DEFAULT_NEGATIVE_PROMPT
+
     try:
         await generate_3d_model(
             prompt=args.prompt,
             image=args.image,
             images=args.images,
-            negative_prompt=args.negative_prompt,
+            negative_prompt=negative_prompt,
             model_version=args.model,
             texture_quality=args.texture_quality,
             geometry_quality=args.geometry_quality,
