@@ -17,6 +17,8 @@ $SkillsDirectories = @{
     "vscode"   = ".claude\skills"  # VSCode uses Claude skills directory
 }
 
+$VenvName = ".venv-genix"
+
 Write-Host "=== Genix Skills Setup ===" -ForegroundColor Cyan
 Write-Host "Target tool: $Tool" -ForegroundColor Cyan
 
@@ -50,31 +52,31 @@ if (!(Test-Path "pyproject.toml")) {
 }
 
 # 3. Create virtual environment if not exists
-Write-Host "`n[3/6] Checking virtual environment..." -ForegroundColor Yellow
-if (!(Test-Path ".venv")) {
+Write-Host "`n[3/6] Checking virtual environment ($VenvName)..." -ForegroundColor Yellow
+if (!(Test-Path $VenvName)) {
     Write-Host "Creating Python 3.14 virtual environment..." -ForegroundColor Yellow
-    uv venv --python 3.14
+    uv venv $VenvName --python 3.14
     Write-Host "Virtual environment created!" -ForegroundColor Green
 } else {
     Write-Host "Virtual environment already exists." -ForegroundColor Green
 }
 
-# 4. Create .env from template if not exists
-Write-Host "`n[4/6] Checking .env file..." -ForegroundColor Yellow
-if (!(Test-Path ".env")) {
+# 4. Create .genix.env from template if not exists
+Write-Host "`n[4/6] Checking .genix.env file..." -ForegroundColor Yellow
+if (!(Test-Path ".genix.env")) {
     if (Test-Path ".env.template") {
-        Copy-Item ".env.template" ".env"
-        Write-Host ".env created from template. Please update with your API keys." -ForegroundColor Green
+        Copy-Item ".env.template" ".genix.env"
+        Write-Host ".genix.env created from template. Please update with your API keys." -ForegroundColor Green
     } else {
-        Write-Host "Warning: .env.template not found, skipping .env creation." -ForegroundColor Yellow
+        Write-Host "Warning: .env.template not found, skipping .genix.env creation." -ForegroundColor Yellow
     }
 } else {
-    Write-Host ".env already exists." -ForegroundColor Green
+    Write-Host ".genix.env already exists." -ForegroundColor Green
 }
 
 # 5. Install dependencies
 Write-Host "`n[5/6] Installing dependencies..." -ForegroundColor Yellow
-uv add python-dotenv asyncio aiofiles aiohttp elevenlabs google-genai openai pillow -U --link-mode=copy
+uv pip install --python "$VenvName\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d
 Write-Host "Dependencies installed!" -ForegroundColor Green
 
 # 6. Copy genix to tool's skills directory

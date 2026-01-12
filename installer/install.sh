@@ -58,24 +58,24 @@ else
     echo "Virtual environment already exists."
 fi
 
-# 3. Create .env from template if not exists
+# 3. Create .genix.env from template if not exists
 echo ""
-echo "[3/5] Checking .env file..."
-if [ ! -f ".env" ]; then
+echo "[3/5] Checking .genix.env file..."
+if [ ! -f ".genix.env" ]; then
     if [ -f ".env.template" ]; then
-        cp ".env.template" ".env"
-        echo ".env created from template. Please update with your API keys."
+        cp ".env.template" ".genix.env"
+        echo ".genix.env created from template. Please update with your API keys."
     else
-        echo "Warning: .env.template not found, skipping .env creation."
+        echo "Warning: .env.template not found, skipping .genix.env creation."
     fi
 else
-    echo ".env already exists."
+    echo ".genix.env already exists."
 fi
 
 # 4. Install dependencies
 echo ""
 echo "[4/5] Installing dependencies..."
-uv pip install --python "$VENV_NAME/bin/python" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow
+uv pip install --python "$VENV_NAME/bin/python" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d
 echo "Dependencies installed!"
 
 # 5. Move genix to tool's skills directory
