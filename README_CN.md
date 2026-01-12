@@ -14,6 +14,7 @@
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
 | **音频** | ElevenLabs | 文字转语音、音效生成 |
 | **音乐** | ElevenLabs | 文生音乐（纯乐器/带人声） |
+| **3D 模型** | Tripo | 文生 3D、图生 3D、多视图生 3D |
 
 ## 安装
 
@@ -30,8 +31,8 @@
 **安装脚本做了什么：**
 
 1. 安装 `uv` 包管理器（如未安装）
-2. 创建 `pyproject.toml` 和虚拟环境（Python 3.14）
-3. 从模板创建 `.env` 文件
+2. 创建 `pyproject.toml` 和虚拟环境 `.venv-genix`（Python 3.14）
+3. 从模板创建 `.genix.env` 文件
 4. 安装 Python 依赖
 5. 将 genix 技能复制到 AI 工具的技能目录
 
@@ -50,7 +51,7 @@ setup.bat cursor
 
 ### 第二步：配置 API 密钥
 
-编辑 `.env` 文件，填入你的 API 密钥：
+编辑 `.genix.env` 文件，填入你的 API 密钥：
 
 #### Google API
 
@@ -66,7 +67,13 @@ setup.bat cursor
 | `false` | `OPENAI_API_KEY`, `OPENAI_API_BASE`（可选） |
 | `true` | `OPENAI_API_KEY`, `OPENAI_API_BASE`, `AZURE_OPENAI_API_VERSION` |
 
-#### `.env` 文件示例
+#### Tripo API
+
+| 必需变量 |
+| -------- |
+| `TRIPO_API_KEY` |
+
+#### `.genix.env` 文件示例
 
 ```env
 # Google API（二选一）
@@ -83,6 +90,9 @@ USE_AZURE_OPENAI = "false"
 OPENAI_API_KEY = "your_openai_api_key_here"
 OPENAI_API_BASE = "https://api.openai.com/v1"          # OpenAI 可选，Azure 必填
 AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # USE_AZURE_OPENAI = true 时需要
+
+# Tripo API
+TRIPO_API_KEY = "your_tripo_api_key_here"
 ```
 
 ## 使用方法
@@ -109,6 +119,12 @@ AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # USE_AZURE_OPENAI = true
 
 - "创作一段平静的钢琴旋律，30秒，纯乐器"
 - "生成一段史诗级的管弦乐预告片主题曲"
+
+**3D 模型生成：**
+
+- "生成一个可爱的卡通猫 3D 模型"
+- "把这张图片转换成 3D 模型"
+- "创建一把木椅的 3D 模型，导出为 FBX 格式"
 
 AI 会自动选择合适的技能，并按照最佳实践优化你的提示词以获得最佳效果。
 

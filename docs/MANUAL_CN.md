@@ -11,6 +11,7 @@
   - [下载安装包](#下载安装包)
   - [运行安装脚本](#运行安装脚本)
   - [配置 API 密钥](#配置-api-密钥)
+- [从 v0.1 升级](#从-v01-升级)
 - [技能概览](#技能概览)
 - [图像生成](#图像生成)
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
@@ -23,6 +24,8 @@
   - [ElevenLabs 文字转语音](#elevenlabs-文字转语音)
 - [音乐生成](#音乐生成)
   - [ElevenLabs Music](#elevenlabs-music)
+- [3D 模型生成](#3d-模型生成)
+  - [Tripo 3D](#tripo-3d)
 - [高级工作流](#高级工作流)
   - [文生图到图生视频流水线](#文生图到图生视频流水线)
   - [图像编辑到视频流水线](#图像编辑到视频流水线)
@@ -101,10 +104,11 @@ chmod +x install.sh   # 仅首次需要
 
 - 技能位置：`.claude/skills/genix/`、`.cursor/skills/genix/` 或 `.codex/skills/genix/`
 - Python 环境：`.venv-genix/`（不会与现有的 `.venv` 冲突）
+- 环境配置文件：`.genix.env`（API 密钥配置）
 
 ### 配置 API 密钥
 
-编辑项目根目录下的 `.env` 文件：
+编辑项目根目录下的 `.genix.env` 文件：
 
 ```env
 # Google API（用于 Gemini 图像和 Veo 视频）
@@ -118,9 +122,51 @@ ELEVENLABS_API_KEY = "your_elevenlabs_api_key_here"
 USE_AZURE_OPENAI = "false"
 OPENAI_API_KEY = "your_openai_api_key_here"
 OPENAI_API_BASE = "https://api.openai.com/v1"
+
+# Tripo API（用于 3D 模型生成）
+TRIPO_API_KEY = "your_tripo_api_key_here"
 ```
 
 **注意**：你只需要配置你计划使用的服务商的 API 密钥。
+
+---
+
+## 从 v0.1 升级
+
+如果你从 Genix Skills v0.1 升级，请注意以下**破坏性变更**：
+
+### 环境文件重命名
+
+环境文件已从 `.env` 重命名为 `.genix.env`，以避免与项目自身的 `.env` 文件冲突。
+
+**迁移步骤：**
+
+1. 将现有的 `.env` 文件重命名为 `.genix.env`：
+
+   ```bash
+   # Windows PowerShell
+   Rename-Item .env .genix.env
+
+   # Linux/macOS
+   mv .env .genix.env
+   ```
+
+2. 添加新的 Tripo API 密钥（如果你想使用 3D 生成）：
+
+   ```env
+   TRIPO_API_KEY = "your_tripo_api_key_here"
+   ```
+
+3. 重新运行安装脚本以更新技能文件：
+
+   ```powershell
+   .\install.ps1
+   ```
+
+### v0.2 新功能
+
+- **3D 模型生成**：使用 Tripo API 支持文生 3D、图生 3D 和多视图生 3D
+- **隔离环境**：使用 `.venv-genix` 避免与项目的 `.venv` 冲突
 
 ---
 
@@ -135,6 +181,7 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 | Sound Effects | ElevenLabs | 文字 | 音频 | 音效、环境音 |
 | Text-to-Speech | ElevenLabs | 文字 | 音频 | 语音旁白、对话 |
 | Music | ElevenLabs | 文字 | 音频 | 背景音乐、歌曲 |
+| Tripo 3D | Tripo | 文字、图片 | 3D 模型 | 3D 模型生成（GLB、FBX、OBJ） |
 
 ---
 
@@ -376,6 +423,51 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 
 ---
 
+## 3D 模型生成
+
+### Tripo 3D
+
+最适合：游戏素材、产品可视化、角色模型、3D 打印
+
+#### 文生 3D
+
+> "生成一个可爱的卡通猫 3D 模型，大眼睛，坐姿"
+
+#### 高质量文生 3D
+
+> "创建一个精细的中世纪宝箱 3D 模型，有铁条装饰和木纹，详细几何体"
+
+#### 图生 3D
+
+> "把这张产品照片转换成 3D 模型"
+> （附上你的图片）
+
+#### 多视图生 3D
+
+> "用我这个角色设计的 4 个角度生成 3D 模型"
+> （附上正面、背面、左侧、右侧图片）
+
+#### 导出不同格式
+
+> "创建一个简单椅子的 3D 模型，导出为 FBX 格式用于 Unity"
+
+**支持的选项**：
+
+- 模型：`v3.0-20250812`（最新，默认）、`v2.5-20250123`、`Turbo-v1.0-20250506`（快速）
+- 质量：`standard` 或 `detailed`（用于纹理和几何体）
+- 输出格式：`GLB`（默认）、`GLTF`、`FBX`、`OBJ`、`STL`、`USDZ`、`3MF`
+- 面数限制：控制多边形数量以获得游戏可用的模型
+
+**最佳实践**：
+
+- 保持提示词简洁："主体 + 1-3 个形容词 + 风格"
+- 关注材质（光泽、哑光、金属）而非光线
+- 一次只生成一个物体以获得最佳质量
+- 使用负向提示词排除不需要的特征
+- 对于图片：使用干净的背景，最好预先提取前景
+
+---
+
 ## 高级工作流
 
 ### 文生图到图生视频流水线
@@ -484,9 +576,10 @@ AI 会创建图像（如 `lion_savanna.png`）。
 
 **错误**："API key not found" 或 "Authentication failed"
 
-- 检查项目根目录是否存在 `.env` 文件
+- 检查项目根目录是否存在 `.genix.env` 文件
 - 确认 API 密钥正确复制（没有多余空格）
 - 确保设置了正确的环境变量
+- 如果从 v0.1 升级，请将 `.env` 重命名为 `.genix.env`
 
 ### 生成失败
 

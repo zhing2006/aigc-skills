@@ -21,6 +21,8 @@ if "%TOOL%"=="codex" set "TARGET_DIR=.codex\skills"
 if "%TOOL%"=="opencode" set "TARGET_DIR=.claude\skills"
 if "%TOOL%"=="vscode" set "TARGET_DIR=.claude\skills"
 
+set "VENV_NAME=.venv-genix"
+
 echo === Genix Skills Setup ===
 echo Target tool: %TOOL%
 
@@ -53,33 +55,33 @@ if not exist "pyproject.toml" (
 
 REM 3. Create virtual environment if not exists
 echo.
-echo [3/6] Checking virtual environment...
-if not exist ".venv" (
+echo [3/6] Checking virtual environment (%VENV_NAME%)...
+if not exist "%VENV_NAME%" (
     echo Creating Python 3.14 virtual environment...
-    uv venv --python 3.14
+    uv venv %VENV_NAME% --python 3.14
     echo Virtual environment created!
 ) else (
     echo Virtual environment already exists.
 )
 
-REM 4. Create .env from template if not exists
+REM 4. Create .genix.env from template if not exists
 echo.
-echo [4/6] Checking .env file...
-if not exist ".env" (
+echo [4/6] Checking .genix.env file...
+if not exist ".genix.env" (
     if exist ".env.template" (
-        copy ".env.template" ".env" >nul
-        echo .env created from template. Please update with your API keys.
+        copy ".env.template" ".genix.env" >nul
+        echo .genix.env created from template. Please update with your API keys.
     ) else (
-        echo Warning: .env.template not found, skipping .env creation.
+        echo Warning: .env.template not found, skipping .genix.env creation.
     )
 ) else (
-    echo .env already exists.
+    echo .genix.env already exists.
 )
 
 REM 5. Install dependencies
 echo.
 echo [5/6] Installing dependencies...
-uv add python-dotenv asyncio aiofiles aiohttp elevenlabs google-genai openai pillow -U --link-mode=copy
+uv pip install --python "%VENV_NAME%\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d
 echo Dependencies installed!
 
 REM 6. Copy genix to tool's skills directory

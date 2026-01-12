@@ -50,22 +50,22 @@ if (!(Test-Path $VenvName)) {
     Write-Host "Virtual environment already exists." -ForegroundColor Green
 }
 
-# 3. Create .env from template if not exists
-Write-Host "`n[3/5] Checking .env file..." -ForegroundColor Yellow
-if (!(Test-Path ".env")) {
+# 3. Create .genix.env from template if not exists
+Write-Host "`n[3/5] Checking .genix.env file..." -ForegroundColor Yellow
+if (!(Test-Path ".genix.env")) {
     if (Test-Path ".env.template") {
-        Copy-Item ".env.template" ".env"
-        Write-Host ".env created from template. Please update with your API keys." -ForegroundColor Green
+        Copy-Item ".env.template" ".genix.env"
+        Write-Host ".genix.env created from template. Please update with your API keys." -ForegroundColor Green
     } else {
-        Write-Host "Warning: .env.template not found, skipping .env creation." -ForegroundColor Yellow
+        Write-Host "Warning: .env.template not found, skipping .genix.env creation." -ForegroundColor Yellow
     }
 } else {
-    Write-Host ".env already exists." -ForegroundColor Green
+    Write-Host ".genix.env already exists." -ForegroundColor Green
 }
 
 # 4. Install dependencies
 Write-Host "`n[4/5] Installing dependencies..." -ForegroundColor Yellow
-uv pip install --python "$VenvName\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow
+uv pip install --python "$VenvName\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d
 Write-Host "Dependencies installed!" -ForegroundColor Green
 
 # 5. Move genix to tool's skills directory

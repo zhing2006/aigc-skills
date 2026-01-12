@@ -14,6 +14,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
+| **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D |
 
 ## Installation
 
@@ -30,8 +31,8 @@ Choose the appropriate script for your system:
 **What the setup script does:**
 
 1. Installs `uv` package manager (if not present)
-2. Creates `pyproject.toml` and virtual environment (Python 3.14)
-3. Creates `.env` file from template
+2. Creates `pyproject.toml` and virtual environment `.venv-genix` (Python 3.14)
+3. Creates `.genix.env` file from template
 4. Installs Python dependencies
 5. Copies genix skill to the AI tool's skills directory
 
@@ -50,7 +51,7 @@ Supported tools: `claude` (default), `cursor`, `codex`, `opencode`, `vscode`
 
 ### Step 2: Configure API Keys
 
-Edit the `.env` file and fill in your API keys:
+Edit the `.genix.env` file and fill in your API keys:
 
 #### Google API
 
@@ -66,7 +67,13 @@ Edit the `.env` file and fill in your API keys:
 | `false` | `OPENAI_API_KEY`, `OPENAI_API_BASE` (optional) |
 | `true` | `OPENAI_API_KEY`, `OPENAI_API_BASE`, `AZURE_OPENAI_API_VERSION` |
 
-#### Example `.env` file
+#### Tripo API
+
+| Required Variables |
+| ------------------ |
+| `TRIPO_API_KEY` |
+
+#### Example `.genix.env` file
 
 ```env
 # Google API (choose one mode)
@@ -83,6 +90,9 @@ USE_AZURE_OPENAI = "false"
 OPENAI_API_KEY = "your_openai_api_key_here"
 OPENAI_API_BASE = "https://api.openai.com/v1"          # Optional for OpenAI, required for Azure
 AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # When USE_AZURE_OPENAI = true
+
+# Tripo API
+TRIPO_API_KEY = "your_tripo_api_key_here"
 ```
 
 ## Usage
@@ -109,6 +119,12 @@ AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # When USE_AZURE_OPENAI =
 
 - "Create a calm piano melody, 30 seconds, instrumental"
 - "Generate an epic orchestral theme for a trailer"
+
+**3D Model Generation:**
+
+- "Generate a 3D model of a cute cartoon cat"
+- "Convert this image to a 3D model"
+- "Create a wooden chair 3D model and export as FBX"
 
 The AI will automatically select the appropriate skill and optimize your prompt following best practices for best results.
 

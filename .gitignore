@@ -215,3 +215,4 @@ uv.lock
 .codex/
 .opencode/
 .vscode/
+.*.env

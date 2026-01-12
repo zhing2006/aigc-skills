@@ -4,7 +4,7 @@ description: AIGC image/video/audio/music generation skills
 compatibility: Designed for Claude Code (or similar products)
 license: Apache 2.0. LICENSE.txt has complete terms
 metadata:
-  version: "0.1"
+  version: "0.2"
   author: zhing2006
 ---
 
@@ -45,3 +45,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 ## Music Skills
 
 - [ElevenLabs music generation](references/elevenlabs-music.md)
+
+## 3D Model Skills
+
+- [Tripo 3D model generation](references/tripo-3d.md)

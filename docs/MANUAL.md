@@ -11,6 +11,7 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [Download Package](#download-package)
   - [Run Install Script](#run-install-script)
   - [Configure API Keys](#configure-api-keys)
+- [Upgrading from v0.1](#upgrading-from-v01)
 - [Skills Overview](#skills-overview)
 - [Image Generation](#image-generation)
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
@@ -23,6 +24,8 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [ElevenLabs Text-to-Speech](#elevenlabs-text-to-speech)
 - [Music Generation](#music-generation)
   - [ElevenLabs Music](#elevenlabs-music)
+- [3D Model Generation](#3d-model-generation)
+  - [Tripo 3D](#tripo-3d)
 - [Advanced Workflows](#advanced-workflows)
   - [Text to Image to Video Pipeline](#text-to-image-to-video-pipeline)
   - [Image Editing to Video Pipeline](#image-editing-to-video-pipeline)
@@ -101,10 +104,11 @@ After installation:
 
 - Skills location: `.claude/skills/genix/`, `.cursor/skills/genix/`, or `.codex/skills/genix/`
 - Python environment: `.venv-genix/` (does not conflict with existing `.venv`)
+- Environment file: `.genix.env` (API keys configuration)
 
 ### Configure API Keys
 
-Edit the `.env` file in your project root with your API keys:
+Edit the `.genix.env` file in your project root with your API keys:
 
 ```env
 # Google API (for Gemini image and Veo video)
@@ -118,9 +122,51 @@ ELEVENLABS_API_KEY = "your_elevenlabs_api_key_here"
 USE_AZURE_OPENAI = "false"
 OPENAI_API_KEY = "your_openai_api_key_here"
 OPENAI_API_BASE = "https://api.openai.com/v1"
+
+# Tripo API (for 3D model generation)
+TRIPO_API_KEY = "your_tripo_api_key_here"
 ```
 
 **Note**: You only need to configure the API keys for the providers you plan to use.
+
+---
+
+## Upgrading from v0.1
+
+If you are upgrading from Genix Skills v0.1, please note the following **breaking changes**:
+
+### Environment File Renamed
+
+The environment file has been renamed from `.env` to `.genix.env` to avoid conflicts with your project's own `.env` file.
+
+**Migration Steps:**
+
+1. Rename your existing `.env` file to `.genix.env`:
+
+   ```bash
+   # Windows PowerShell
+   Rename-Item .env .genix.env
+
+   # Linux/macOS
+   mv .env .genix.env
+   ```
+
+2. Add the new Tripo API key (if you want to use 3D generation):
+
+   ```env
+   TRIPO_API_KEY = "your_tripo_api_key_here"
+   ```
+
+3. Re-run the install script to update the skill files:
+
+   ```powershell
+   .\install.ps1
+   ```
+
+### New Features in v0.2
+
+- **3D Model Generation**: Text-to-3D, Image-to-3D, and Multiview-to-3D using Tripo API
+- **Isolated Environment**: Uses `.venv-genix` to avoid conflicts with project's `.venv`
 
 ---
 
@@ -135,6 +181,7 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 | Sound Effects | ElevenLabs | Text | Audio | Sound effects, ambient sounds |
 | Text-to-Speech | ElevenLabs | Text | Audio | Voice narration, dialogue |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
+| Tripo 3D | Tripo | Text, Images | 3D Model | 3D model generation (GLB, FBX, OBJ) |
 
 ---
 
@@ -376,6 +423,51 @@ Best for: Background music, theme songs, ambient tracks, jingles
 
 ---
 
+## 3D Model Generation
+
+### Tripo 3D
+
+Best for: Game assets, product visualization, character models, 3D printing
+
+#### Text-to-3D
+
+> "Generate a 3D model of a cute cartoon cat with big eyes, sitting pose"
+
+#### Text-to-3D with High Quality
+
+> "Create a detailed medieval treasure chest 3D model with iron bands and wood texture, detailed geometry"
+
+#### Image-to-3D
+
+> "Convert this product photo into a 3D model"
+> (attach your image)
+
+#### Multiview-to-3D
+
+> "Generate a 3D model from these 4 angles of my character design"
+> (attach front, back, left, right images)
+
+#### Export to Different Formats
+
+> "Create a 3D model of a simple chair and export it as FBX for Unity"
+
+**Supported Options**:
+
+- Models: `v3.0-20250812` (latest, default), `v2.5-20250123`, `Turbo-v1.0-20250506` (fast)
+- Quality: `standard` or `detailed` (for texture and geometry)
+- Output Formats: `GLB` (default), `GLTF`, `FBX`, `OBJ`, `STL`, `USDZ`, `3MF`
+- Face Limit: Control polygon count for game-ready models
+
+**Tips for Best Results**:
+
+- Keep prompts concise: "Subject + 1-3 adjectives + style"
+- Focus on materials (glossy, matte, metallic) over lighting
+- Generate one object at a time for best quality
+- Use negative prompt to exclude unwanted features
+- For images: use clean backgrounds, pre-extract foreground if possible
+
+---
+
 ## Advanced Workflows
 
 ### Text to Image to Video Pipeline
@@ -484,9 +576,10 @@ Result: A complete set of game assets from a single creative session, ready for 
 
 **Error**: "API key not found" or "Authentication failed"
 
-- Check `.env` file exists in project root
+- Check `.genix.env` file exists in project root
 - Verify API key is correctly copied (no extra spaces)
 - Ensure the correct environment variables are set
+- If upgrading from v0.1, rename `.env` to `.genix.env`
 
 ### Generation Failures
 

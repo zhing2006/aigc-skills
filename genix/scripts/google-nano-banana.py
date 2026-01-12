@@ -181,5 +181,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    load_dotenv(override=True)
+    load_dotenv(dotenv_path=".genix.env", override=True)
     asyncio.run(main())
