@@ -77,21 +77,31 @@ echo.
 echo [5/5] Installing genix skill to %TOOL%...
 set "GENIX_TARGET=%TARGET_DIR%\genix"
 
-REM Create skills directory if not exists
-if not exist "%TARGET_DIR%" (
-    mkdir "%TARGET_DIR%"
-    echo Created skills directory: %TARGET_DIR%
-)
+REM Check if source genix directory exists
+if not exist "genix" (
+    if exist "%GENIX_TARGET%" (
+        echo Genix skill already installed at: %GENIX_TARGET%
+    ) else (
+        echo Error: genix directory not found. Please re-extract the package.
+        exit /b 1
+    )
+) else (
+    REM Create skills directory if not exists
+    if not exist "%TARGET_DIR%" (
+        mkdir "%TARGET_DIR%"
+        echo Created skills directory: %TARGET_DIR%
+    )
 
-REM Remove existing genix skill if exists
-if exist "%GENIX_TARGET%" (
-    rmdir /s /q "%GENIX_TARGET%"
-    echo Removed existing genix skill.
-)
+    REM Remove existing genix skill if exists
+    if exist "%GENIX_TARGET%" (
+        rmdir /s /q "%GENIX_TARGET%"
+        echo Removed existing genix skill.
+    )
 
-REM Move genix directory (instead of copy)
-move "genix" "%GENIX_TARGET%" >nul
-echo Genix skill installed to: %GENIX_TARGET%
+    REM Move genix directory
+    move "genix" "%GENIX_TARGET%" >nul
+    echo Genix skill installed to: %GENIX_TARGET%
+)
 
 echo.
 echo === Install Complete ===

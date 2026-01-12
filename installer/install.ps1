@@ -73,21 +73,31 @@ Write-Host "`n[5/5] Installing genix skill to $Tool..." -ForegroundColor Yellow
 $targetDir = $SkillsDirectories[$Tool]
 $genixTarget = Join-Path $targetDir "genix"
 
-# Create skills directory if not exists
-if (!(Test-Path $targetDir)) {
-    New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-    Write-Host "Created skills directory: $targetDir" -ForegroundColor Gray
-}
+# Check if source genix directory exists
+if (!(Test-Path "genix")) {
+    if (Test-Path $genixTarget) {
+        Write-Host "Genix skill already installed at: $genixTarget" -ForegroundColor Green
+    } else {
+        Write-Host "Error: genix directory not found. Please re-extract the package." -ForegroundColor Red
+        exit 1
+    }
+} else {
+    # Create skills directory if not exists
+    if (!(Test-Path $targetDir)) {
+        New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
+        Write-Host "Created skills directory: $targetDir" -ForegroundColor Gray
+    }
 
-# Remove existing genix skill if exists
-if (Test-Path $genixTarget) {
-    Remove-Item -Path $genixTarget -Recurse -Force
-    Write-Host "Removed existing genix skill." -ForegroundColor Gray
-}
+    # Remove existing genix skill if exists
+    if (Test-Path $genixTarget) {
+        Remove-Item -Path $genixTarget -Recurse -Force
+        Write-Host "Removed existing genix skill." -ForegroundColor Gray
+    }
 
-# Move genix directory (instead of copy)
-Move-Item -Path "genix" -Destination $genixTarget
-Write-Host "Genix skill installed to: $genixTarget" -ForegroundColor Green
+    # Move genix directory (instead of copy)
+    Move-Item -Path "genix" -Destination $genixTarget
+    Write-Host "Genix skill installed to: $genixTarget" -ForegroundColor Green
+}
 
 # Done
 Write-Host "`n=== Install Complete ===" -ForegroundColor Cyan
