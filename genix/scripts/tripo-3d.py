@@ -72,6 +72,10 @@ async def generate_3d_model(
     api_key = os.environ.get("TRIPO_API_KEY")
     if not api_key:
         raise ValueError("TRIPO_API_KEY environment variable is not set")
+    base_url = os.environ.get("TRIPO_API_BASE_URL")
+    if base_url:
+        print(f"Using custom Tripo API base URL: {base_url}")
+        TripoClient.BASE_URL = base_url
 
     # Determine mode
     if images:
