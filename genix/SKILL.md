@@ -36,6 +36,8 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 
 - [ElevenLabs sound effects generation](references/elevenlabs-sound-effect.md)
 - [ElevenLabs text-to-speech generation](references/elevenlabs-text-speech.md)
+- [DashScope Voice Design](references/dashscope-voice-design.md)
+- [DashScope Voice Clone](references/dashscope-voice-clone.md)
 
 ## Video Skills
 
