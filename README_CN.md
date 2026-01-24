@@ -13,6 +13,7 @@
 | **视频** | Google Veo | 文生视频、图生视频 |
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
 | **音频** | ElevenLabs | 文字转语音、音效生成 |
+| **音频** | DashScope | 文字转语音、音色设计、音色克隆 |
 | **音乐** | ElevenLabs | 文生音乐（纯乐器/带人声） |
 | **3D 模型** | Tripo | 文生 3D、图生 3D、多视图生 3D |
 
@@ -73,6 +74,12 @@ setup.bat cursor
 | -------- |
 | `TRIPO_API_KEY` |
 
+#### DashScope API
+
+| 必需变量 |
+| -------- |
+| `DASHSCOPE_API_KEY` |
+
 #### `.genix.env` 文件示例
 
 ```env
@@ -93,6 +100,9 @@ AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # USE_AZURE_OPENAI = true
 
 # Tripo API
 TRIPO_API_KEY = "your_tripo_api_key_here"
+
+# DashScope API（阿里云）
+DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 ```
 
 ## 使用方法

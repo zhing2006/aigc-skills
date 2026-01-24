@@ -22,6 +22,9 @@ This manual provides detailed instructions for installing and using the Genix AI
 - [Audio Generation](#audio-generation)
   - [ElevenLabs Sound Effects](#elevenlabs-sound-effects)
   - [ElevenLabs Text-to-Speech](#elevenlabs-text-to-speech)
+  - [DashScope Text-to-Speech](#dashscope-text-to-speech)
+  - [DashScope Voice Design](#dashscope-voice-design)
+  - [DashScope Voice Clone](#dashscope-voice-clone)
 - [Music Generation](#music-generation)
   - [ElevenLabs Music](#elevenlabs-music)
 - [3D Model Generation](#3d-model-generation)
@@ -125,6 +128,9 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 
 # Tripo API (for 3D model generation)
 TRIPO_API_KEY = "your_tripo_api_key_here"
+
+# DashScope API (for Chinese TTS, Voice Design, Voice Clone)
+DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 ```
 
 **Note**: You only need to configure the API keys for the providers you plan to use.
@@ -180,6 +186,9 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Sora | OpenAI | Text, Image | Video | Cinematic video generation |
 | Sound Effects | ElevenLabs | Text | Audio | Sound effects, ambient sounds |
 | Text-to-Speech | ElevenLabs | Text | Audio | Voice narration, dialogue |
+| Text-to-Speech | DashScope | Text | Audio | Chinese/multilingual TTS, custom voices |
+| Voice Design | DashScope | Text | Voice | AI-designed custom voices |
+| Voice Clone | DashScope | Audio | Voice | Clone voices from audio samples |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
 | Tripo 3D | Tripo | Text, Images | 3D Model | 3D model generation (GLB, FBX, OBJ) |
 
@@ -386,6 +395,101 @@ Best for: Narration, dialogue, voice-overs, character voices
   - MP3: `mp3_22050_32`, `mp3_44100_64`, `mp3_44100_128`, `mp3_44100_192`
   - PCM: `pcm_16000`, `pcm_22050`, `pcm_44100`, `pcm_48000`
   - Opus: `opus_48000_64`, `opus_48000_128`
+
+---
+
+### DashScope Text-to-Speech
+
+Best for: Chinese/multilingual TTS, custom voice characters, game dialogue
+
+#### Basic Chinese TTS
+
+> "Generate Chinese speech saying 'Hello everyone, welcome to our show' with a warm female voice"
+
+#### English TTS with Professional Voice
+
+> "Create English narration saying 'Welcome to our product demonstration' using Jennifer voice"
+
+#### News Broadcast Style
+
+> "Generate Chinese news anchor style speech reading this article"
+
+#### Using Custom Voice
+
+> "Synthesize this text using my custom Voice Design voice for the game character"
+
+**Supported Options**:
+
+- Models:
+  - `qwen3-tts-flash-realtime`: Default for system voices
+  - `qwen3-tts-vd-realtime-2025-12-16`: For Voice Design custom voices
+  - `qwen3-tts-vc-realtime-2026-01-15`: For Voice Clone custom voices
+- System Voices: 40+ voices including Chinese, English, Japanese, Korean, and more
+- Voice Parameters: Volume (0-100), Speed (0.5-2.0), Pitch (0.5-2.0)
+- Formats: PCM, WAV, MP3, Opus
+- Sample Rates: 8000, 16000, 22050, 24000, 44100, 48000 Hz
+
+---
+
+### DashScope Voice Design
+
+Best for: Creating unique AI voices for characters, narration, brand voices
+
+#### Create a Professional Narrator
+
+> "Design a voice: mature male announcer, deep and magnetic, steady pace, clear articulation, suitable for news or documentary"
+
+#### Create a Sweet Young Female Voice
+
+> "Design a voice: gentle and sweet young female, medium pace, suitable for emotional content"
+
+#### Create an Anime Character Voice
+
+> "Design a voice: lively and cute child voice, about 8-year-old girl, slightly childish speech, suitable for anime character dubbing"
+
+**Voice Design Tips**:
+
+- Be specific: Use concrete descriptors like "low-pitched", "crisp", "moderate speed"
+- Multi-dimensional: Combine gender, age, emotion, and characteristics
+- Avoid vague terms: Don't use "nice" or "good", describe actual voice qualities
+- Include use case: Specify intended use (news, audiobook, game, etc.)
+
+**Supported Options**:
+
+- Languages: Chinese, English, German, Italian, Portuguese, Spanish, Japanese, Korean, French, Russian
+- Output: Voice ID + preview audio
+- Sample Rates: 8000, 16000, 24000, 48000 Hz
+- Formats: MP3, WAV, PCM, Opus
+
+---
+
+### DashScope Voice Clone
+
+Best for: Cloning real voices, maintaining voice consistency, custom narrators
+
+#### Clone from Audio File
+
+> "Clone a voice from this audio recording for use as a narrator"
+> (attach audio file)
+
+#### Clone with Language Specification
+
+> "Clone this English voice recording for podcast narration"
+> (attach audio file)
+
+**Audio Requirements**:
+
+- Duration: 10-20 seconds recommended (max 60 seconds)
+- Format: WAV (16-bit), MP3, or M4A
+- File size: Under 10 MB
+- Quality: Clear speech, no background music/noise, mono channel
+- Sample rate: 24 kHz or higher recommended
+
+**Supported Options**:
+
+- Languages: Chinese, English, German, Italian, Portuguese, Spanish, Japanese, Korean, French, Russian
+- Target Models: `qwen3-tts-vc-realtime-2026-01-15` (latest), `qwen3-tts-vc-realtime-2025-11-27`
+- Actions: Create, List, Delete
 
 ---
 

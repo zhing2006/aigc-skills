@@ -13,6 +13,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
+| **Audio** | DashScope | Text-to-Speech, Voice Design, Voice Clone |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
 | **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D |
 
@@ -73,6 +74,12 @@ Edit the `.genix.env` file and fill in your API keys:
 | ------------------ |
 | `TRIPO_API_KEY` |
 
+#### DashScope API
+
+| Required Variables |
+| ------------------ |
+| `DASHSCOPE_API_KEY` |
+
 #### Example `.genix.env` file
 
 ```env
@@ -93,6 +100,9 @@ AZURE_OPENAI_API_VERSION = "2025-04-01-preview"        # When USE_AZURE_OPENAI =
 
 # Tripo API
 TRIPO_API_KEY = "your_tripo_api_key_here"
+
+# DashScope API (Alibaba Cloud)
+DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 ```
 
 ## Usage
