@@ -39,7 +39,7 @@ SUPPORTED_MODELS = [
 ]
 DEFAULT_MODEL = "qwen3-tts-flash-realtime"
 DEFAULT_VOICE = "Cherry"
-DEFAULT_FORMAT = "mp3"
+DEFAULT_FORMAT = "wav"
 DEFAULT_SAMPLE_RATE = 24000
 
 SUPPORTED_FORMATS = ["pcm", "wav", "mp3", "opus"]
