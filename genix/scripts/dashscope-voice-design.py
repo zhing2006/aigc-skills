@@ -198,7 +198,7 @@ async def list_voices(
             data = await response.json()
 
     output = data.get("output", {})
-    voices = output.get("voices", [])
+    voices = output.get("voice_list", [])
     total_count = output.get("total_count", 0)
 
     print(f"Found {total_count} custom voice(s) (showing {len(voices)} on this page)")

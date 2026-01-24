@@ -27,27 +27,28 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 4. **Generate**: Run the script with the optimized prompt and parameters as instructed in the reference file
 5. **Report result**: Tell the user where the generated file was saved. Do not read the generated file content
 
-## Image Skills
+## Image Generation Skills
 
-- [Nano Banana Pro Image generation](references/google-nano-banana.md)
-- [OpenAI GPT Image generation](references/openai-gpt-image.md)
+- [Nano Banana Pro Image](references/google-nano-banana.md)
+- [OpenAI GPT Image](references/openai-gpt-image.md)
 
-## Audio Skills
+## Audio Generation Skills
 
-- [ElevenLabs sound effects generation](references/elevenlabs-sound-effect.md)
-- [ElevenLabs text-to-speech generation](references/elevenlabs-text-speech.md)
+- [DashScope Text to Speech](references/dashscope-text-speech.md)
 - [DashScope Voice Design](references/dashscope-voice-design.md)
 - [DashScope Voice Clone](references/dashscope-voice-clone.md)
+- [ElevenLabs Sound Effects](references/elevenlabs-sound-effect.md)
+- [ElevenLabs Text to Speech](references/elevenlabs-text-speech.md)
 
-## Video Skills
+## Video Generation Skills
 
-- [Google Veo video generation](references/google-veo.md)
-- [OpenAI Sora video generation](references/openai-sora.md)
+- [Google Veo Video](references/google-veo.md)
+- [OpenAI Sora Video](references/openai-sora.md)
 
-## Music Skills
+## Music Generation Skills
 
-- [ElevenLabs music generation](references/elevenlabs-music.md)
+- [ElevenLabs Music](references/elevenlabs-music.md)
 
-## 3D Model Skills
+## 3D Model Generation Skills
 
-- [Tripo 3D model generation](references/tripo-3d.md)
+- [Tripo 3D Model](references/tripo-3d.md)

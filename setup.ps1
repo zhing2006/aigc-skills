@@ -76,7 +76,7 @@ if (!(Test-Path ".genix.env")) {
 
 # 5. Install dependencies
 Write-Host "`n[5/6] Installing dependencies..." -ForegroundColor Yellow
-uv pip install --python "$VenvName\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d
+uv pip install --python "$VenvName\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d dashscope
 Write-Host "Dependencies installed!" -ForegroundColor Green
 
 # 6. Copy genix to tool's skills directory

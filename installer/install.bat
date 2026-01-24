@@ -69,7 +69,7 @@ if not exist ".genix.env" (
 REM 4. Install dependencies
 echo.
 echo [4/5] Installing dependencies...
-uv pip install --python "%VENV_NAME%\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d
+uv pip install --python "%VENV_NAME%\Scripts\python.exe" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d dashscope
 echo Dependencies installed!
 
 REM 5. Move genix to tool's skills directory
