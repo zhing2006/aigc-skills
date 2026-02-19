@@ -549,7 +549,7 @@ Best for: Game assets, product visualization, character models, 3D printing
 #### Multiview-to-3D
 
 > "Generate a 3D model from these 4 angles of my character design"
-> (attach front, back, left, right images)
+> (attach front, left, back, right images)
 
 #### Export to Different Formats
 

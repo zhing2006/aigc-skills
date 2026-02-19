@@ -14,8 +14,8 @@ This is an AIGC (AI-Generated Content) skills framework for Claude Code and simi
 .\setup.ps1 -Tool cursor    # Install for Cursor editor
 
 # Activate virtual environment
-.\.venv\Scripts\activate    # Windows
-source .venv/bin/activate   # Linux/Mac
+.\.venv-genix\Scripts\activate    # Windows
+source .venv-genix/bin/activate   # Linux/Mac
 
 # Add dependencies
 uv add <package_name>

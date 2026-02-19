@@ -46,6 +46,7 @@ async def generate_3d_model(
     face_limit: int | None = None,
     texture: bool = True,
     pbr: bool = True,
+    smart_low_poly: bool = False,
     output_format: str | None = None,
     output_path: str | None = None,
 ) -> Path:
@@ -55,7 +56,7 @@ async def generate_3d_model(
     Args:
         prompt: Text prompt for text-to-3d generation
         image: Single image path for image-to-3d generation
-        images: Multiple image paths for multiview-to-3d generation (front, back, left, right)
+        images: Multiple image paths for multiview-to-3d generation (front, left, back, right)
         negative_prompt: Negative prompt (text-to-3d only)
         model_version: Model version to use
         texture_quality: Texture quality (standard/detailed)
@@ -63,6 +64,7 @@ async def generate_3d_model(
         face_limit: Maximum number of faces
         texture: Generate texture
         pbr: Generate PBR material
+        smart_low_poly: Generate low-poly meshes with hand-crafted topology
         output_format: Output format for conversion (GLTF/USDZ/FBX/OBJ/STL/3MF)
         output_path: Output file path (optional)
 
@@ -132,6 +134,8 @@ async def generate_3d_model(
     if negative_prompt:
         print(f"Negative prompt: {negative_prompt}")
     print(f"Model version: {model_version}")
+    if smart_low_poly:
+        print(f"Smart low-poly: enabled (face_limit: {face_limit or 'auto'})")
     print(f"Texture quality: {texture_quality}, Geometry quality: {geometry_quality}")
     print("Generating 3D model...")
 
@@ -147,6 +151,7 @@ async def generate_3d_model(
                 face_limit=face_limit,
                 texture=texture,
                 pbr=pbr,
+                smart_low_poly=smart_low_poly,
             )
         elif mode == "image":
             task_id = await client.image_to_model(
@@ -157,6 +162,7 @@ async def generate_3d_model(
                 face_limit=face_limit,
                 texture=texture,
                 pbr=pbr,
+                smart_low_poly=smart_low_poly,
             )
         else:  # multiview
             task_id = await client.multiview_to_model(
@@ -167,6 +173,7 @@ async def generate_3d_model(
                 face_limit=face_limit,
                 texture=texture,
                 pbr=pbr,
+                smart_low_poly=smart_low_poly,
             )
 
         print(f"Task submitted: {task_id}")
@@ -279,7 +286,7 @@ async def main():
         type=str,
         nargs="+",
         default=None,
-        help="Multiple image paths for multiview-to-3d (order: front, back, left, right)",
+        help="Multiple image paths for multiview-to-3d (order: front, left, back, right)",
     )
     parser.add_argument(
         "--negative-prompt",
@@ -321,6 +328,11 @@ async def main():
         choices=SUPPORTED_FORMATS,
         dest="output_format",
         help="Output format for conversion (default: keep original GLB)",
+    )
+    parser.add_argument(
+        "--smart-low-poly",
+        action="store_true",
+        help="Generate low-poly meshes with hand-crafted topology (face_limit should be 1000~20000)",
     )
     parser.add_argument(
         "--no-texture",
@@ -365,6 +377,7 @@ async def main():
             face_limit=args.face_limit,
             texture=not args.no_texture,
             pbr=not args.no_pbr,
+            smart_low_poly=args.smart_low_poly,
             output_format=args.output_format,
             output_path=args.output,
         )
