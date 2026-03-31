@@ -8,7 +8,7 @@
 
 | 类别 | 提供商 | 能力 |
 | ---- | ------ | ---- |
-| **图像** | Google Gemini | 文生图、图生图 |
+| **图像** | Google Gemini | 文生图、图生图、图片搜索 Grounding |
 | **图像** | OpenAI GPT | 文生图、图像编辑 |
 | **视频** | Google Veo | 文生视频、图生视频 |
 | **视频** | OpenAI Sora | 文生视频、图生视频 |

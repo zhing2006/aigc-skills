@@ -29,7 +29,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 
 ## Image Generation Skills
 
-- [Nano Banana Pro Image](references/google-nano-banana.md)
+- [Nano Banana Image](references/google-nano-banana.md)
 - [OpenAI GPT Image](references/openai-gpt-image.md)
 
 ## Audio Generation Skills

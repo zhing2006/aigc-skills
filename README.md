@@ -8,7 +8,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 
 | Category | Provider | Capability |
 | -------- | -------- | ---------- |
-| **Image** | Google Gemini | Text-to-Image, Image-to-Image |
+| **Image** | Google Gemini | Text-to-Image, Image-to-Image, Image Search Grounding |
 | **Image** | OpenAI GPT | Text-to-Image, Image Edit |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |

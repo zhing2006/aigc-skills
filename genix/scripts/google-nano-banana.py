@@ -1,7 +1,10 @@
 """
-Google Nano Banana Pro (Gemini 3 Pro Image) - Text/Image to Image Generation
+Google Nano Banana Image Generation - Text/Image to Image Generation
 
-Supported aspect ratios: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
+Supported models: gemini-3.1-flash-image-preview (Nano Banana 2, default),
+                  gemini-3-pro-image-preview (Nano Banana Pro)
+Supported aspect ratios: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9,
+                          4:1, 1:4, 8:1, 1:8 (Nano Banana 2 only)
 Supported resolutions: 1K, 2K, 4K
 Max input images: 14
 """
@@ -19,12 +22,17 @@ from PIL import Image
 
 
 SUPPORTED_MODELS = [
-    "gemini-3-pro-image-preview",
+    "gemini-3.1-flash-image-preview",  # Nano Banana 2 (default)
+    "gemini-3-pro-image-preview",      # Nano Banana Pro
 ]
-SUPPORTED_ASPECT_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9"]
+SUPPORTED_ASPECT_RATIOS = [
+    "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4",
+    "9:16", "16:9", "21:9",
+    "4:1", "1:4", "8:1", "1:8",  # Nano Banana 2 only
+]
 SUPPORTED_RESOLUTIONS = ["1K", "2K", "4K"]
 MAX_INPUT_IMAGES = 14
-DEFAULT_MODEL = "gemini-3-pro-image-preview"
+DEFAULT_MODEL = "gemini-3.1-flash-image-preview"
 
 
 async def generate_image(
@@ -33,22 +41,9 @@ async def generate_image(
     model_id: str = DEFAULT_MODEL,
     aspect_ratio: str = "1:1",
     resolution: str = "1K",
+    search: bool = False,
     output_path: str | None = None,
 ) -> Path:
-    """
-    Generate an image using Google Nano Banana Pro (Gemini 3 Pro Image).
-
-    Args:
-        prompt: Text prompt for image generation
-        images: List of local image file paths (max 14)
-        model_id: Model to use for generation
-        aspect_ratio: Aspect ratio (1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9)
-        resolution: Output resolution (1K, 2K, 4K)
-        output_path: Output file path (optional, defaults to generated_image.png)
-
-    Returns:
-        Path to the generated image file
-    """
     if model_id not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model_id}. Supported: {SUPPORTED_MODELS}")
 
@@ -60,6 +55,12 @@ async def generate_image(
 
     if images and len(images) > MAX_INPUT_IMAGES:
         raise ValueError(f"Too many input images: {len(images)}. Maximum: {MAX_INPUT_IMAGES}")
+
+    if search and model_id != "gemini-3.1-flash-image-preview":
+        raise ValueError(
+            "Image Search grounding is only supported with "
+            "gemini-3.1-flash-image-preview (Nano Banana 2)"
+        )
 
     use_vertex_ai = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
     if use_vertex_ai:
@@ -85,18 +86,23 @@ async def generate_image(
                 raise FileNotFoundError(f"Image file not found: {image_path}")
             contents.append(Image.open(path))
 
-    config = types.GenerateContentConfig(
-        response_modalities=["TEXT", "IMAGE"],
-        image_config=types.ImageConfig(
+    config_kwargs = {
+        "response_modalities": ["TEXT", "IMAGE"],
+        "image_config": types.ImageConfig(
             aspect_ratio=aspect_ratio,
             image_size=resolution.upper(),
             output_mime_type="image/png",
         ),
-    )
+    }
+    if search:
+        config_kwargs["search_types"] = ["IMAGE"]
+
+    config = types.GenerateContentConfig(**config_kwargs)
 
     # Print prompt before generation
     print(f"Prompt: {prompt}")
-    print(f"Generating image ({aspect_ratio}, {resolution.upper()}, model: {model_id})...")
+    search_str = ", search grounding" if search else ""
+    print(f"Generating image ({aspect_ratio}, {resolution.upper()}, model: {model_id}{search_str})...")
 
     output_file = Path(output_path) if output_path else Path("generated_image.png")
 
@@ -123,7 +129,7 @@ async def generate_image(
 
 async def main():
     parser = argparse.ArgumentParser(
-        description="Generate images using Google Nano Banana Pro (Gemini 3 Pro Image)"
+        description="Generate images using Google Nano Banana (Gemini Image)"
     )
     parser.add_argument(
         "prompt",
@@ -158,6 +164,11 @@ async def main():
         help="Output resolution (default: 1K)",
     )
     parser.add_argument(
+        "-s", "--search",
+        action="store_true",
+        help="Enable Image Search grounding (Nano Banana 2 only)",
+    )
+    parser.add_argument(
         "-o", "--output",
         type=str,
         default=None,
@@ -173,6 +184,7 @@ async def main():
             model_id=args.model,
             aspect_ratio=args.aspect_ratio,
             resolution=args.resolution,
+            search=args.search,
             output_path=args.output,
         )
     except Exception as e:

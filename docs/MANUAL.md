@@ -181,7 +181,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 
 | Skill | Provider | Input | Output | Use Case |
 | ----- | -------- | ----- | ------ | -------- |
-| Nano Banana Pro | Google | Text, Images | Image | High-quality image generation, style transfer |
+| Nano Banana | Google | Text, Images | Image | High-quality image generation, style transfer, Image Search grounding |
 | GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds |
 | Veo | Google | Text, Image | Video | Video generation with audio |
 | Sora | OpenAI | Text, Image | Video | Cinematic video generation |
@@ -211,9 +211,9 @@ You can provide simple, natural language requests - the AI will automatically en
 
 ## Image Generation
 
-### Google Gemini (Nano Banana Pro)
+### Google Gemini (Nano Banana)
 
-Best for: High-resolution images, style transfer, character consistency
+Best for: High-resolution images, style transfer, character consistency, Image Search grounding
 
 #### Basic Text-to-Image
 
@@ -234,10 +234,16 @@ Ask your AI assistant:
 > "Using these reference images, create the same character now sitting in a coffee shop"
 > (attach 3-5 reference images)
 
+#### Image Search Grounding (Nano Banana 2)
+
+> "Generate a photorealistic image of the Sydney Opera House at golden hour, use image search for accurate architecture"
+
 **Supported Options**:
 
-- Aspect Ratios: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+- Models: `gemini-3.1-flash-image-preview` (default, Nano Banana 2), `gemini-3-pro-image-preview` (Pro)
+- Aspect Ratios: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`, plus `4:1`, `1:4`, `8:1`, `1:8` (Nano Banana 2 only)
 - Resolutions: `1K` (1024px), `2K` (2048px), `4K` (4096px)
+- Image Search Grounding: Use real photos from Google Image Search as references (Nano Banana 2 only)
 
 ---
 

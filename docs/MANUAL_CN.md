@@ -181,7 +181,7 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 
 | 技能 | 服务商 | 输入 | 输出 | 使用场景 |
 | ---- | ------ | ---- | ---- | -------- |
-| Nano Banana Pro | Google | 文字、图片 | 图像 | 高质量图像生成、风格迁移 |
+| Nano Banana | Google | 文字、图片 | 图像 | 高质量图像生成、风格迁移、图片搜索 Grounding |
 | GPT Image | OpenAI | 文字、图片 | 图像 | 图像生成、编辑、透明背景 |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
 | Sora | OpenAI | 文字、图片 | 视频 | 电影级视频生成 |
@@ -211,9 +211,9 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 
 ## 图像生成
 
-### Google Gemini (Nano Banana Pro)
+### Google Gemini (Nano Banana)
 
-最适合：高分辨率图像、风格迁移、角色一致性
+最适合：高分辨率图像、风格迁移、角色一致性、图片搜索 Grounding
 
 #### 基础文生图
 
@@ -234,10 +234,16 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 > "使用这些参考图片，创建同一个角色现在坐在咖啡店里的场景"
 > （附上 3-5 张参考图片）
 
+#### 图片搜索 Grounding（Nano Banana 2）
+
+> "生成悉尼歌剧院在黄金时段的写实风格图片，使用图片搜索确保建筑细节准确"
+
 **支持的选项**：
 
-- 宽高比：`1:1`、`2:3`、`3:2`、`3:4`、`4:3`、`4:5`、`5:4`、`9:16`、`16:9`、`21:9`
+- 模型：`gemini-3.1-flash-image-preview`（默认，Nano Banana 2）、`gemini-3-pro-image-preview`（Pro）
+- 宽高比：`1:1`、`2:3`、`3:2`、`3:4`、`4:3`、`4:5`、`5:4`、`9:16`、`16:9`、`21:9`，以及 `4:1`、`1:4`、`8:1`、`1:8`（仅 Nano Banana 2）
 - 分辨率：`1K` (1024px)、`2K` (2048px)、`4K` (4096px)
+- 图片搜索 Grounding：使用 Google 图片搜索的真实照片作为参考（仅 Nano Banana 2）
 
 ---
 

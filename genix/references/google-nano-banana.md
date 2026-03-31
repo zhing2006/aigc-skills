@@ -1,6 +1,6 @@
-# Google Nano Banana Pro (Gemini 3 Pro Image)
+# Google Nano Banana Image Generation
 
-Text-to-Image and Image-to-Image generation using Google's Gemini 3 Pro Image model.
+Text-to-Image and Image-to-Image generation using Google's Nano Banana models.
 
 ## Usage
 
@@ -19,22 +19,28 @@ Text-to-Image and Image-to-Image generation using Google's Gemini 3 Pro Image mo
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `-i`, `--images` | None | Input image file paths (max 14) |
-| `-m`, `--model` | `gemini-3-pro-image-preview` | Model to use |
+| `-m`, `--model` | `gemini-3.1-flash-image-preview` | Model to use |
 | `-a`, `--aspect-ratio` | `1:1` | Output aspect ratio |
 | `-r`, `--resolution` | `1K` | Output resolution |
+| `-s`, `--search` | false | Enable Image Search grounding (**Nano Banana 2 only**) |
 | `-o`, `--output` | `generated_image.png` | Output file path |
 
 ## Supported Models
 
-| Model | Description |
-| ----- | ----------- |
-| `gemini-3-pro-image-preview` | Default model for image generation |
+| Model | Code Name | Speed | Cost (1K) | Notes |
+| ----- | --------- | ----- | --------- | ----- |
+| `gemini-3.1-flash-image-preview` | Nano Banana 2 | Fast (Flash) | ~$0.045 | **Default**. Image Search grounding, extra aspect ratios |
+| `gemini-3-pro-image-preview` | Nano Banana Pro | Slower (Pro) | ~$0.134 | Studio-quality, original model |
 
-**Note**: If the user does not specify model, use `gemini-3-pro-image-preview` as default.
+**Note**: If the user does not specify model, use `gemini-3.1-flash-image-preview` (Nano Banana 2) as default.
 
 ## Supported Aspect Ratios
 
-`1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+**All models**: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+
+**Nano Banana 2 only** (`gemini-3.1-flash-image-preview`): `4:1`, `1:4`, `8:1`, `1:8`
+
+**Important**: Do NOT use Nano Banana 2-only aspect ratios (`4:1`, `1:4`, `8:1`, `1:8`) with the Pro model — the API will return an error.
 
 **Note**: If the user does not specify aspect ratio, use `1:1` as default.
 
@@ -43,6 +49,23 @@ Text-to-Image and Image-to-Image generation using Google's Gemini 3 Pro Image mo
 `1K` (1024px), `2K` (2048px), `4K` (4096px)
 
 **Note**: If the user does not specify resolution, use `1K` as default.
+
+## Image Search Grounding (Nano Banana 2 Only)
+
+Image Search grounding enables the model to retrieve real photos from Google Image Search as visual references during generation. This produces more accurate results for real-world subjects.
+
+**When to use** (`-s` flag):
+- Real landmarks and architecture (e.g., Eiffel Tower, Sydney Opera House)
+- Specific products, brands, or logos
+- Known animals, plants, or natural formations
+- Famous artworks or cultural references
+
+**When NOT to use**:
+- Pure fantasy or fictional scenes
+- Abstract art or creative compositions
+- Style transfers where accuracy to reality is not needed
+
+**Important**: Do NOT use `--search` with the Pro model (`gemini-3-pro-image-preview`) — it is only supported on Nano Banana 2.
 
 ## Prompt Best Practices
 
@@ -132,6 +155,18 @@ Use this formula for best results:
 
 ```bash
 {python} {skill_dir}/scripts/google-nano-banana.py "The character from the reference images now sitting in a cozy library reading a book. Keep facial features exactly as shown. Warm afternoon sunlight through window. Photorealistic style." -i ref1.png ref2.png ref3.png -a 3:2 -r 2K -o character_library.png
+```
+
+### Image Search Grounding (Nano Banana 2)
+
+```bash
+{python} {skill_dir}/scripts/google-nano-banana.py "The Sydney Opera House at golden hour with dramatic cloud formations above. Wide-angle architectural photography with warm rim lighting." -s -a 16:9 -r 4K -o sydney_opera.png
+```
+
+### Ultra-Wide Panorama (Nano Banana 2)
+
+```bash
+{python} {skill_dir}/scripts/google-nano-banana.py "A sweeping mountain panorama at dawn, mist rolling through valleys, snow-capped peaks catching first light. Landscape photography with rich natural colors." -a 8:1 -r 4K -o mountain_panorama.png
 ```
 
 ## Environment Variables
