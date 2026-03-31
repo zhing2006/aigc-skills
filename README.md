@@ -135,6 +135,7 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 - "Generate a 3D model of a cute cartoon cat"
 - "Convert this image to a 3D model"
 - "Create a wooden chair 3D model and export as FBX"
+- "Use P1 model to generate a low-poly medieval sword with 3000 faces for game use"
 
 The AI will automatically select the appropriate skill and optimize your prompt following best practices for best results.
 

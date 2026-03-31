@@ -31,11 +31,13 @@ Text/Image/Multi-view to 3D model generation using Tripo API.
 | `-i`, `--image` | None | Single image path for image-to-3d generation |
 | `--images` | None | Multiple image paths for multiview-to-3d (order: front, left, back, right) |
 | `--negative-prompt` | `low quality, blurry, deformed, extra limbs, multiple heads` | Negative prompt (text-to-3d only) |
-| `-m`, `--model` | `v3.0-20250812` | Model version |
+| `-m`, `--model` | `v3.1-20260211` | Model version |
 | `--texture-quality` | `standard` | Texture quality (standard/detailed) |
-| `--geometry-quality` | `standard` | Geometry quality (standard/detailed) |
-| `--face-limit` | None | Maximum number of faces |
-| `--smart-low-poly` | False | Generate low-poly meshes with hand-crafted topology (face_limit should be 1000~20000) |
+| `--geometry-quality` | `standard` | Geometry quality (standard/detailed, not available for P1) |
+| `--face-limit` | None | Maximum number of faces (P1: 48~20000) |
+| `--smart-low-poly` | False | Generate low-poly meshes with hand-crafted topology (not available for P1) |
+| `--enable-image-autofix` | False | Optimize input image for better results (image mode only) |
+| `--no-export-uv` | False | Skip UV unwrapping during generation (faster, smaller model) |
 | `--format` | None | Output format conversion (GLTF/USDZ/FBX/OBJ/STL/3MF) |
 | `--no-texture` | False | Do not generate texture |
 | `--no-pbr` | False | Do not generate PBR material |
@@ -43,13 +45,26 @@ Text/Image/Multi-view to 3D model generation using Tripo API.
 
 ## Supported Model Versions
 
-- `v3.0-20250812` - Latest (default)
+- `v3.1-20260211` - Latest (default)
+- `v3.0-20250812` - Stable
 - `v2.5-20250123` - Stable
 - `v2.0-20240919` - Legacy
 - `v1.4-20240625` - Legacy
 - `Turbo-v1.0-20250506` - Fast generation (text/image mode only)
+- `P1-20260311` - Optimized low-poly generation (~2s mesh, ideal for game assets)
 
-**Note**: Multiview mode only supports v2.0-20240919, v2.5-20250123, and v3.0-20250812.
+**Note**: Multiview mode supports P1-20260311, v2.0-20240919, v2.5-20250123, v3.0-20250812, and v3.1-20260211.
+
+### P1 Model (P1-20260311)
+
+P1 is a specialized model optimized for best-in-class low-poly generation with clean, refined geometry. Ideal for game assets, stylized content, mobile/AR/VR applications.
+
+**Key differences from standard models:**
+- Inherently optimized for low-poly — `--smart-low-poly` is not needed and not supported
+- `--geometry-quality` is pre-optimized and not configurable
+- `--face-limit` range: 48~20000
+- ~2 second mesh generation (texture adds additional time)
+- Does not support `quad` or `generate_parts`
 
 ## Supported Output Formats
 
@@ -193,6 +208,18 @@ Front view is required. You may omit other views but must provide at least 2 ima
 
 ```bash
 {python} {skill_dir}/scripts/tripo-3d.py "A detailed dragon sculpture with scales and wings spread" --texture-quality detailed --geometry-quality detailed --face-limit 50000 -o ./output
+```
+
+### P1 Low-Poly: Game-Ready Asset
+
+```bash
+{python} {skill_dir}/scripts/tripo-3d.py "A low poly medieval sword" -m P1-20260311 --face-limit 3000 --texture-quality detailed -o ./output
+```
+
+### P1 Low-Poly: Image to Game Model
+
+```bash
+{python} {skill_dir}/scripts/tripo-3d.py -i character.jpg -m P1-20260311 --face-limit 5000 --enable-image-autofix -o ./output
 ```
 
 ### Fast Generation with Turbo

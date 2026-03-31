@@ -2,7 +2,7 @@
 Tripo 3D - Text/Image/Multi-view to 3D Model Generation
 
 Supported modes: text-to-3d, image-to-3d, multiview-to-3d
-Supported versions: Turbo-v1.0-20250506, v1.4-20240625, v2.0-20240919, v2.5-20250123, v3.0-20250812
+Supported versions: P1-20260311, Turbo-v1.0-20250506, v1.4-20240625, v2.0-20240919, v2.5-20250123, v3.0-20250812, v3.1-20260211
 Supported output formats: GLTF, USDZ, FBX, OBJ, STL, 3MF
 """
 
@@ -18,16 +18,20 @@ from tripo3d import TripoClient, TaskStatus
 
 
 SUPPORTED_VERSIONS = [
+    "P1-20260311",
     "Turbo-v1.0-20250506",
     "v1.4-20240625",
     "v2.0-20240919",
     "v2.5-20250123",
     "v3.0-20250812",
+    "v3.1-20260211",
 ]
 SUPPORTED_MULTIVIEW_VERSIONS = [
+    "P1-20260311",
     "v2.0-20240919",
     "v2.5-20250123",
     "v3.0-20250812",
+    "v3.1-20260211",
 ]
 SUPPORTED_FORMATS = ["GLTF", "USDZ", "FBX", "OBJ", "STL", "3MF"]
 SUPPORTED_TEXTURE_QUALITY = ["standard", "detailed"]
@@ -40,13 +44,15 @@ async def generate_3d_model(
     image: str | None = None,
     images: list[str] | None = None,
     negative_prompt: str | None = None,
-    model_version: str = "v3.0-20250812",
+    model_version: str = "v3.1-20260211",
     texture_quality: str = "standard",
     geometry_quality: str = "standard",
     face_limit: int | None = None,
     texture: bool = True,
     pbr: bool = True,
     smart_low_poly: bool = False,
+    enable_image_autofix: bool = False,
+    export_uv: bool = True,
     output_format: str | None = None,
     output_path: str | None = None,
 ) -> Path:
@@ -65,6 +71,8 @@ async def generate_3d_model(
         texture: Generate texture
         pbr: Generate PBR material
         smart_low_poly: Generate low-poly meshes with hand-crafted topology
+        enable_image_autofix: Optimize input image for better results (image mode only)
+        export_uv: Whether to perform UV unwrapping during generation
         output_format: Output format for conversion (GLTF/USDZ/FBX/OBJ/STL/3MF)
         output_path: Output file path (optional)
 
@@ -78,6 +86,8 @@ async def generate_3d_model(
     if base_url:
         print(f"Using custom Tripo API base URL: {base_url}")
         TripoClient.BASE_URL = base_url
+
+    is_p1 = model_version == "P1-20260311"
 
     # Determine mode
     if images:
@@ -99,13 +109,22 @@ async def generate_3d_model(
             f"Unsupported version: {model_version}. Supported: {SUPPORTED_VERSIONS}"
         )
 
+    # P1 model parameter validation
+    if is_p1:
+        if smart_low_poly:
+            raise ValueError("P1 model does not support --smart-low-poly (it is inherently optimized for low-poly)")
+        if geometry_quality != "standard":
+            raise ValueError("P1 model does not support --geometry-quality (quality is pre-optimized)")
+        if face_limit is not None and not (48 <= face_limit <= 20000):
+            raise ValueError("P1 model face_limit must be between 48 and 20000")
+
     if texture_quality not in SUPPORTED_TEXTURE_QUALITY:
         raise ValueError(
             f"Unsupported texture quality: {texture_quality}. "
             f"Supported: {SUPPORTED_TEXTURE_QUALITY}"
         )
 
-    if geometry_quality not in SUPPORTED_GEOMETRY_QUALITY:
+    if not is_p1 and geometry_quality not in SUPPORTED_GEOMETRY_QUALITY:
         raise ValueError(
             f"Unsupported geometry quality: {geometry_quality}. "
             f"Supported: {SUPPORTED_GEOMETRY_QUALITY}"
@@ -134,47 +153,58 @@ async def generate_3d_model(
     if negative_prompt:
         print(f"Negative prompt: {negative_prompt}")
     print(f"Model version: {model_version}")
-    if smart_low_poly:
+    if is_p1:
+        print(f"P1 low-poly mode (face_limit: {face_limit or 'auto'})")
+    elif smart_low_poly:
         print(f"Smart low-poly: enabled (face_limit: {face_limit or 'auto'})")
-    print(f"Texture quality: {texture_quality}, Geometry quality: {geometry_quality}")
+    print(f"Texture quality: {texture_quality}", end="")
+    if not is_p1:
+        print(f", Geometry quality: {geometry_quality}")
+    else:
+        print()
     print("Generating 3D model...")
 
     async with TripoClient(api_key=api_key) as client:
-        # Generate model based on mode
+        # Build task data - use create_task directly for full parameter control
+        # (SDK methods don't support P1 model or enable_image_autofix/export_uv params)
+
+        # --- Mode-specific base data ---
         if mode == "text":
-            task_id = await client.text_to_model(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                model_version=model_version,
-                texture_quality=texture_quality,
-                geometry_quality=geometry_quality,
-                face_limit=face_limit,
-                texture=texture,
-                pbr=pbr,
-                smart_low_poly=smart_low_poly,
-            )
+            task_data = {"type": "text_to_model", "prompt": prompt}
+            if negative_prompt:
+                task_data["negative_prompt"] = negative_prompt
         elif mode == "image":
-            task_id = await client.image_to_model(
-                image=image,
-                model_version=model_version,
-                texture_quality=texture_quality,
-                geometry_quality=geometry_quality,
-                face_limit=face_limit,
-                texture=texture,
-                pbr=pbr,
-                smart_low_poly=smart_low_poly,
-            )
+            task_data = {
+                "type": "image_to_model",
+                "file": await client._image_to_file_content(image),
+            }
+            if enable_image_autofix:
+                task_data["enable_image_autofix"] = True
         else:  # multiview
-            task_id = await client.multiview_to_model(
-                images=images,
-                model_version=model_version,
-                texture_quality=texture_quality,
-                geometry_quality=geometry_quality,
-                face_limit=face_limit,
-                texture=texture,
-                pbr=pbr,
-                smart_low_poly=smart_low_poly,
-            )
+            file_tokens = []
+            for img in images:
+                file_tokens.append(
+                    await client._image_to_file_content(img) if img else {}
+                )
+            task_data = {"type": "multiview_to_model", "files": file_tokens}
+
+        # --- Common params (all models) ---
+        task_data["model_version"] = model_version
+        task_data["texture_quality"] = texture_quality
+        task_data["texture"] = texture
+        task_data["pbr"] = pbr
+        if face_limit is not None:
+            task_data["face_limit"] = face_limit
+        if not export_uv:
+            task_data["export_uv"] = False
+
+        # --- Standard model params (not applicable to P1) ---
+        if not is_p1:
+            task_data["geometry_quality"] = geometry_quality
+            if smart_low_poly:
+                task_data["smart_low_poly"] = True
+
+        task_id = await client.create_task(task_data)
 
         print(f"Task submitted: {task_id}")
 
@@ -187,9 +217,14 @@ async def generate_3d_model(
         print("Model generation completed!")
 
         # Determine output directory for downloading
+        # If output_path has no extension or is an existing directory, treat as directory
         if output_path:
             out_file = Path(output_path)
-            download_dir = out_file.parent if out_file.parent != Path() else Path(".")
+            if out_file.is_dir() or not out_file.suffix:
+                download_dir = out_file
+                output_path = None  # will generate filename automatically
+            else:
+                download_dir = out_file.parent if out_file.parent != Path() else Path(".")
         else:
             download_dir = Path(".")
 
@@ -297,9 +332,9 @@ async def main():
     parser.add_argument(
         "-m", "--model",
         type=str,
-        default="v3.0-20250812",
+        default="v3.1-20260211",
         choices=SUPPORTED_VERSIONS,
-        help="Model version (default: v3.0-20250812)",
+        help="Model version (default: v3.1-20260211)",
     )
     parser.add_argument(
         "--texture-quality",
@@ -333,6 +368,16 @@ async def main():
         "--smart-low-poly",
         action="store_true",
         help="Generate low-poly meshes with hand-crafted topology (face_limit should be 1000~20000)",
+    )
+    parser.add_argument(
+        "--enable-image-autofix",
+        action="store_true",
+        help="Optimize input image for better generation results (image mode only)",
+    )
+    parser.add_argument(
+        "--no-export-uv",
+        action="store_true",
+        help="Skip UV unwrapping during generation (faster, smaller model; UV handled during texturing)",
     )
     parser.add_argument(
         "--no-texture",
@@ -378,6 +423,8 @@ async def main():
             texture=not args.no_texture,
             pbr=not args.no_pbr,
             smart_low_poly=args.smart_low_poly,
+            enable_image_autofix=args.enable_image_autofix,
+            export_uv=not args.no_export_uv,
             output_format=args.output_format,
             output_path=args.output,
         )
