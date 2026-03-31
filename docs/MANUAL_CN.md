@@ -27,6 +27,7 @@
   - [DashScope 音色克隆](#dashscope-音色克隆)
 - [音乐生成](#音乐生成)
   - [ElevenLabs Music](#elevenlabs-music)
+  - [Google Lyria Music](#google-lyria-music)
 - [3D 模型生成](#3d-模型生成)
   - [Tripo 3D](#tripo-3d)
 - [高级工作流](#高级工作流)
@@ -190,6 +191,7 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 | 音色设计 | DashScope | 文字 | 音色 | AI 设计自定义音色 |
 | 音色克隆 | DashScope | 音频 | 音色 | 从音频样本克隆音色 |
 | Music | ElevenLabs | 文字 | 音频 | 背景音乐、歌曲 |
+| Lyria Music | Google | 文字、图片 | 音频 | 完整歌曲、短片段、自定义歌词 |
 | Tripo 3D | Tripo | 文字、图片 | 3D 模型 | 3D 模型生成（GLB、FBX、OBJ） |
 
 ---
@@ -524,6 +526,36 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
   - MP3：`mp3_22050_32`、`mp3_44100_64`、`mp3_44100_128`、`mp3_44100_192`
   - PCM：`pcm_16000`、`pcm_22050`、`pcm_44100`、`pcm_48000`
   - Opus：`opus_48000_64`、`opus_48000_128`、`opus_48000_192`
+
+### Google Lyria Music
+
+最适合：完整歌曲、自定义歌词、图片启发音乐、高保真片段
+
+#### 纯乐器音乐
+
+> "创作一段 2 分钟平静的环境音钢琴曲，温柔放松，纯乐器"
+
+#### 带自定义歌词的歌曲
+
+> "写一首流行歌，歌词如下：[Verse 1] 清晨走在空旷的街道上... [Chorus] 我们终会找到回家的路"
+
+#### 图生音乐
+
+> "根据这张日落海滩照片生成音乐，怀旧温暖"
+
+#### 30 秒快速片段
+
+> "创作一段 30 秒高能电子循环，用于游戏菜单，使用 Clip 模型"
+
+**支持的选项**：
+
+- 模型：`lyria-3-pro-preview`（默认，完整歌曲最长 ~3-4 分钟）、`lyria-3-clip-preview`（30 秒片段）
+- 纯乐器：强制无人声
+- 图片输入：最多 10 张参考图片
+- 自定义歌词：使用 `[Verse]`、`[Chorus]`、`[Bridge]` 段落标签
+- 时间戳：通过 `[0:00-0:30] 前奏：...` 控制歌曲结构（仅 Pro）
+- 输出：MP3（两种模型）、WAV（仅 Pro）
+- 歌词：自动返回，可选保存为 `.lyrics.txt` 文件
 
 ---
 

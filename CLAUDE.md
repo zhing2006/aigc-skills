@@ -50,7 +50,7 @@ Skills are self-contained modules installed to tool-specific directories:
 
 The project integrates with multiple AIGC APIs (configured via `.env`):
 
-- **Google Generative AI** (`google-genai`) - Image and Video generation
+- **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 
@@ -59,7 +59,7 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 - **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT)
 - **Video**: Text-to-Video, Image-to-Video (Google Veo, OpenAI Sora)
 - **Audio**: Sound Effects, Text-to-Speech (ElevenLabs)
-- **Music**: Text-to-Music with vocals or instrumental (ElevenLabs)
+- **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
 
 ## Environment Setup
 

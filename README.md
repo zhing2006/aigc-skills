@@ -15,6 +15,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
 | **Audio** | DashScope | Text-to-Speech, Voice Design, Voice Clone |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
+| **Music** | Google Lyria | Text-to-Music, Image-to-Music (full songs/clips) |
 | **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D |
 
 ## Installation
@@ -129,6 +130,8 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 
 - "Create a calm piano melody, 30 seconds, instrumental"
 - "Generate an epic orchestral theme for a trailer"
+- "Create a 2-minute jazz fusion track with saxophone and piano"
+- "Generate music inspired by this sunset photo, calm and nostalgic"
 
 **3D Model Generation:**
 

@@ -27,6 +27,7 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [DashScope Voice Clone](#dashscope-voice-clone)
 - [Music Generation](#music-generation)
   - [ElevenLabs Music](#elevenlabs-music)
+  - [Google Lyria Music](#google-lyria-music)
 - [3D Model Generation](#3d-model-generation)
   - [Tripo 3D](#tripo-3d)
 - [Advanced Workflows](#advanced-workflows)
@@ -190,6 +191,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Voice Design | DashScope | Text | Voice | AI-designed custom voices |
 | Voice Clone | DashScope | Audio | Voice | Clone voices from audio samples |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
+| Lyria Music | Google | Text, Images | Audio | Full songs, clips, custom lyrics |
 | Tripo 3D | Tripo | Text, Images | 3D Model | 3D model generation (GLB, FBX, OBJ) |
 
 ---
@@ -524,6 +526,36 @@ Best for: Background music, theme songs, ambient tracks, jingles
   - MP3: `mp3_22050_32`, `mp3_44100_64`, `mp3_44100_128`, `mp3_44100_192`
   - PCM: `pcm_16000`, `pcm_22050`, `pcm_44100`, `pcm_48000`
   - Opus: `opus_48000_64`, `opus_48000_128`, `opus_48000_192`
+
+### Google Lyria Music
+
+Best for: Full-length songs, custom lyrics, image-inspired music, high-fidelity clips
+
+#### Instrumental Music
+
+> "Create a calm ambient piano piece, 2 minutes, gentle and relaxing, instrumental"
+
+#### Song with Custom Lyrics
+
+> "Write a pop song with these lyrics: [Verse 1] Walking down the empty street at dawn... [Chorus] We'll find our way back home"
+
+#### Image-to-Music
+
+> "Generate music inspired by this sunset beach photo, nostalgic and warm"
+
+#### Quick 30-Second Clip
+
+> "Create a 30-second energetic electronic loop for a game menu, use Clip model"
+
+**Supported Options**:
+
+- Models: `lyria-3-pro-preview` (default, full songs up to ~3-4 min), `lyria-3-clip-preview` (30s clips)
+- Instrumental: Force no vocals
+- Image input: Up to 10 reference images
+- Custom lyrics: Use `[Verse]`, `[Chorus]`, `[Bridge]` section tags
+- Timestamps: Control song structure with `[0:00-0:30] Intro: ...` (Pro only)
+- Output: MP3 (both models), WAV (Pro only)
+- Lyrics: Auto-returned, optionally saved to `.lyrics.txt` file
 
 ---
 

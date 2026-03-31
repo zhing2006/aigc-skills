@@ -48,6 +48,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 ## Music Generation Skills
 
 - [ElevenLabs Music](references/elevenlabs-music.md)
+- [Google Lyria Music](references/google-lyria-music.md)
 
 ## 3D Model Generation Skills
 
