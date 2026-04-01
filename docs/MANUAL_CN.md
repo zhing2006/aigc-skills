@@ -17,6 +17,7 @@
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
   - [OpenAI GPT Image](#openai-gpt-image)
 - [视频生成](#视频生成)
+  - [Volcengine Seedance](#volcengine-seedance)
   - [Google Veo](#google-veo)
   - [OpenAI Sora](#openai-sora)
 - [音频生成](#音频生成)
@@ -183,6 +184,7 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 | ---- | ------ | ---- | ---- | -------- |
 | Nano Banana | Google | 文字、图片 | 图像 | 高质量图像生成、风格迁移、图片搜索 Grounding |
 | GPT Image | OpenAI | 文字、图片 | 图像 | 图像生成、编辑、透明背景 |
+| Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认） |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
 | Sora | OpenAI | 文字、图片 | 视频 | 电影级视频生成 |
 | Sound Effects | ElevenLabs | 文字 | 音频 | 音效、环境音 |
@@ -278,6 +280,48 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 ---
 
 ## 视频生成
+
+### Volcengine Seedance
+
+最适合：多模态视频生成、视频编辑/延长、同步音频、产品广告
+
+#### 基础文生视频
+
+> "创建一段猫咪在金色夕阳下沙滩漫步的视频，电影质感"
+
+#### 图生视频（首帧）
+
+> "把这张图片做成动画，猫咪慢慢转头看向镜头"
+> （附上你的图片）
+
+#### 首尾帧视频
+
+> "生成一段从冬季场景到夏季场景的平滑过渡视频"
+> （附上两张图片）
+
+#### 多模态参考
+
+> "使用图片 1 作为角色，按照视频 1 的运镜方式，使用音频 1 作为背景音乐"
+> （附上参考图片、视频、音频）
+
+#### 带对话
+
+> "一位女性手持产品说：'这款面霜质地轻盈，一抹就吸收，太好用了！'"
+
+#### 无声视频
+
+> "创建一段微距镜头露珠从花瓣滑落的无声慢动作视频"
+
+**支持的选项**：
+
+- 模型：`doubao-seedance-2-0-260128`（最高质量，默认）、`doubao-seedance-2-0-fast-260128`（更快）
+- 宽高比：`16:9`、`4:3`、`1:1`、`3:4`、`9:16`、`21:9`、`adaptive`（自适应，默认）
+- 时长：`4` 到 `15` 秒，或 `-1` 自动选择
+- 分辨率：`480p`、`720p`
+- 音频：默认开启（同步对话、音效、音乐）
+- 多模态输入：最多 9 张参考图片、3 个参考视频、3 段参考音频
+
+---
 
 ### Google Veo
 

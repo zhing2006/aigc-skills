@@ -88,7 +88,7 @@ fi
 # 5. Install dependencies
 echo ""
 echo "[5/6] Installing dependencies..."
-uv pip install --python "$VENV_NAME/bin/python" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d dashscope
+uv pip install --python "$VENV_NAME/bin/python" python-dotenv aiofiles aiohttp elevenlabs google-genai openai pillow tripo3d dashscope 'volcengine-python-sdk[ark]'
 echo "Dependencies installed!"
 
 # 6. Copy genix to tool's skills directory

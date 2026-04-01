@@ -52,12 +52,13 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 
 - **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
+- **Volcengine** (`volcengine-python-sdk[ark]`) - Video generation (Seedance 2.0)
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 
 ### Current Skill Capabilities (genix)
 
 - **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT)
-- **Video**: Text-to-Video, Image-to-Video (Google Veo, OpenAI Sora)
+- **Video**: Text-to-Video, Image-to-Video, Multi-modal Reference (Volcengine Seedance, Google Veo, OpenAI Sora)
 - **Audio**: Sound Effects, Text-to-Speech (ElevenLabs)
 - **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
 
@@ -69,6 +70,8 @@ Copy `.env.template` to `.env` and configure API keys:
 - `ELEVENLABS_API_KEY`
 - `OPENAI_API_KEY`
 - `OPENAI_API_BASE` (optional, defaults to OpenAI)
+- `VOLCENGINE_API_KEY`
+- `VOLCENGINE_API_BASE` (optional, defaults to Volcengine official endpoint)
 
 ## Technical Stack
 

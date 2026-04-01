@@ -10,6 +10,7 @@
 | ---- | ------ | ---- |
 | **图像** | Google Gemini | 文生图、图生图、图片搜索 Grounding |
 | **图像** | OpenAI GPT | 文生图、图像编辑 |
+| **视频** | Volcengine Seedance | 文生视频、图生视频、多模态参考、视频编辑/延长 |
 | **视频** | Google Veo | 文生视频、图生视频 |
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
 | **音频** | ElevenLabs | 文字转语音、音效生成 |
@@ -81,6 +82,13 @@ setup.bat cursor
 | -------- |
 | `DASHSCOPE_API_KEY` |
 
+#### Volcengine API
+
+| 必需变量 |
+| -------- |
+| `VOLCENGINE_API_KEY` |
+| `VOLCENGINE_API_BASE`（可选，默认使用官方地址） |
+
 #### `.genix.env` 文件示例
 
 ```env
@@ -104,6 +112,10 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 
 # DashScope API（阿里云）
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+
+# Volcengine API（字节跳动）
+VOLCENGINE_API_KEY = "your_volcengine_api_key_here"
+VOLCENGINE_API_BASE = "https://ark.cn-beijing.volces.com/api/v3"  # 可选
 ```
 
 ## 使用方法

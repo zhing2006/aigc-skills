@@ -42,6 +42,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 
 ## Video Generation Skills
 
+- [Volcengine Seedance Video](references/volcengine-seedance.md)
 - [Google Veo Video](references/google-veo.md)
 - [OpenAI Sora Video](references/openai-sora.md)
 

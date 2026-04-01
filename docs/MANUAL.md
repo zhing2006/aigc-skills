@@ -17,6 +17,7 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
   - [OpenAI GPT Image](#openai-gpt-image)
 - [Video Generation](#video-generation)
+  - [Volcengine Seedance](#volcengine-seedance)
   - [Google Veo](#google-veo)
   - [OpenAI Sora](#openai-sora)
 - [Audio Generation](#audio-generation)
@@ -183,6 +184,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | ----- | -------- | ----- | ------ | -------- |
 | Nano Banana | Google | Text, Images | Image | High-quality image generation, style transfer, Image Search grounding |
 | GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds |
+| Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default) |
 | Veo | Google | Text, Image | Video | Video generation with audio |
 | Sora | OpenAI | Text, Image | Video | Cinematic video generation |
 | Sound Effects | ElevenLabs | Text | Audio | Sound effects, ambient sounds |
@@ -278,6 +280,48 @@ Best for: Precise editing, transparent backgrounds, text in images
 ---
 
 ## Video Generation
+
+### Volcengine Seedance
+
+Best for: Multi-modal video generation, video editing/extending, synchronized audio, product ads
+
+#### Basic Text-to-Video
+
+> "Create a video of a cat walking on the beach at golden hour, cinematic quality"
+
+#### Image-to-Video (First Frame)
+
+> "Animate this image, the cat slowly turns its head and looks at the camera"
+> (attach your image)
+
+#### First + Last Frame
+
+> "Generate a smooth transition video from this winter scene to this summer scene"
+> (attach two images)
+
+#### Multi-modal Reference
+
+> "Use image 1 as the character, follow video 1's camera angle, use audio 1 as background music"
+> (attach reference images, videos, audio)
+
+#### With Dialogue
+
+> "A woman holds up a product and says 'This cream is amazing, so lightweight and hydrating!'"
+
+#### Silent Video
+
+> "Create a silent video of dewdrops sliding off flower petals in slow motion, macro lens"
+
+**Supported Options**:
+
+- Models: `doubao-seedance-2-0-260128` (highest quality, default), `doubao-seedance-2-0-fast-260128` (faster)
+- Aspect Ratios: `16:9`, `4:3`, `1:1`, `3:4`, `9:16`, `21:9`, `adaptive` (default)
+- Durations: `4` to `15` seconds, or `-1` for auto
+- Resolutions: `480p`, `720p`
+- Audio: Enabled by default (synchronized dialogue, SFX, music)
+- Multi-modal input: Up to 9 reference images, 3 reference videos, 3 reference audios
+
+---
 
 ### Google Veo
 

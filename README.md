@@ -10,6 +10,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | -------- | -------- | ---------- |
 | **Image** | Google Gemini | Text-to-Image, Image-to-Image, Image Search Grounding |
 | **Image** | OpenAI GPT | Text-to-Image, Image Edit |
+| **Video** | Volcengine Seedance | Text-to-Video, Image-to-Video, Multi-modal Reference, Video Edit/Extend |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
@@ -81,6 +82,13 @@ Edit the `.genix.env` file and fill in your API keys:
 | ------------------ |
 | `DASHSCOPE_API_KEY` |
 
+#### Volcengine API
+
+| Required Variables |
+| ------------------ |
+| `VOLCENGINE_API_KEY` |
+| `VOLCENGINE_API_BASE` (optional, defaults to official endpoint) |
+
 #### Example `.genix.env` file
 
 ```env
@@ -104,6 +112,10 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 
 # DashScope API (Alibaba Cloud)
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+
+# Volcengine API (ByteDance)
+VOLCENGINE_API_KEY = "your_volcengine_api_key_here"
+VOLCENGINE_API_BASE = "https://ark.cn-beijing.volces.com/api/v3"  # Optional
 ```
 
 ## Usage
