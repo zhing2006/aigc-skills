@@ -19,8 +19,8 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `-i`, `--images` | None | Input image file paths for editing (max 16) |
-| `-m`, `--model` | `gpt-image-1.5` | Model to use |
-| `-s`, `--size` | `1024x1024` | Output size |
+| `-m`, `--model` | `gpt-image-2` | Model to use |
+| `-s`, `--size` | `auto` | Output size (auto omits the param so routing decides) |
 | `-q`, `--quality` | `auto` | Image quality |
 | `-f`, `--format` | `png` | Output format |
 | `-b`, `--background` | `auto` | Background type |
@@ -29,20 +29,33 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 
 ## Supported Models
 
-- `gpt-image-1.5` - State of the art (default)
+- `gpt-image-2` - Next-generation, default (recommended: improved text rendering, multilingual, neutral color fidelity, up to 4K, ~2x faster)
+- `gpt-image-1.5` - Previous flagship; choose this when you need parameter-level transparent background support
 - `gpt-image-1` - Standard
 - `gpt-image-1-mini` - Lightweight
 
-**Note**: If the user does not specify a model, use `gpt-image-1.5` as default.
+**Note**: If the user does not specify a model, use `gpt-image-2` as default.
 
 ## Supported Sizes
+
+### gpt-image-1.x
 
 - `1024x1024` - Square (default)
 - `1536x1024` - Landscape
 - `1024x1536` - Portrait
 - `auto` - Let the model decide
 
-**Note**: If the user does not specify size, use `1024x1024` as default.
+### gpt-image-2
+
+- `auto` only (default)
+
+gpt-image-2 uses an intelligent routing layer that chooses the size for you; explicit `WxH` values are rejected by the API. To bias the aspect ratio, describe it in the prompt instead:
+
+- `"square composition"` / `"square 1:1"`
+- `"portrait composition"` / `"vertical 9:16"`
+- `"wide landscape"` / `"16:9 cinematic"`
+
+The script omits `size` from the API call when it's `auto`, so the default just works.
 
 ## Supported Quality
 
@@ -64,6 +77,21 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 - `auto` - Model decides (default)
 - `transparent` - Transparent background (requires png or webp)
 - `opaque` - Solid background
+
+**Note on `gpt-image-2`**: OpenAI's official docs state that `background=transparent` is not supported on `gpt-image-2`, though some proxy endpoints may still accept it. Recommended: with `gpt-image-2`, leave `-b` at `auto` and instead describe transparency in the prompt itself (e.g. "transparent background, isolated subject on alpha channel, no backdrop"). The model will decide whether to output an alpha channel. If you need a guaranteed parameter-level transparent PNG, use `gpt-image-1.5` with `-b transparent`.
+
+## Model-Specific Notes
+
+| Aspect | gpt-image-2 | gpt-image-1.5 |
+| ------ | ----------- | ------------- |
+| Default in this skill | Yes | No |
+| Recommended `--size` | `auto` (only accepted value; routing decides) | `1024x1024` or pick from fixed set |
+| Size flexibility | `auto` only — bias via prompt | 3 fixed sizes + auto |
+| Max resolution | Routing-controlled (up to 4K) | 1536 long edge |
+| Response shape | b64_json or url (auto-handled) | b64_json |
+| `background=transparent` | Officially unsupported (use prompt) | Supported |
+| `input_fidelity` | Disabled (always high) | Configurable |
+| Strengths | Text rendering, multilingual, neutral colors, reasoning | Mature, broader parameter support |
 
 ## Prompt Best Practices
 
@@ -148,46 +176,56 @@ A [medium] of [subject] in [environment], [specific visual characteristics]. [Li
 
 ## Examples
 
+> Examples that pass an explicit `-s WxH` use `-m gpt-image-1.5` because gpt-image-2 only accepts `-s auto`. For gpt-image-2, omit `-s` and describe the desired aspect ratio in the prompt (e.g. "portrait composition", "wide landscape").
+
 ### Photorealistic Portrait
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A high-resolution photograph of a young woman with freckles, standing in a sunlit wheat field during golden hour. She has windswept auburn hair, wearing a vintage floral dress. Soft warm lighting with lens flare, shallow depth of field, 85mm portrait lens aesthetic." -s 1024x1536 -q high -o portrait.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A high-resolution photograph of a young woman with freckles, standing in a sunlit wheat field during golden hour. She has windswept auburn hair, wearing a vintage floral dress. Soft warm lighting with lens flare, shallow depth of field, 85mm portrait lens aesthetic." -m gpt-image-1.5 -s 1024x1536 -q high -o portrait.png
 ```
 
 ### Product Photography
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A sleek wireless headphone on a minimalist white surface. Professional product photography with soft diffused lighting, subtle reflections, clean background. Commercial e-commerce style." -s 1024x1024 -q high -o headphones.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A sleek wireless headphone on a minimalist white surface. Professional product photography with soft diffused lighting, subtle reflections, clean background. Commercial e-commerce style." -q high -o headphones.png
 ```
 
 ### Landscape Scene
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A majestic mountain range at sunrise with mist rolling through the valleys. Vibrant orange and pink sky reflected in a still alpine lake. Wide-angle composition, landscape orientation, National Geographic photography style." -s 1536x1024 -q high -o mountain.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A majestic mountain range at sunrise with mist rolling through the valleys. Vibrant orange and pink sky reflected in a still alpine lake. Wide-angle composition, landscape orientation, National Geographic photography style." -m gpt-image-1.5 -s 1536x1024 -q high -o mountain.png
 ```
 
-### Illustration with Transparent Background
+### Illustration with Transparent Background (gpt-image-2, prompt-driven)
+
+Note: gpt-image-2 only accepts `-s auto` (the default), so don't pass `-s WxH`. Aspect ratio and transparency are both expressed in the prompt.
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration style, clean lines, vibrant colors, transparent PNG sticker format." -s 1024x1024 -b transparent -f png -o robot_sticker.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration, clean lines, vibrant colors, transparent background, isolated subject on alpha channel, no backdrop, sticker format." -m gpt-image-2 -f png -o robot_sticker.png
+```
+
+### Illustration with Transparent Background (gpt-image-1.5, parameter-guaranteed)
+
+```bash
+{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration style, clean lines, vibrant colors, transparent PNG sticker format." -m gpt-image-1.5 -s 1024x1024 -b transparent -f png -o robot_sticker.png
 ```
 
 ### Icon Design
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A modern app icon for a music streaming service. Minimalist design with a stylized sound wave, gradient from purple to blue, rounded corners, flat design style." -s 1024x1024 -q high -o music_icon.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A modern app icon for a music streaming service. Minimalist design with a stylized sound wave, gradient from purple to blue, rounded corners, flat design style, square composition." -q high -o music_icon.png
 ```
 
 ### Image Editing with References
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "Edit this photo by adding a dramatic sunset sky with orange and purple clouds. Keep the foreground subject exactly as shown." -i original_photo.jpg -s 1536x1024 -o sunset_edit.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "Edit this photo by adding a dramatic sunset sky with orange and purple clouds. Keep the foreground subject exactly as shown, wide landscape composition." -i original_photo.jpg -o sunset_edit.png
 ```
 
 ### Multiple Image Generation
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A variety of colorful tropical cocktails in different glass shapes, each with unique garnishes, overhead view, summer party aesthetic." -n 4 -s 1024x1024 -o cocktails.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A variety of colorful tropical cocktails in different glass shapes, each with unique garnishes, overhead view, summer party aesthetic, square composition." -n 4 -o cocktails.png
 ```
 
 ## Environment Variables

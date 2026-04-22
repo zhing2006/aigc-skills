@@ -1,10 +1,17 @@
 """
 OpenAI GPT Image - Text/Image to Image Generation
 
-Supported models: gpt-image-1.5, gpt-image-1, gpt-image-1-mini
-Supported sizes: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait), auto
+Supported models: gpt-image-2 (default), gpt-image-1.5, gpt-image-1, gpt-image-1-mini
+Supported sizes:
+  - gpt-image-1.x: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait), auto
+  - gpt-image-2: auto only (size is chosen by the model's routing layer; explicit
+    sizes are rejected). Bias aspect ratio via the prompt instead.
 Supported quality: auto, high, medium, low
 Max input images: 16 (for image edit)
+
+Note: gpt-image-2 does not accept input_fidelity (always treated as high) and
+officially does not support background=transparent (transparency can still be
+requested via the prompt; the model decides whether to emit an alpha channel).
 """
 
 import argparse
@@ -15,23 +22,45 @@ import sys
 from pathlib import Path
 
 import aiofiles
+import httpx
 from dotenv import load_dotenv
 from openai import AsyncOpenAI, AsyncAzureOpenAI
 
 
-SUPPORTED_MODELS = ["gpt-image-1.5", "gpt-image-1", "gpt-image-1-mini"]
-SUPPORTED_SIZES = ["1024x1024", "1536x1024", "1024x1536", "auto"]
+SUPPORTED_MODELS = ["gpt-image-2", "gpt-image-1.5", "gpt-image-1", "gpt-image-1-mini"]
+GPT_IMAGE_1_X_SIZES = ["1024x1024", "1536x1024", "1024x1536", "auto"]
 SUPPORTED_QUALITY = ["auto", "high", "medium", "low"]
 SUPPORTED_FORMATS = ["png", "jpeg", "webp"]
 SUPPORTED_BACKGROUNDS = ["auto", "transparent", "opaque"]
 MAX_INPUT_IMAGES = 16
 
 
+def validate_size(model: str, size: str) -> None:
+    """Validate the size parameter against the model's supported set."""
+    if model == "gpt-image-2":
+        if size != "auto":
+            raise ValueError(
+                f"gpt-image-2 only supports size='auto' (routing layer decides). "
+                f"Got: {size}. Bias aspect ratio via the prompt instead "
+                f"(e.g. 'portrait composition', 'wide landscape', 'square 1:1')."
+            )
+        return
+
+    if model.startswith("gpt-image-1"):
+        if size not in GPT_IMAGE_1_X_SIZES:
+            raise ValueError(
+                f"Unsupported size for {model}: {size}. Supported: {GPT_IMAGE_1_X_SIZES}"
+            )
+        return
+
+    raise ValueError(f"Unknown model for size validation: {model}")
+
+
 async def generate_image(
     prompt: str,
     images: list[str] | None = None,
-    model: str = "gpt-image-1.5",
-    size: str = "1024x1024",
+    model: str = "gpt-image-2",
+    size: str = "auto",
     quality: str = "auto",
     output_format: str = "png",
     background: str = "auto",
@@ -44,8 +73,11 @@ async def generate_image(
     Args:
         prompt: Text prompt for image generation (max 32000 characters)
         images: List of local image file paths for editing (max 16)
-        model: Model to use (gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
-        size: Output size (1024x1024, 1536x1024, 1024x1536, auto)
+        model: Model to use (gpt-image-2, gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
+        size: Output size. "auto" (default) omits the param so the model decides.
+              For gpt-image-1.x: 1024x1024, 1536x1024, 1024x1536, auto.
+              For gpt-image-2: only "auto" is accepted; the routing layer chooses.
+              Bias aspect ratio via the prompt for gpt-image-2.
         quality: Image quality (auto, high, medium, low)
         output_format: Output format (png, jpeg, webp)
         background: Background type (auto, transparent, opaque)
@@ -58,8 +90,7 @@ async def generate_image(
     if model not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model}. Supported: {SUPPORTED_MODELS}")
 
-    if size not in SUPPORTED_SIZES:
-        raise ValueError(f"Unsupported size: {size}. Supported: {SUPPORTED_SIZES}")
+    validate_size(model, size)
 
     if quality not in SUPPORTED_QUALITY:
         raise ValueError(f"Unsupported quality: {quality}. Supported: {SUPPORTED_QUALITY}")
@@ -99,6 +130,19 @@ async def generate_image(
 
     output_files: list[Path] = []
 
+    # Build kwargs; omit `size` when auto so the routing layer / server default
+    # picks it. gpt-image-2 in particular only accepts auto.
+    common_kwargs: dict = {
+        "model": model,
+        "prompt": prompt,
+        "quality": quality,
+        "output_format": output_format,
+        "background": background,
+        "n": n,
+    }
+    if size != "auto":
+        common_kwargs["size"] = size
+
     if images:
         # Image edit mode
         image_files = []
@@ -110,48 +154,50 @@ async def generate_image(
 
         try:
             response = await client.images.edit(
-                model=model,
                 image=image_files if len(image_files) > 1 else image_files[0],
-                prompt=prompt,
-                size=size,
-                quality=quality,
-                output_format=output_format,
-                background=background,
-                n=n,
+                **common_kwargs,
             )
         finally:
             for f in image_files:
                 f.close()
     else:
         # Text to image mode
-        response = await client.images.generate(
-            model=model,
-            prompt=prompt,
-            size=size,
-            quality=quality,
-            output_format=output_format,
-            background=background,
-            n=n,
-        )
+        response = await client.images.generate(**common_kwargs)
 
-    # Save generated images
-    for i, image_data in enumerate(response.data):
-        if output_path:
-            if n > 1:
-                base_path = Path(output_path)
-                file_path = base_path.parent / f"{base_path.stem}_{i+1}{base_path.suffix}"
+    # Save generated images. The API may return either b64_json or url depending
+    # on endpoint/model (Azure's gpt-image-2 routing sometimes returns url).
+    http_client: "httpx.AsyncClient | None" = None
+    try:
+        for i, image_data in enumerate(response.data):
+            if output_path:
+                if n > 1:
+                    base_path = Path(output_path)
+                    file_path = base_path.parent / f"{base_path.stem}_{i+1}{base_path.suffix}"
+                else:
+                    file_path = Path(output_path)
             else:
-                file_path = Path(output_path)
-        else:
-            suffix = f"_{i+1}" if n > 1 else ""
-            file_path = Path(f"generated_image{suffix}.{output_format}")
+                suffix = f"_{i+1}" if n > 1 else ""
+                file_path = Path(f"generated_image{suffix}.{output_format}")
 
-        image_bytes = base64.b64decode(image_data.b64_json)
-        async with aiofiles.open(file_path, "wb") as f:
-            await f.write(image_bytes)
+            if getattr(image_data, "b64_json", None):
+                image_bytes = base64.b64decode(image_data.b64_json)
+            elif getattr(image_data, "url", None):
+                if http_client is None:
+                    http_client = httpx.AsyncClient(timeout=120)
+                resp = await http_client.get(image_data.url)
+                resp.raise_for_status()
+                image_bytes = resp.content
+            else:
+                raise ValueError(f"Image response item {i} has neither b64_json nor url")
 
-        output_files.append(file_path)
-        print(f"Image saved to: {file_path}")
+            async with aiofiles.open(file_path, "wb") as f:
+                await f.write(image_bytes)
+
+            output_files.append(file_path)
+            print(f"Image saved to: {file_path}")
+    finally:
+        if http_client is not None:
+            await http_client.aclose()
 
     return output_files
 
@@ -174,16 +220,20 @@ async def main():
     parser.add_argument(
         "-m", "--model",
         type=str,
-        default="gpt-image-1.5",
+        default="gpt-image-2",
         choices=SUPPORTED_MODELS,
-        help="Model to use (default: gpt-image-1.5)",
+        help="Model to use (default: gpt-image-2)",
     )
     parser.add_argument(
         "-s", "--size",
         type=str,
-        default="1024x1024",
-        choices=SUPPORTED_SIZES,
-        help="Output size (default: 1024x1024)",
+        default="auto",
+        help=(
+            "Output size (default: auto - omit to let model decide). "
+            "gpt-image-1.x accepts: 1024x1024, 1536x1024, 1024x1536, auto. "
+            "gpt-image-2 only accepts auto (routing layer chooses); "
+            "bias aspect ratio via the prompt instead."
+        ),
     )
     parser.add_argument(
         "-q", "--quality",
