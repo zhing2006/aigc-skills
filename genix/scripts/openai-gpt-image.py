@@ -119,7 +119,7 @@ async def generate_image(
     if os.environ.get("USE_AZURE_OPENAI", "false").lower() == "true":
         api_version = os.environ.get("AZURE_OPENAI_API_VERSION", "2025-04-01-preview")
         client = AsyncAzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=api_base)
-        print("Using Azure OpenAI endpoint with KEY:", api_key)
+        print("Using Azure OpenAI endpoint.")
     else:
         client = AsyncOpenAI(api_key=api_key, base_url=api_base)
         print("Using OpenAI endpoint.")
