@@ -1,22 +1,36 @@
 """
-DashScope HappyHorse - Text-to-Video Generation
+DashScope HappyHorse - Video Generation (Text / Image / Reference / Edit)
 
-Generate physically realistic, smoothly-moving video from a text prompt using
-Alibaba Bailian (DashScope) HappyHorse. The native API is asynchronous:
-create a task, then poll until the video is ready.
+Generate physically realistic, smoothly-moving video using Alibaba Bailian
+(DashScope) HappyHorse. The native API is asynchronous: create a task, then
+poll until the video is ready. Four modes are supported, auto-detected from
+the inputs you provide:
+
+  Text-to-Video (t2v)        prompt only
+  Image-to-Video (i2v)       --first-frame IMAGE  (prompt optional)
+  Reference-to-Video (r2v)   --ref-image IMAGE ... (1-9, reference the images
+                             in the prompt as [Image 1], [Image 2], ...)
+  Video Edit (video-edit)    --video URL [--ref-image IMAGE ...] (0-5 refs)
 
 Subcommands:
   generate  Create a video generation task and wait for the result (default)
   get       Query a single video generation task by ID
 
-Supported models: happyhorse-1.1-t2v, happyhorse-1.0-t2v
+Models (suffix matches the mode; --version selects 1.1 or 1.0):
+  happyhorse-1.1-t2v / happyhorse-1.0-t2v
+  happyhorse-1.1-i2v / happyhorse-1.0-i2v
+  happyhorse-1.1-r2v / happyhorse-1.0-r2v
+  happyhorse-1.0-video-edit            (video edit is 1.0 only)
+
 Supported resolutions: 720P, 1080P (default)
-Supported ratios: 16:9 (default), 9:16, 1:1, 4:3, 3:4, 4:5, 5:4, 9:21, 21:9
-Supported durations: 3-15 seconds (default 5)
+Supported ratios (t2v/r2v only): 16:9 (default), 9:16, 1:1, 4:3, 3:4, 4:5, 5:4, 9:21, 21:9
+Supported durations (t2v/i2v/r2v): 3-15 seconds (default 5); video-edit follows the source
 """
 
 import argparse
 import asyncio
+import base64
+import mimetypes
 import os
 import sys
 from pathlib import Path
@@ -26,13 +40,19 @@ import aiohttp
 from dotenv import load_dotenv
 
 
-SUPPORTED_MODELS = [
-    "happyhorse-1.1-t2v",
-    "happyhorse-1.0-t2v",
-]
+# Model groups by mode. The suffix encodes the mode; the middle token is the version.
+T2V_MODELS = ["happyhorse-1.1-t2v", "happyhorse-1.0-t2v"]
+I2V_MODELS = ["happyhorse-1.1-i2v", "happyhorse-1.0-i2v"]
+R2V_MODELS = ["happyhorse-1.1-r2v", "happyhorse-1.0-r2v"]
+EDIT_MODELS = ["happyhorse-1.0-video-edit"]
+SUPPORTED_MODELS = T2V_MODELS + I2V_MODELS + R2V_MODELS + EDIT_MODELS
+
+SUPPORTED_VERSIONS = ["1.1", "1.0"]
 SUPPORTED_RESOLUTIONS = ["720P", "1080P"]
 SUPPORTED_RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "4:5", "5:4", "9:21", "21:9"]
-DEFAULT_MODEL = "happyhorse-1.1-t2v"
+SUPPORTED_AUDIO_SETTINGS = ["auto", "origin"]  # video-edit only
+
+DEFAULT_VERSION = "1.1"
 DEFAULT_RESOLUTION = "1080P"
 DEFAULT_RATIO = "16:9"
 DEFAULT_DURATION = 5
@@ -45,6 +65,10 @@ DEFAULT_DURATION = 5
 DEFAULT_BASE_URL = "https://dashscope.aliyuncs.com"
 
 POLL_INTERVAL = 15  # seconds; the docs recommend ~15s between polls
+
+# Reference-image / first-frame count limits per mode
+MAX_REF_IMAGES = {"r2v": 9, "video-edit": 5}
+MIN_REF_IMAGES = {"r2v": 1, "video-edit": 0}
 
 
 def get_api_key() -> str:
@@ -78,20 +102,88 @@ def normalize_resolution(value: str) -> str:
     return value.upper()
 
 
+def encode_image_base64(image_path: str) -> str:
+    """Encode a local image file to a base64 data URI per the API format."""
+    path = Path(image_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Image file not found: {image_path}")
+    mime_type = mimetypes.guess_type(str(path))[0] or "image/png"
+    with open(path, "rb") as f:
+        encoded = base64.b64encode(f.read()).decode("utf-8")
+    return f"data:{mime_type};base64,{encoded}"
+
+
+def resolve_image_url(path_or_url: str) -> str:
+    """Resolve an image path or URL. Local files are base64-encoded."""
+    if path_or_url.startswith(("http://", "https://", "data:")):
+        return path_or_url
+    return encode_image_base64(path_or_url)
+
+
+def derive_model(mode: str, version: str) -> str:
+    """Build the model ID from the detected mode and version selector."""
+    if mode == "video-edit":
+        return "happyhorse-1.0-video-edit"  # video edit is 1.0 only
+    return f"happyhorse-{version}-{mode}"
+
+
+def detect_mode(first_frame, ref_images, video) -> str:
+    """Determine the generation mode from the provided inputs."""
+    if video:
+        return "video-edit"
+    if first_frame:
+        return "i2v"
+    if ref_images:
+        return "r2v"
+    return "t2v"
+
+
 # ──────────────────────────── generate ────────────────────────────
 
 
 async def generate_video(
-    prompt: str,
-    model: str = DEFAULT_MODEL,
+    prompt: str | None = None,
+    first_frame: str | None = None,
+    ref_images: list[str] | None = None,
+    video: str | None = None,
+    model: str | None = None,
+    version: str = DEFAULT_VERSION,
     resolution: str = DEFAULT_RESOLUTION,
     ratio: str = DEFAULT_RATIO,
     duration: int = DEFAULT_DURATION,
+    audio_setting: str | None = None,
     watermark: bool = True,
     seed: int | None = None,
     output_path: str | None = None,
 ) -> Path:
-    """Generate a video using DashScope HappyHorse text-to-video."""
+    """Generate a video using DashScope HappyHorse (t2v / i2v / r2v / video-edit)."""
+    mode = detect_mode(first_frame, ref_images, video)
+
+    # ── Cross-input validation ──
+    if first_frame and ref_images:
+        raise ValueError("--first-frame and --ref-image are mutually exclusive")
+    if video and first_frame:
+        raise ValueError("--first-frame is not used for video editing (use --ref-image)")
+
+    if mode == "i2v":
+        # prompt is optional for image-to-video
+        pass
+    elif not prompt:
+        raise ValueError(f"A text prompt is required for {mode}")
+
+    if mode == "r2v":
+        n = len(ref_images)
+        if n < MIN_REF_IMAGES["r2v"] or n > MAX_REF_IMAGES["r2v"]:
+            raise ValueError("Reference-to-video requires 1 to 9 --ref-image inputs")
+    if mode == "video-edit":
+        if not (video.startswith("http://") or video.startswith("https://")):
+            raise ValueError("--video must be a public http(s) URL (base64/local not supported)")
+        n = len(ref_images) if ref_images else 0
+        if n > MAX_REF_IMAGES["video-edit"]:
+            raise ValueError("Video edit accepts at most 5 --ref-image inputs")
+
+    if model is None:
+        model = derive_model(mode, version)
     if model not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model}. Supported: {SUPPORTED_MODELS}")
 
@@ -104,35 +196,56 @@ async def generate_video(
     if duration < 3 or duration > 15:
         raise ValueError("Duration must be an integer between 3 and 15 seconds")
 
+    if audio_setting is not None and audio_setting not in SUPPORTED_AUDIO_SETTINGS:
+        raise ValueError(f"Unsupported audio_setting: {audio_setting}. Supported: {SUPPORTED_AUDIO_SETTINGS}")
+
     if seed is not None and (seed < 0 or seed > 2147483647):
         raise ValueError("Seed must be between 0 and 2147483647")
-
-    if not prompt:
-        raise ValueError("A text prompt is required")
 
     api_key = get_api_key()
     base = get_base_url()
 
-    parameters = {
-        "resolution": resolution,
-        "ratio": ratio,
-        "duration": duration,
-        "watermark": watermark,
-    }
+    # ── Build input.media by mode ──
+    input_obj: dict = {}
+    if prompt:
+        input_obj["prompt"] = prompt
+
+    media = []
+    if mode == "i2v":
+        media.append({"type": "first_frame", "url": resolve_image_url(first_frame)})
+    elif mode == "r2v":
+        for img in ref_images:
+            media.append({"type": "reference_image", "url": resolve_image_url(img)})
+    elif mode == "video-edit":
+        media.append({"type": "video", "url": video})
+        for img in (ref_images or []):
+            media.append({"type": "reference_image", "url": resolve_image_url(img)})
+    if media:
+        input_obj["media"] = media
+
+    # ── Build parameters by mode (only send what the mode accepts) ──
+    parameters: dict = {"resolution": resolution, "watermark": watermark}
+    if mode in ("t2v", "r2v"):
+        parameters["ratio"] = ratio  # i2v follows the first frame; video-edit follows the source
+    if mode in ("t2v", "i2v", "r2v"):
+        parameters["duration"] = duration  # video-edit duration follows the source video
+    if mode == "video-edit" and audio_setting:
+        parameters["audio_setting"] = audio_setting
     if seed is not None:
         parameters["seed"] = seed
 
-    payload = {
-        "model": model,
-        "input": {"prompt": prompt},
-        "parameters": parameters,
-    }
+    payload = {"model": model, "input": input_obj, "parameters": parameters}
 
     output_file = Path(output_path) if output_path else Path("generated_video.mp4")
 
-    print(f"Prompt: {prompt}")
-    print(f"Generating video (Text-to-Video, {ratio}, {duration}s, {resolution}, "
-          f"watermark={watermark}, model: {model})...")
+    mode_label = {
+        "t2v": "Text-to-Video",
+        "i2v": "Image-to-Video (first frame)",
+        "r2v": "Reference-to-Video",
+        "video-edit": "Video Edit",
+    }[mode]
+    print(f"Prompt: {prompt or '(none)'}")
+    print(f"Generating video ({mode_label}, {resolution}, watermark={watermark}, model: {model})...")
 
     async with aiohttp.ClientSession() as session:
         # ── Step 1: create the async task ──
@@ -259,19 +372,37 @@ async def main():
         sys.argv.insert(1, "generate")
 
     parser = argparse.ArgumentParser(
-        description="DashScope HappyHorse Text-to-Video Generation"
+        description="DashScope HappyHorse Video Generation (text / image / reference / edit)"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # ── generate ──
     gen_parser = subparsers.add_parser("generate", help="Generate a video (default)")
     gen_parser.add_argument(
-        "prompt", type=str,
-        help="Text prompt describing the video to generate",
+        "prompt", type=str, nargs="?", default=None,
+        help="Text prompt (required except for image-to-video; "
+             "for reference-to-video, refer to images as [Image 1], [Image 2], ...)",
     )
     gen_parser.add_argument(
-        "-m", "--model", type=str, default=DEFAULT_MODEL, choices=SUPPORTED_MODELS,
-        help=f"Model to use (default: {DEFAULT_MODEL})",
+        "-i", "--first-frame", type=str, default=None,
+        help="First frame image path/URL -> Image-to-Video (i2v)",
+    )
+    gen_parser.add_argument(
+        "--ref-image", type=str, action="append", default=None,
+        help="Reference image path/URL (repeatable). 1-9 -> Reference-to-Video; "
+             "with --video, 0-5 reference images for editing",
+    )
+    gen_parser.add_argument(
+        "--video", type=str, default=None,
+        help="Source video public URL -> Video Edit (video-edit)",
+    )
+    gen_parser.add_argument(
+        "--version", type=str, default=DEFAULT_VERSION, choices=SUPPORTED_VERSIONS,
+        help=f"Model version (default: {DEFAULT_VERSION}); video-edit is always 1.0",
+    )
+    gen_parser.add_argument(
+        "-m", "--model", type=str, default=None, choices=SUPPORTED_MODELS,
+        help="Explicit model ID (overrides mode/version derivation)",
     )
     gen_parser.add_argument(
         "-r", "--resolution", type=normalize_resolution, default=DEFAULT_RESOLUTION,
@@ -280,11 +411,16 @@ async def main():
     )
     gen_parser.add_argument(
         "-a", "--ratio", type=str, default=DEFAULT_RATIO, choices=SUPPORTED_RATIOS,
-        help=f"Aspect ratio (default: {DEFAULT_RATIO})",
+        help=f"Aspect ratio (default: {DEFAULT_RATIO}); t2v/r2v only, ignored otherwise",
     )
     gen_parser.add_argument(
         "-d", "--duration", type=int, default=DEFAULT_DURATION,
-        help=f"Duration in seconds, 3-15 (default: {DEFAULT_DURATION})",
+        help=f"Duration in seconds, 3-15 (default: {DEFAULT_DURATION}); "
+             "ignored for video-edit (follows the source)",
+    )
+    gen_parser.add_argument(
+        "--audio-setting", type=str, default=None, choices=SUPPORTED_AUDIO_SETTINGS,
+        help="Video-edit only: 'auto' (model decides) or 'origin' (keep source audio)",
     )
     gen_parser.add_argument(
         "--no-watermark", action="store_true",
@@ -314,12 +450,19 @@ async def main():
 
     try:
         if args.command == "generate":
+            if not args.prompt and not args.first_frame and not args.ref_image and not args.video:
+                gen_parser.error("At least a prompt, --first-frame, --ref-image, or --video is required")
             await generate_video(
                 prompt=args.prompt,
+                first_frame=args.first_frame,
+                ref_images=args.ref_image,
+                video=args.video,
                 model=args.model,
+                version=args.version,
                 resolution=args.resolution,
                 ratio=args.ratio,
                 duration=args.duration,
+                audio_setting=args.audio_setting,
                 watermark=not args.no_watermark,
                 seed=args.seed,
                 output_path=args.output,
