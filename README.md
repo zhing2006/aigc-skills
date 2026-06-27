@@ -10,7 +10,8 @@ AIGC generation skills for Claude Code and similar AI tools.
 | -------- | -------- | ---------- |
 | **Image** | Google Gemini | Text-to-Image, Image-to-Image, Image Search Grounding |
 | **Image** | OpenAI GPT | Text-to-Image, Image Edit |
-| **Video** | Volcengine Seedance | Text-to-Video, Image-to-Video, Multi-modal Reference, Video Edit/Extend |
+| **Video** | Volcengine Seedance | Text-to-Video, Image-to-Video, Multi-modal Reference, Video Edit/Extend (up to 4K) |
+| **Video** | DashScope HappyHorse | Text-to-Video (physically realistic, smooth motion) |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
