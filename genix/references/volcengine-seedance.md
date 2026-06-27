@@ -31,12 +31,13 @@ Generate a video. This is the default command — the `generate` keyword can be 
 | `--ref-video` | None | Reference video URL (repeatable, max 3) |
 | `--ref-audio` | None | Reference audio (repeatable, max 3, requires ref image/video) |
 | `-m`, `--model` | `doubao-seedance-2-0-260128` | Model to use |
-| `-r`, `--resolution` | `720p` | Video resolution |
+| `-r`, `--resolution` | `720p` | Video resolution (`480p`, `720p`, `1080p`, `4k`) |
 | `-a`, `--ratio` | `adaptive` | Aspect ratio |
 | `-d`, `--duration` | `5` | Duration in seconds (4-15 or -1 for auto) |
 | `--no-audio` | false | Disable synchronized audio generation |
 | `--watermark` | false | Add watermark |
 | `--web-search` | false | Enable web search enhancement (text-to-video only) |
+| `--return-last-frame` | false | Also save the video's last frame as `<name>_last_frame.png` (for chaining clips) |
 | `-o`, `--output` | `generated_video.mp4` | Output file path |
 
 ### get
@@ -89,16 +90,30 @@ Delete a video generation task.
 
 | Model | Model ID | Description |
 | ----- | -------- | ----------- |
-| Seedance 2.0 | `doubao-seedance-2-0-260128` | Highest quality (default) |
-| Seedance 2.0 fast | `doubao-seedance-2-0-fast-260128` | Faster, lower cost |
+| Seedance 2.0 | `doubao-seedance-2-0-260128` | Highest quality (default), supports up to 4k |
+| Seedance 2.0 fast | `doubao-seedance-2-0-fast-260128` | Faster, lower cost, max 720p |
+| Seedance 2.0 mini | `doubao-seedance-2-0-mini-260615` | Cheapest/fastest, max 720p |
 
-**Note**: If the user does not specify model, use `doubao-seedance-2-0-260128` as default. For quick previews or drafts, recommend the fast model.
+**Note**: If the user does not specify model, use `doubao-seedance-2-0-260128` as default. For quick previews or drafts, recommend the fast or mini model.
 
 ## Supported Resolutions
 
-`480p`, `720p` (default)
+`480p`, `720p` (default), `1080p`, `4k`
 
-**Tip**: Draft at 480p to iterate quickly, then re-run at 720p for final output.
+Resolution support depends on the model:
+
+| Model | 480p | 720p | 1080p | 4k |
+| ----- | :--: | :--: | :---: | :-: |
+| `doubao-seedance-2-0-260128` (full) | ✅ | ✅ | ✅ | ✅ |
+| `doubao-seedance-2-0-fast-260128` | ✅ | ✅ | ❌ | ❌ |
+| `doubao-seedance-2-0-mini-260615` | ✅ | ✅ | ❌ | ❌ |
+
+**Notes**:
+- `1080p` is **not** supported by the fast or mini models; `4k` is **only** supported by the full model.
+- The script validates resolution against the chosen model and errors early if unsupported.
+- `4k` output uses 10-bit H.265 encoding (HDR-ready). Some players may not support it — use VLC, MPV, or QuickTime Player if playback fails.
+
+**Tip**: Draft at 480p to iterate quickly, then re-run at 720p/1080p/4k for final output.
 
 ## Supported Aspect Ratios
 
@@ -170,9 +185,9 @@ Scene description → Subject action → Camera movement → Audio cue
 
 ### Prompt Length
 
-- Recommended: 60-200 characters (Chinese) or 60-200 words (English)
-- Too long may cause the model to ignore details
-- Both Chinese and English prompts are supported
+- Max: 500 characters (Chinese) or 1000 words (English)
+- Too long causes information to scatter — the model may ignore details and only focus on the main points
+- **Language support**: all models support Chinese and English; Seedance 2.0 additionally supports Japanese, Indonesian, Spanish, and Portuguese
 
 ### Key Principles
 
@@ -323,6 +338,24 @@ References are numbered in the order they appear in the `--ref-image`, `--ref-vi
 
 ```bash
 {python} {skill_dir}/scripts/volcengine-seedance.py "微距镜头拍摄一只玻璃蛙，透明腹部可见心脏跳动，热带雨林背景" --web-search -a 16:9 -d 8 -o glass_frog.mp4
+```
+
+### 4K Output (full model only)
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "航拍，云雾缭绕的山谷在日出时分，金色阳光穿透云层，史诗级电影质感" -m doubao-seedance-2-0-260128 -r 4k -a 16:9 -d 8 -o valley_4k.mp4
+```
+
+### Chaining Clips via Last Frame
+
+Save the final frame, then feed it as the first frame of the next clip for a seamless continuation.
+
+```bash
+# Clip 1: generate and keep the last frame
+{python} {skill_dir}/scripts/volcengine-seedance.py "女孩走向窗边，缓慢推镜头" --return-last-frame -d 5 -o clip1.mp4
+
+# Clip 2: continue from clip1's last frame
+{python} {skill_dir}/scripts/volcengine-seedance.py "女孩推开窗户，阳光洒入房间" -i clip1_last_frame.png -d 5 -o clip2.mp4
 ```
 
 ### Get Task

@@ -6,8 +6,12 @@ Subcommands:
   list      List video generation tasks
   delete    Delete a video generation task
 
-Supported models: doubao-seedance-2-0-260128, doubao-seedance-2-0-fast-260128
-Supported resolutions: 480p, 720p
+Supported models: doubao-seedance-2-0-260128, doubao-seedance-2-0-fast-260128,
+                  doubao-seedance-2-0-mini-260615
+Supported resolutions: 480p, 720p, 1080p, 4k
+  - doubao-seedance-2-0-260128 (full):  480p, 720p, 1080p, 4k
+  - doubao-seedance-2-0-fast-260128:    480p, 720p
+  - doubao-seedance-2-0-mini-260615:    480p, 720p
 Supported ratios: 16:9, 4:3, 1:1, 3:4, 9:16, 21:9, adaptive
 Supported durations: 4-15 seconds, or -1 (auto)
 """
@@ -29,8 +33,15 @@ from volcenginesdkarkruntime import Ark
 SUPPORTED_MODELS = [
     "doubao-seedance-2-0-260128",
     "doubao-seedance-2-0-fast-260128",
+    "doubao-seedance-2-0-mini-260615",
 ]
-SUPPORTED_RESOLUTIONS = ["480p", "720p"]
+SUPPORTED_RESOLUTIONS = ["480p", "720p", "1080p", "4k"]
+# Per-model resolution support. Fast/mini variants top out at 720p; 4k is full-model only.
+RESOLUTION_SUPPORT = {
+    "doubao-seedance-2-0-260128": ["480p", "720p", "1080p", "4k"],
+    "doubao-seedance-2-0-fast-260128": ["480p", "720p"],
+    "doubao-seedance-2-0-mini-260615": ["480p", "720p"],
+}
 SUPPORTED_RATIOS = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9", "adaptive"]
 SUPPORTED_STATUSES = ["queued", "running", "succeeded", "failed", "cancelled"]
 DEFAULT_MODEL = "doubao-seedance-2-0-260128"
@@ -114,14 +125,19 @@ async def generate_video(
     generate_audio: bool = True,
     watermark: bool = False,
     web_search: bool = False,
+    return_last_frame: bool = False,
     output_path: str | None = None,
 ) -> Path:
     """Generate a video using Volcengine Seedance 2.0."""
     if model not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model}. Supported: {SUPPORTED_MODELS}")
 
-    if resolution not in SUPPORTED_RESOLUTIONS:
-        raise ValueError(f"Unsupported resolution: {resolution}. Supported: {SUPPORTED_RESOLUTIONS}")
+    allowed_resolutions = RESOLUTION_SUPPORT.get(model, SUPPORTED_RESOLUTIONS)
+    if resolution not in allowed_resolutions:
+        raise ValueError(
+            f"Model {model} does not support resolution '{resolution}'. "
+            f"Supported: {allowed_resolutions}"
+        )
 
     if ratio not in SUPPORTED_RATIOS:
         raise ValueError(f"Unsupported ratio: {ratio}. Supported: {SUPPORTED_RATIOS}")
@@ -197,6 +213,9 @@ async def generate_video(
         "watermark": watermark,
     }
 
+    if return_last_frame:
+        create_kwargs["return_last_frame"] = True
+
     if web_search:
         create_kwargs["tools"] = [{"type": "web_search"}]
 
@@ -254,7 +273,19 @@ async def generate_video(
             async with aiofiles.open(output_file, "wb") as f:
                 await f.write(await resp.read())
 
-    print(f"Video saved to: {output_file}")
+        print(f"Video saved to: {output_file}")
+
+        # Save the last frame image when requested (useful for chaining clips)
+        last_frame_url = None
+        if hasattr(task, "content") and task.content:
+            last_frame_url = getattr(task.content, "last_frame_url", None)
+        if return_last_frame and last_frame_url:
+            frame_file = output_file.with_name(f"{output_file.stem}_last_frame.png")
+            async with session.get(last_frame_url) as resp:
+                if resp.status == 200:
+                    async with aiofiles.open(frame_file, "wb") as f:
+                        await f.write(await resp.read())
+                    print(f"Last frame saved to: {frame_file}")
 
     return output_file
 
@@ -265,8 +296,10 @@ async def generate_video(
 def print_task(task) -> None:
     """Print task details."""
     video_url = ""
-    if hasattr(task, "content") and task.content and hasattr(task.content, "video_url"):
-        video_url = task.content.video_url or ""
+    last_frame_url = ""
+    if hasattr(task, "content") and task.content:
+        video_url = getattr(task.content, "video_url", "") or ""
+        last_frame_url = getattr(task.content, "last_frame_url", "") or ""
 
     print(f"  ID:         {task.id}")
     print(f"  Model:      {task.model}")
@@ -278,6 +311,8 @@ def print_task(task) -> None:
     print(f"  Updated:    {format_timestamp(task.updated_at)}")
     if video_url:
         print(f"  Video URL:  {video_url}")
+    if last_frame_url:
+        print(f"  Last Frame: {last_frame_url}")
     if hasattr(task, "error") and task.error:
         print(f"  Error:      {task.error}")
 
@@ -382,7 +417,8 @@ async def main():
     )
     gen_parser.add_argument(
         "-r", "--resolution", type=str, default="720p", choices=SUPPORTED_RESOLUTIONS,
-        help="Video resolution (default: 720p)",
+        help="Video resolution (default: 720p). 1080p/4k require the full model "
+             "(fast model supports 480p/720p only); 4k is full-model only.",
     )
     gen_parser.add_argument(
         "-a", "--ratio", type=str, default="adaptive", choices=SUPPORTED_RATIOS,
@@ -403,6 +439,10 @@ async def main():
     gen_parser.add_argument(
         "--web-search", action="store_true",
         help="Enable web search enhancement (text-to-video only)",
+    )
+    gen_parser.add_argument(
+        "--return-last-frame", action="store_true",
+        help="Also save the video's last frame as a PNG (for chaining clips)",
     )
     gen_parser.add_argument(
         "-o", "--output", type=str, default=None,
@@ -470,6 +510,7 @@ async def main():
                 generate_audio=not args.no_audio,
                 watermark=args.watermark,
                 web_search=args.web_search,
+                return_last_frame=args.return_last_frame,
                 output_path=args.output,
             )
         elif args.command == "get":

@@ -53,13 +53,14 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 - **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
 - **Volcengine** (`volcengine-python-sdk[ark]`) - Video generation (Seedance 2.0)
+- **Alibaba Bailian / DashScope** (`dashscope`) - Text-to-Speech and Video generation (HappyHorse)
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 
 ### Current Skill Capabilities (genix)
 
 - **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT)
-- **Video**: Text-to-Video, Image-to-Video, Multi-modal Reference (Volcengine Seedance, Google Veo, OpenAI Sora)
-- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs)
+- **Video**: Text-to-Video, Image-to-Video, Multi-modal Reference (Volcengine Seedance, DashScope HappyHorse, Google Veo, OpenAI Sora)
+- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs, DashScope)
 - **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
 
 ## Environment Setup
