@@ -16,6 +16,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
 | **Audio** | DashScope | Text-to-Speech, Voice Design, Voice Clone |
+| **Audio** | Volcengine | Text-to-Speech (streaming, voice tags/instructions), Voice Design, Voice Clone, Voice Management |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
 | **Music** | Google Lyria | Text-to-Music, Image-to-Music (full songs/clips) |
 | **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D, Model Import, Rigging & Animation, Mesh Segmentation, Mesh Completion |
@@ -87,8 +88,12 @@ Edit the `.genix.env` file and fill in your API keys:
 
 | Required Variables |
 | ------------------ |
-| `VOLCENGINE_API_KEY` |
+| `VOLCENGINE_API_KEY` (video generation) |
 | `VOLCENGINE_API_BASE` (optional, defaults to official endpoint) |
+| `VOLCENGINE_TTS_API_KEY` (speech: TTS / voice clone / voice design) |
+| `VOLCENGINE_TTS_BASE` (optional, defaults to official endpoint) |
+| `VOLCENGINE_TTS_APPID` (voice management only) |
+| `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` (voice management only) |
 
 #### Example `.genix.env` file
 
@@ -117,6 +122,11 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 # Volcengine API (ByteDance)
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"
 VOLCENGINE_API_BASE = "https://ark.cn-beijing.volces.com/api/v3"  # Optional
+VOLCENGINE_TTS_API_KEY = "your_volcengine_tts_api_key_here"       # Speech (TTS/clone/design)
+VOLCENGINE_TTS_BASE = "https://openspeech.bytedance.com"      # Optional
+VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # Voice management only
+VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # Voice management only
+VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # Voice management only
 ```
 
 ## Usage

@@ -52,7 +52,7 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 
 - **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
-- **Volcengine** (`volcengine-python-sdk[ark]`) - Video generation (Seedance 2.0)
+- **Volcengine** (`volcengine-python-sdk[ark]` + raw HTTP OpenSpeech v3) - Video generation (Seedance 2.0), Speech synthesis / Voice Clone / Voice Design (Doubao Seed-TTS 2.0)
 - **Alibaba Bailian / DashScope** (`dashscope`) - Text-to-Speech and Video generation (HappyHorse)
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 
@@ -60,7 +60,7 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 
 - **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT)
 - **Video**: Text-to-Video, Image-to-Video, Multi-modal Reference (Volcengine Seedance, DashScope HappyHorse, Google Veo, OpenAI Sora)
-- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs, DashScope)
+- **Audio**: Sound Effects, Text-to-Speech, Voice Design, Voice Clone (ElevenLabs, DashScope, Volcengine)
 - **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
 
 ## Environment Setup
@@ -73,6 +73,9 @@ Copy `.env.template` to `.env` and configure API keys:
 - `OPENAI_API_BASE` (optional, defaults to OpenAI)
 - `VOLCENGINE_API_KEY`
 - `VOLCENGINE_API_BASE` (optional, defaults to Volcengine official endpoint)
+- `VOLCENGINE_TTS_API_KEY` (speech: TTS / voice clone / voice design)
+- `VOLCENGINE_TTS_BASE` (optional, defaults to OpenSpeech official endpoint)
+- `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` (voice management only)
 
 ## Technical Stack
 

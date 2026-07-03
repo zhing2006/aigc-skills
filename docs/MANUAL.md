@@ -26,6 +26,9 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [DashScope Text-to-Speech](#dashscope-text-to-speech)
   - [DashScope Voice Design](#dashscope-voice-design)
   - [DashScope Voice Clone](#dashscope-voice-clone)
+  - [Volcengine Text-to-Speech](#volcengine-text-to-speech)
+  - [Volcengine Voice Design](#volcengine-voice-design)
+  - [Volcengine Voice Clone](#volcengine-voice-clone)
 - [Music Generation](#music-generation)
   - [ElevenLabs Music](#elevenlabs-music)
   - [Google Lyria Music](#google-lyria-music)
@@ -133,6 +136,13 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 
 # DashScope API (for Chinese TTS, Voice Design, Voice Clone)
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+
+# Volcengine API (for Seedance video and Doubao speech)
+VOLCENGINE_API_KEY = "your_volcengine_api_key_here"               # Video generation
+VOLCENGINE_TTS_API_KEY = "your_volcengine_tts_api_key_here"       # Speech (TTS/clone/design)
+VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # Voice management only
+VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # Voice management only
+VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # Voice management only
 ```
 
 **Note**: You only need to configure the API keys for the providers you plan to use.
@@ -176,6 +186,11 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 - **3D Model Generation**: Text-to-3D, Image-to-3D, and Multiview-to-3D using Tripo API
 - **Isolated Environment**: Uses `.venv-genix` to avoid conflicts with project's `.venv`
 
+### New Features in v0.4.2
+
+- **Volcengine Speech**: Streaming TTS (Doubao Seed-TTS 2.0 with voice tags & instructions), Voice Design, Voice Clone, and voice instance management
+- **New Environment Variables**: `VOLCENGINE_TTS_API_KEY`, plus `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` for voice management
+
 ---
 
 ## Skills Overview
@@ -192,6 +207,9 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Text-to-Speech | DashScope | Text | Audio | Chinese/multilingual TTS, custom voices |
 | Voice Design | DashScope | Text | Voice | AI-designed custom voices |
 | Voice Clone | DashScope | Audio | Voice | Clone voices from audio samples |
+| Text-to-Speech | Volcengine | Text | Audio | Streaming TTS with voice tags/instructions, cloned voices |
+| Voice Design | Volcengine | Text, Image | Voice | Design voices from text descriptions or images |
+| Voice Clone | Volcengine | Audio | Voice | Clone voices, manage/renew voice instances |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
 | Lyria Music | Google | Text, Images | Audio | Full songs, clips, custom lyrics |
 | Tripo 3D | Tripo | Text, Images, 3D Models | 3D Model | 3D model generation, model import, rigging & animation, segmentation, completion (GLB, FBX, OBJ) |
@@ -541,6 +559,96 @@ Best for: Cloning real voices, maintaining voice consistency, custom narrators
 - Languages: Chinese, English, German, Italian, Portuguese, Spanish, Japanese, Korean, French, Russian
 - Target Models: `qwen3-tts-vc-realtime-2026-01-15` (latest), `qwen3-tts-vc-realtime-2025-11-27`
 - Actions: Create, List, Delete
+
+---
+
+### Volcengine Text-to-Speech
+
+Best for: Expressive Chinese TTS, emotional narration, dialects, synthesizing with cloned/designed voices
+
+#### Basic Chinese TTS
+
+> "Use Volcengine to generate Chinese speech saying '夜色渐浓，城市的灯火次第亮起'"
+
+#### Emotional Delivery with Voice Tags
+
+> "Generate speech: '[怒目圆睁，冲着你大声怒吼]放肆！我是龙族的女王！'"
+
+#### Overall Mood with a Voice Instruction
+
+> "Read this line with a trembling, heartbroken crying tone: '我逆转时空九十九次救你……'"
+
+#### Synthesize with a Cloned Voice
+
+> "Use my cloned voice S_abc12345 to read this script"
+
+**Supported Options**:
+
+- Voices: Official Seed-TTS 2.0 voices (`*_uranus_bigtts`) and cloned/designed voices (`S_xxx`, auto-routed)
+- Voice Tags: `[表情/心理/肢体动作描述]` before sentences (selected 2.0 voices + all cloned 2.0 voices)
+- Voice Instructions: overall emotion/dialect/tone/speed control, plus quoting context (official voices only, free)
+- Formats: MP3, WAV, PCM, OGG_OPUS; Sample Rates: 8000-48000 Hz
+- Extras: speed/loudness (-50 to 100), SSML, word-level subtitles, trailing silence, AIGC watermark
+
+---
+
+### Volcengine Voice Design
+
+Best for: Creating voices from text descriptions or character images
+
+#### Design from a Text Description
+
+> "Design a Volcengine voice: 女性，语速中等偏快，语调低沉有力"
+
+#### Design from a Character Image
+
+> "Design a voice that matches this character portrait"
+> (attach the image)
+
+**Voice Design Tips**:
+
+- Be specific: cover gender, age, pitch, speed, timbre, and style/role
+- Image prompts take priority over text prompts when both are given
+- Each speaker ID has a limited number of design attempts
+
+**Supported Options**:
+
+- Prompt: text description (max 200 chars) or image (local file / URL, max 10MB)
+- Languages: Chinese, English
+- Output: demo audio (downloaded immediately; URL valid for 1 hour)
+
+---
+
+### Volcengine Voice Clone
+
+Best for: Cloning real voices (Voice Clone 2.0), managing purchased voice instances
+
+#### Clone from an Audio Sample
+
+> "Clone a Volcengine voice from this recording onto speaker S_abc12345"
+> (attach audio file)
+
+#### Check Status and Listen to the Demo
+
+> "Check the training status of S_abc12345 and download the demo audio"
+
+#### Manage Voice Instances
+
+> "List all my Volcengine voices and their expiry dates"
+
+**Audio Requirements**:
+
+- Duration: 10-15 seconds recommended (longer audio is truncated)
+- Format: WAV, MP3, OGG, M4A, AAC, or PCM (24kHz mono); under 10 MB
+- Quality: single speaker, low noise, steady emotion
+
+**Supported Options**:
+
+- Actions: Train, Status, Upgrade (V1→V3), List, Order, Renew
+- Languages: 17 languages including Chinese, English, Japanese, Spanish
+- Extras: denoising, volume normalization control, demo preview text
+
+**Billing Note**: `Order` and `Renew` purchase/extend paid voice instances and are billed to your Volcengine account. For postpaid custom speaker IDs, the first synthesis call activates the voice and bills the slot fee.
 
 ---
 

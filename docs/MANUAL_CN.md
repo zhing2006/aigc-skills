@@ -26,6 +26,9 @@
   - [DashScope 文字转语音](#dashscope-文字转语音)
   - [DashScope 音色设计](#dashscope-音色设计)
   - [DashScope 音色克隆](#dashscope-音色克隆)
+  - [Volcengine 文字转语音](#volcengine-文字转语音)
+  - [Volcengine 音色设计](#volcengine-音色设计)
+  - [Volcengine 音色克隆](#volcengine-音色克隆)
 - [音乐生成](#音乐生成)
   - [ElevenLabs Music](#elevenlabs-music)
   - [Google Lyria Music](#google-lyria-music)
@@ -133,6 +136,13 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 
 # DashScope API（用于中文语音、音色设计、音色克隆）
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+
+# Volcengine API（用于 Seedance 视频和豆包语音）
+VOLCENGINE_API_KEY = "your_volcengine_api_key_here"               # 视频生成
+VOLCENGINE_TTS_API_KEY = "your_volcengine_tts_api_key_here"       # 语音（合成/克隆/设计）
+VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # 仅音色管理需要
+VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # 仅音色管理需要
+VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管理需要
 ```
 
 **注意**：你只需要配置你计划使用的服务商的 API 密钥。
@@ -176,6 +186,11 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 - **3D 模型生成**：使用 Tripo API 支持文生 3D、图生 3D 和多视图生 3D
 - **隔离环境**：使用 `.venv-genix` 避免与项目的 `.venv` 冲突
 
+### v0.4.2 新功能
+
+- **火山引擎语音**：流式语音合成（豆包 Seed-TTS 2.0，支持语音标签与语音指令）、音色设计、音色克隆及音色实例管理
+- **新增环境变量**：`VOLCENGINE_TTS_API_KEY`，音色管理另需 `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY`
+
 ---
 
 ## 技能概览
@@ -192,6 +207,9 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 | 文字转语音 | DashScope | 文字 | 音频 | 中文/多语言语音、自定义音色 |
 | 音色设计 | DashScope | 文字 | 音色 | AI 设计自定义音色 |
 | 音色克隆 | DashScope | 音频 | 音色 | 从音频样本克隆音色 |
+| 文字转语音 | Volcengine | 文字 | 音频 | 流式合成，支持语音标签/指令、克隆音色 |
+| 音色设计 | Volcengine | 文字、图片 | 音色 | 通过文字描述或图片设计音色 |
+| 音色克隆 | Volcengine | 音频 | 音色 | 克隆音色，管理/续费音色实例 |
 | Music | ElevenLabs | 文字 | 音频 | 背景音乐、歌曲 |
 | Lyria Music | Google | 文字、图片 | 音频 | 完整歌曲、短片段、自定义歌词 |
 | Tripo 3D | Tripo | 文字、图片、3D 模型 | 3D 模型 | 3D 模型生成、模型导入、骨骼绑定与动画、部件分割、部件补全（GLB、FBX、OBJ） |
@@ -541,6 +559,96 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 - 语言：中文、英文、德语、意大利语、葡萄牙语、西班牙语、日语、韩语、法语、俄语
 - 目标模型：`qwen3-tts-vc-realtime-2026-01-15`（最新）、`qwen3-tts-vc-realtime-2025-11-27`
 - 操作：创建、列表、删除
+
+---
+
+### Volcengine 文字转语音
+
+最适合：富有表现力的中文语音、情感旁白、方言、使用克隆/设计音色合成
+
+#### 基础中文合成
+
+> "用火山引擎生成中文语音：'夜色渐浓，城市的灯火次第亮起'"
+
+#### 用语音标签控制情感
+
+> "生成语音：'[怒目圆睁，冲着你大声怒吼]放肆！我是龙族的女王！'"
+
+#### 用语音指令控制整体语气
+
+> "用颤抖沙哑、带着崩溃与绝望的哭腔读这句话：'我逆转时空九十九次救你……'"
+
+#### 使用克隆音色合成
+
+> "用我的克隆音色 S_abc12345 朗读这段文稿"
+
+**支持的选项**：
+
+- 音色：豆包 Seed-TTS 2.0 官方音色（`*_uranus_bigtts`）和克隆/设计音色（`S_xxx`，自动路由）
+- 语音标签：句前 `[表情/心理/肢体动作描述]`（部分 2.0 官方音色 + 全部复刻 2.0 音色支持）
+- 语音指令：控制整体情绪/方言/语气/语速音调，可引用上文承接语境（仅官方音色，不计费）
+- 格式：MP3、WAV、PCM、OGG_OPUS；采样率：8000-48000 Hz
+- 其他：语速/音量（-50 到 100）、SSML、字级时间戳字幕、末尾静音、AIGC 水印
+
+---
+
+### Volcengine 音色设计
+
+最适合：通过文字描述或角色图片创建音色
+
+#### 通过文字描述设计
+
+> "设计一个火山引擎音色：女性，语速中等偏快，语调低沉有力"
+
+#### 通过角色图片设计
+
+> "设计一个匹配这张角色立绘的音色"
+> （附上图片）
+
+**音色设计技巧**：
+
+- 描述要具体：覆盖性别、年龄感、音高、语速、音质、风格/角色
+- 同时给出图片和文字时，图片优先生效
+- 每个 speaker ID 的设计次数有限
+
+**支持的选项**：
+
+- 提示词：文字描述（最多 200 字）或图片（本地文件/URL，最大 10MB）
+- 语言：中文、英文
+- 输出：试听音频（立即下载；URL 1 小时有效）
+
+---
+
+### Volcengine 音色克隆
+
+最适合：克隆真实人声（声音复刻 2.0）、管理已购音色实例
+
+#### 从音频样本克隆
+
+> "把这段录音克隆到火山引擎音色 S_abc12345"
+> （附上音频文件）
+
+#### 查询状态并试听
+
+> "查询 S_abc12345 的训练状态并下载试听音频"
+
+#### 管理音色实例
+
+> "列出我所有的火山引擎音色及到期时间"
+
+**音频要求**：
+
+- 时长：推荐 10-15 秒（过长会被截断）
+- 格式：WAV、MP3、OGG、M4A、AAC 或 PCM（24kHz 单声道）；10 MB 以内
+- 质量：单人、低噪声、情绪平稳
+
+**支持的选项**：
+
+- 操作：训练、状态查询、升级（V1→V3）、列表、下单、续费
+- 语言：中文、英文、日语、西班牙语等 17 种语言
+- 其他：降噪、音量归一化控制、试听文本
+
+**计费提示**：`下单` 和 `续费` 会购买/延长付费音色实例，直接从火山引擎账户扣费。后付费自定义音色首次调用合成即视为"转正"并收取音色槽位费。
 
 ---
 

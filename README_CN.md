@@ -16,6 +16,7 @@
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
 | **音频** | ElevenLabs | 文字转语音、音效生成 |
 | **音频** | DashScope | 文字转语音、音色设计、音色克隆 |
+| **音频** | Volcengine | 文字转语音（流式、语音标签/指令）、音色设计、音色克隆、音色管理 |
 | **音乐** | ElevenLabs | 文生音乐（纯乐器/带人声） |
 | **音乐** | Google Lyria | 文生音乐、图生音乐（完整歌曲/短片段） |
 | **3D 模型** | Tripo | 文生 3D、图生 3D、多视图生 3D、模型导入、骨骼绑定与动画、网格分割、网格补全 |
@@ -87,8 +88,12 @@ setup.bat cursor
 
 | 必需变量 |
 | -------- |
-| `VOLCENGINE_API_KEY` |
+| `VOLCENGINE_API_KEY`（视频生成） |
 | `VOLCENGINE_API_BASE`（可选，默认使用官方地址） |
+| `VOLCENGINE_TTS_API_KEY`（语音：合成/克隆/设计） |
+| `VOLCENGINE_TTS_BASE`（可选，默认使用官方地址） |
+| `VOLCENGINE_TTS_APPID`（仅音色管理需要） |
+| `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY`（仅音色管理需要） |
 
 #### `.genix.env` 文件示例
 
@@ -117,6 +122,11 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 # Volcengine API（字节跳动）
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"
 VOLCENGINE_API_BASE = "https://ark.cn-beijing.volces.com/api/v3"  # 可选
+VOLCENGINE_TTS_API_KEY = "your_volcengine_tts_api_key_here"       # 语音（合成/克隆/设计）
+VOLCENGINE_TTS_BASE = "https://openspeech.bytedance.com"      # 可选
+VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # 仅音色管理需要
+VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # 仅音色管理需要
+VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管理需要
 ```
 
 ## 使用方法
