@@ -34,7 +34,6 @@ Text-to-Speech generation using ElevenLabs API with voice search support.
 | `eleven_v3` | Most expressive, emotionally rich, 70+ languages, 5K chars |
 | `eleven_multilingual_v2` | Natural speech, 29 languages, 10K chars (default) |
 | `eleven_flash_v2_5` | Ultra-low latency ~75ms, 32 languages |
-| `eleven_turbo_v2_5` | High quality, low latency ~250ms, 32 languages |
 
 **Note**: If the user does not specify model, use `eleven_multilingual_v2` as default.
 

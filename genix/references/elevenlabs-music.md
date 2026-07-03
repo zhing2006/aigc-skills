@@ -18,7 +18,7 @@ Text-to-Music generation using ElevenLabs Music API.
 
 | Option | Default | Description |
 | ------ | ------- | ----------- |
-| `-m`, `--model` | `music_v1` | Model for music generation |
+| `-m`, `--model` | `music_v2` | Model for music generation |
 | `-d`, `--duration` | `30` | Duration in seconds (10-300) |
 | `-i`, `--instrumental` | false | Force instrumental (no vocals) |
 | `-f`, `--format` | `mp3_44100_128` | Output audio format |
@@ -28,9 +28,10 @@ Text-to-Music generation using ElevenLabs Music API.
 
 | Model | Description |
 | ----- | ----------- |
-| `music_v1` | Current music generation model (default) |
+| `music_v2` | Latest model: better vocals and arrangement, mid-track genre switching, improved multilingual support (default) |
+| `music_v1` | Previous generation model |
 
-**Note**: If the user does not specify model, use `music_v1` as default.
+**Note**: If the user does not specify model, use `music_v2` as default.
 
 ## Supported Output Formats
 

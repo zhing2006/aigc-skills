@@ -1,7 +1,7 @@
 """
 ElevenLabs Sound Effects - Text to Sound Effect Generation
 
-Supported models: eleven_text_to_sound_v1, eleven_text_to_sound_v2
+Supported models: eleven_text_to_sound_v2
 Supported duration: 0.5-30 seconds
 Supported output formats: MP3, PCM, Opus
 """
@@ -18,7 +18,6 @@ from elevenlabs.client import AsyncElevenLabs
 
 
 SUPPORTED_MODELS = [
-    "eleven_text_to_sound_v1",
     "eleven_text_to_sound_v2",
 ]
 SUPPORTED_OUTPUT_FORMATS = [
@@ -56,7 +55,7 @@ async def generate_sound_effect(
         model_id: Model ID for sound generation
         duration: Duration in seconds (0.5-30, None for auto)
         prompt_influence: How closely to follow the prompt (0-1)
-        loop: Create a seamless looping sound (v2 model only)
+        loop: Create a seamless looping sound
         output_format: Audio output format
         output_path: Output file path (optional)
 
@@ -75,9 +74,6 @@ async def generate_sound_effect(
 
     if prompt_influence < 0 or prompt_influence > 1:
         raise ValueError("Prompt influence must be between 0 and 1")
-
-    if loop and model_id != "eleven_text_to_sound_v2":
-        raise ValueError("Loop parameter is only supported with eleven_text_to_sound_v2 model")
 
     api_key = os.environ.get("ELEVENLABS_API_KEY")
     if not api_key:
@@ -154,7 +150,7 @@ async def main():
     parser.add_argument(
         "-l", "--loop",
         action="store_true",
-        help="Create a seamless looping sound (v2 model only)",
+        help="Create a seamless looping sound",
     )
     parser.add_argument(
         "-f", "--format",

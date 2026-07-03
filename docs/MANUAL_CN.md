@@ -406,10 +406,10 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 
 **支持的选项**：
 
-- 模型：`eleven_text_to_sound_v2`（默认，支持循环）、`eleven_text_to_sound_v1`
+- 模型：`eleven_text_to_sound_v2`（默认）
 - 时长：0.5 到 30 秒（未指定时自动判断）
 - 提示词影响力：0-1（默认 0.3，越高越精确）
-- 循环：无缝循环（仅 v2）
+- 循环：无缝循环
 - 格式：
   - MP3：`mp3_22050_32`、`mp3_44100_64`、`mp3_44100_128`、`mp3_44100_192`
   - PCM：`pcm_16000`、`pcm_22050`、`pcm_44100`、`pcm_48000`
@@ -439,7 +439,6 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
   - `eleven_v3`：最具表现力，70+ 语言，支持音频标签
   - `eleven_multilingual_v2`：自然语音，29 语言（默认）
   - `eleven_flash_v2_5`：超低延迟 ~75ms
-  - `eleven_turbo_v2_5`：高质量，低延迟 ~250ms
 - 声音选择：通过 ID 或搜索查询（如 "British female calm"）
 - 声音设置：稳定性（0-1）、相似度（0-1）、语速（0.7-1.2）
 - 音频标签（仅 V3）：`[excited]`、`[whispers]`、`[sad]`、`[British accent]` 等
@@ -569,7 +568,7 @@ DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 
 **支持的选项**：
 
-- 模型：`music_v1`（默认）
+- 模型：`music_v2`（默认，人声与编曲更强）、`music_v1`
 - 时长：10 到 300 秒（最长 5 分钟）
 - 纯乐器：强制仅输出乐器演奏（无 AI 人声）
 - 格式：

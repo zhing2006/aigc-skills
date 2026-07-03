@@ -1,7 +1,7 @@
 """
 ElevenLabs Text-to-Speech - Text to Speech Generation
 
-Supported models: eleven_v3, eleven_multilingual_v2, eleven_flash_v2_5, eleven_turbo_v2_5
+Supported models: eleven_v3, eleven_multilingual_v2, eleven_flash_v2_5
 Supported output formats: MP3, PCM, Opus
 Features: Voice search, voice settings (stability, similarity, speed)
 """
@@ -22,7 +22,6 @@ SUPPORTED_MODELS = [
     "eleven_v3",
     "eleven_multilingual_v2",
     "eleven_flash_v2_5",
-    "eleven_turbo_v2_5",
 ]
 SUPPORTED_OUTPUT_FORMATS = [
     "mp3_22050_32",

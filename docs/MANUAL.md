@@ -406,10 +406,10 @@ Best for: Environmental sounds, action sounds, ambient audio, game SFX
 
 **Supported Options**:
 
-- Models: `eleven_text_to_sound_v2` (default, supports loops), `eleven_text_to_sound_v1`
+- Models: `eleven_text_to_sound_v2` (default)
 - Duration: 0.5 to 30 seconds (auto-determined if not specified)
 - Prompt Influence: 0-1 (0.3 default, higher = more literal)
-- Loop: Seamless looping (v2 only)
+- Loop: Seamless looping
 - Formats:
   - MP3: `mp3_22050_32`, `mp3_44100_64`, `mp3_44100_128`, `mp3_44100_192`
   - PCM: `pcm_16000`, `pcm_22050`, `pcm_44100`, `pcm_48000`
@@ -439,7 +439,6 @@ Best for: Narration, dialogue, voice-overs, character voices
   - `eleven_v3`: Most expressive, 70+ languages, audio tags support
   - `eleven_multilingual_v2`: Natural speech, 29 languages (default)
   - `eleven_flash_v2_5`: Ultra-low latency ~75ms
-  - `eleven_turbo_v2_5`: High quality, low latency ~250ms
 - Voice Selection: By ID or search query (e.g., "British female calm")
 - Voice Settings: Stability (0-1), Similarity (0-1), Speed (0.7-1.2)
 - Audio Tags (V3 only): `[excited]`, `[whispers]`, `[sad]`, `[British accent]`, etc.
@@ -569,7 +568,7 @@ Best for: Background music, theme songs, ambient tracks, jingles
 
 **Supported Options**:
 
-- Models: `music_v1` (default)
+- Models: `music_v2` (default, better vocals and arrangement), `music_v1`
 - Duration: 10 to 300 seconds (5 minutes max)
 - Instrumental: Force instrumental-only output (no AI vocals)
 - Formats:

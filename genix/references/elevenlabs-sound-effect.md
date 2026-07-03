@@ -21,7 +21,7 @@ Text-to-Sound Effect generation using ElevenLabs API.
 | `-m`, `--model` | `eleven_text_to_sound_v2` | Model for sound generation |
 | `-d`, `--duration` | auto | Duration in seconds (0.5-30) |
 | `-p`, `--prompt-influence` | `0.3` | How closely to follow the prompt (0-1) |
-| `-l`, `--loop` | false | Create seamless looping sound (v2 only) |
+| `-l`, `--loop` | false | Create seamless looping sound |
 | `-f`, `--format` | `mp3_44100_128` | Output audio format |
 | `-o`, `--output` | `generated_sound.<ext>` | Output file path |
 
@@ -30,7 +30,6 @@ Text-to-Sound Effect generation using ElevenLabs API.
 | Model | Description |
 | ----- | ----------- |
 | `eleven_text_to_sound_v2` | Latest model with loop support (default) |
-| `eleven_text_to_sound_v1` | Original model |
 
 **Note**: If the user does not specify model, use `eleven_text_to_sound_v2` as default.
 

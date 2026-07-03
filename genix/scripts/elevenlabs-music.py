@@ -17,6 +17,7 @@ from elevenlabs.client import AsyncElevenLabs
 
 
 SUPPORTED_MODELS = [
+    "music_v2",
     "music_v1",
 ]
 SUPPORTED_OUTPUT_FORMATS = [
@@ -32,7 +33,7 @@ SUPPORTED_OUTPUT_FORMATS = [
     "opus_48000_128",
     "opus_48000_192",
 ]
-DEFAULT_MODEL = "music_v1"
+DEFAULT_MODEL = "music_v2"
 MIN_DURATION = 10  # seconds
 MAX_DURATION = 300  # seconds (5 minutes)
 
