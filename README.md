@@ -18,7 +18,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Audio** | DashScope | Text-to-Speech, Voice Design, Voice Clone |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
 | **Music** | Google Lyria | Text-to-Music, Image-to-Music (full songs/clips) |
-| **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D |
+| **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D, Model Import, Rigging & Animation, Mesh Segmentation, Mesh Completion |
 
 ## Installation
 

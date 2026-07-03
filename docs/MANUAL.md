@@ -194,7 +194,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Voice Clone | DashScope | Audio | Voice | Clone voices from audio samples |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
 | Lyria Music | Google | Text, Images | Audio | Full songs, clips, custom lyrics |
-| Tripo 3D | Tripo | Text, Images | 3D Model | 3D model generation (GLB, FBX, OBJ) |
+| Tripo 3D | Tripo | Text, Images, 3D Models | 3D Model | 3D model generation, model import, rigging & animation, segmentation, completion (GLB, FBX, OBJ) |
 
 ---
 
@@ -637,12 +637,32 @@ Best for: Game assets, product visualization, character models, 3D printing
 
 > "Create a 3D model of a simple chair and export it as FBX for Unity"
 
+#### Rig and Animate a Model
+
+> "Rig this cat model and make it walk and run"
+> (auto-rigs the skeleton, then exports walk/run animation clips in one GLB)
+
+#### Rig Your Own Model
+
+> "Import my character.glb and make it walk"
+> (uploads your model file, then rigs and animates it — works with GLB/OBJ/FBX/STL)
+
+#### Segment a Model into Parts
+
+> "Split this character model into separate named parts"
+
+#### Complete Hidden Geometry of Parts
+
+> "Complete the occluded geometry of the segmented parts so each part is a closed mesh"
+
 **Supported Options**:
 
-- Models: `v3.0-20250812` (latest, default), `v2.5-20250123`, `Turbo-v1.0-20250506` (fast)
+- Models: `v3.1-20260211` (latest, default), `v3.0-20250812`, `v2.5-20250123`, `P1-20260311` (low-poly), `Turbo-v1.0-20250506` (fast)
 - Quality: `standard` or `detailed` (for texture and geometry)
 - Output Formats: `GLB` (default), `GLTF`, `FBX`, `OBJ`, `STL`, `USDZ`, `3MF`
 - Face Limit: Control polygon count for game-ready models
+- Rigging: 8 skeleton types (biped/quadruped/hexapod/octopod/avian/serpentine/aquatic/others), Tripo or Mixamo spec, 16 preset animations (idle/walk/run/jump/slash/shoot etc.)
+- Segmentation: granularity `simple`/`balanced`/`detailed`, optional reference image guidance
 
 **Tips for Best Results**:
 
