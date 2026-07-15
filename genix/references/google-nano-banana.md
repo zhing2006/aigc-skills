@@ -19,7 +19,7 @@ Text-to-Image and Image-to-Image generation using Google's Nano Banana models.
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `-i`, `--images` | None | Input image file paths (max 14) |
-| `-m`, `--model` | `gemini-3.1-flash-image-preview` | Model to use |
+| `-m`, `--model` | `gemini-3.1-flash-image` | Model to use |
 | `-a`, `--aspect-ratio` | `1:1` | Output aspect ratio |
 | `-r`, `--resolution` | `1K` | Output resolution |
 | `-s`, `--search` | false | Enable Image Search grounding (**Nano Banana 2 only**) |
@@ -29,10 +29,10 @@ Text-to-Image and Image-to-Image generation using Google's Nano Banana models.
 
 | Model | Code Name | Speed | Cost (1K) | Notes |
 | ----- | --------- | ----- | --------- | ----- |
-| `gemini-3.1-flash-image-preview` | Nano Banana 2 | Fast (Flash) | ~$0.045 | **Default**. Image Search grounding, extra aspect ratios |
+| `gemini-3.1-flash-image` | Nano Banana 2 | Fast (Flash) | ~$0.045 | **Default** (GA). Image Search grounding, extra aspect ratios; `gemini-3.1-flash-image-preview` kept as legacy alias |
 | `gemini-3-pro-image-preview` | Nano Banana Pro | Slower (Pro) | ~$0.134 | Studio-quality, original model |
 
-**Note**: If the user does not specify model, use `gemini-3.1-flash-image-preview` (Nano Banana 2) as default.
+**Note**: If the user does not specify model, use `gemini-3.1-flash-image` (Nano Banana 2) as default.
 
 ## Supported Aspect Ratios
 

@@ -22,7 +22,8 @@ from PIL import Image
 
 
 SUPPORTED_MODELS = [
-    "gemini-3.1-flash-image-preview",  # Nano Banana 2 (default)
+    "gemini-3.1-flash-image",          # Nano Banana 2 (default, GA)
+    "gemini-3.1-flash-image-preview",  # Nano Banana 2 (legacy preview alias)
     "gemini-3-pro-image-preview",      # Nano Banana Pro
 ]
 SUPPORTED_ASPECT_RATIOS = [
@@ -32,7 +33,7 @@ SUPPORTED_ASPECT_RATIOS = [
 ]
 SUPPORTED_RESOLUTIONS = ["1K", "2K", "4K"]
 MAX_INPUT_IMAGES = 14
-DEFAULT_MODEL = "gemini-3.1-flash-image-preview"
+DEFAULT_MODEL = "gemini-3.1-flash-image"
 
 
 async def generate_image(
@@ -56,10 +57,10 @@ async def generate_image(
     if images and len(images) > MAX_INPUT_IMAGES:
         raise ValueError(f"Too many input images: {len(images)}. Maximum: {MAX_INPUT_IMAGES}")
 
-    if search and model_id != "gemini-3.1-flash-image-preview":
+    if search and model_id not in ("gemini-3.1-flash-image", "gemini-3.1-flash-image-preview"):
         raise ValueError(
             "Image Search grounding is only supported with "
-            "gemini-3.1-flash-image-preview (Nano Banana 2)"
+            "gemini-3.1-flash-image (Nano Banana 2)"
         )
 
     use_vertex_ai = os.environ.get("USE_VERTEX_AI", "false").lower() == "true"
