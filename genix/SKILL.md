@@ -31,6 +31,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 
 - [Nano Banana Image](references/google-nano-banana.md)
 - [OpenAI GPT Image](references/openai-gpt-image.md)
+- [Volcengine Seedream Image](references/volcengine-seedream.md)
 
 ## Audio Generation Skills
 

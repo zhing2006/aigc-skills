@@ -10,6 +10,7 @@
 | ---- | ------ | ---- |
 | **图像** | Google Gemini | 文生图、图生图、图片搜索 Grounding |
 | **图像** | OpenAI GPT | 文生图、图像编辑 |
+| **图像** | Volcengine Seedream | 文生图、图生图、多图融合、组图生成（最高 4K） |
 | **视频** | Volcengine Seedance | 文生视频、图生视频、多模态参考、视频编辑/延长（最高 4K） |
 | **视频** | DashScope HappyHorse | 文生视频、图生视频、参考生视频、视频编辑（物理真实） |
 | **视频** | Google Veo | 文生视频、图生视频 |

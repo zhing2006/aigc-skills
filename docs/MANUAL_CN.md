@@ -16,6 +16,7 @@
 - [图像生成](#图像生成)
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
   - [OpenAI GPT Image](#openai-gpt-image)
+  - [Volcengine Seedream](#volcengine-seedream)
 - [视频生成](#视频生成)
   - [Volcengine Seedance](#volcengine-seedance)
   - [Google Veo](#google-veo)
@@ -191,6 +192,10 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 - **火山引擎语音**：流式语音合成（豆包 Seed-TTS 2.0，支持语音标签与语音指令）、音色设计、音色克隆及音色实例管理
 - **新增环境变量**：`VOLCENGINE_TTS_API_KEY`，音色管理另需 `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY`
 
+### v0.4.3 新功能
+
+- **火山引擎 Seedream 生图**：豆包 Seedream 5.0 pro / 5.0 lite / 4.5 / 4.0 图片生成——文生图、图生图、多图融合、组图生成、联网搜索（复用 `VOLCENGINE_API_KEY`）
+
 ---
 
 ## 技能概览
@@ -199,6 +204,7 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 | ---- | ------ | ---- | ---- | -------- |
 | Nano Banana | Google | 文字、图片 | 图像 | 高质量图像生成、风格迁移、图片搜索 Grounding |
 | GPT Image | OpenAI | 文字、图片 | 图像 | 图像生成、编辑、透明背景 |
+| Seedream | Volcengine | 文字、图片 | 图像 | 中英文文字渲染、多图融合、组图生成 |
 | Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认） |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
 | Sora | OpenAI | 文字、图片 | 视频 | 电影级视频生成 |
@@ -294,6 +300,41 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 - 尺寸：`1024x1024`、`1536x1024`（横版）、`1024x1536`（竖版）
 - 质量：`auto`、`high`、`medium`、`low`
 - 背景：`auto`、`transparent`、`opaque`
+
+---
+
+### Volcengine Seedream
+
+最适合：图片中的中英文文字渲染、多图融合、组图（序列）生成、精准编辑
+
+#### 基础文生图
+
+> "用 Seedream 生成一张春季新茶促销海报，标题用优雅的书法字体写着'春日限定'"
+
+#### 图像编辑
+
+> "把这张照片的天空换成粉紫色晚霞，其他区域保持不变"
+> （附上你的图片）
+
+#### 多图融合
+
+> "把图 1 中的人物放到图 2 的雪山场景中，穿上图 3 的红色羽绒服"
+> （附上 3 张图片）
+
+#### 组图生成（5.0 lite / 4.5 / 4.0）
+
+> "生成一组 4 张连贯的四格漫画：一只柴犬学习烘焙蛋糕，日系简笔画风格"
+
+#### 联网搜索（5.0 lite）
+
+> "生成最新款旗舰手机的产品渲染图，使用联网搜索确保外观准确"
+
+**支持的选项**：
+
+- 模型：`doubao-seedream-5-0-pro-260628`（默认）、`doubao-seedream-5-0-lite-260128`、`doubao-seedream-4-5-251128`、`doubao-seedream-4-0-250828`
+- 尺寸：分辨率档位（`1K`/`2K`/`3K`/`4K`，因模型而异）或指定 `<宽>x<高>` 像素值
+- 组图生成：单次请求最多 15 张（仅 5.0 lite / 4.5 / 4.0）
+- 联网搜索：实时互联网信息参考（仅 5.0 lite）
 
 ---
 

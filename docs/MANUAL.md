@@ -16,6 +16,7 @@ This manual provides detailed instructions for installing and using the Genix AI
 - [Image Generation](#image-generation)
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
   - [OpenAI GPT Image](#openai-gpt-image)
+  - [Volcengine Seedream](#volcengine-seedream)
 - [Video Generation](#video-generation)
   - [Volcengine Seedance](#volcengine-seedance)
   - [Google Veo](#google-veo)
@@ -191,6 +192,10 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 - **Volcengine Speech**: Streaming TTS (Doubao Seed-TTS 2.0 with voice tags & instructions), Voice Design, Voice Clone, and voice instance management
 - **New Environment Variables**: `VOLCENGINE_TTS_API_KEY`, plus `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` for voice management
 
+### New Features in v0.4.3
+
+- **Volcengine Seedream**: Image generation with Doubao Seedream 5.0 pro / 5.0 lite / 4.5 / 4.0 — Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation, and web search (reuses `VOLCENGINE_API_KEY`)
+
 ---
 
 ## Skills Overview
@@ -199,6 +204,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | ----- | -------- | ----- | ------ | -------- |
 | Nano Banana | Google | Text, Images | Image | High-quality image generation, style transfer, Image Search grounding |
 | GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds |
+| Seedream | Volcengine | Text, Images | Image | Chinese/English text rendering, multi-image fusion, group generation |
 | Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default) |
 | Veo | Google | Text, Image | Video | Video generation with audio |
 | Sora | OpenAI | Text, Image | Video | Cinematic video generation |
@@ -294,6 +300,41 @@ Best for: Precise editing, transparent backgrounds, text in images
 - Sizes: `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait)
 - Quality: `auto`, `high`, `medium`, `low`
 - Background: `auto`, `transparent`, `opaque`
+
+---
+
+### Volcengine Seedream
+
+Best for: Chinese/English text rendering in images, multi-image fusion, group (sequential) generation, precise editing
+
+#### Basic Text-to-Image
+
+> "Use Seedream to generate a poster of a spring tea promotion with the title '春日限定' in elegant Chinese calligraphy"
+
+#### Image Editing
+
+> "Change the sky in this photo to a pink-purple sunset, keep everything else unchanged"
+> (attach your image)
+
+#### Multi-Image Fusion
+
+> "Put the person from image 1 into the snowy mountain scene of image 2, wearing the red jacket from image 3"
+> (attach 3 images)
+
+#### Group Generation (5.0 lite / 4.5 / 4.0)
+
+> "Generate a 4-panel comic of a shiba inu learning to bake a cake, Japanese minimalist style"
+
+#### With Web Search (5.0 lite)
+
+> "Generate a product render of the latest flagship phone, use web search for accurate appearance"
+
+**Supported Options**:
+
+- Models: `doubao-seedream-5-0-pro-260628` (default), `doubao-seedream-5-0-lite-260128`, `doubao-seedream-4-5-251128`, `doubao-seedream-4-0-250828`
+- Sizes: resolution presets (`1K`/`2K`/`3K`/`4K`, model-dependent) or explicit `<width>x<height>` pixels
+- Group Generation: up to 15 images per request (5.0 lite / 4.5 / 4.0 only)
+- Web Search: real-time internet grounding (5.0 lite only)
 
 ---
 
