@@ -1,6 +1,6 @@
 # DashScope Text-to-Speech
 
-Synthesize speech from text using Alibaba DashScope Qwen TTS with system voices or custom voices (Voice Design / Voice Clone).
+Synthesize speech from text using Alibaba DashScope Qwen TTS over WebSocket, with system voices or custom voices (Voice Design / Voice Clone). The two current Qwen-Audio-TTS models use the `tts_v2` protocol; legacy Qwen3 realtime models remain supported for existing voices.
 
 ## Usage
 
@@ -23,28 +23,58 @@ Synthesize speech from text using Alibaba DashScope Qwen TTS with system voices 
 
 | Option | Default | Description |
 | ------ | ------- | ----------- |
-| `-v`, `--voice` | `Cherry` | Voice name or custom voice ID |
-| `-m`, `--model` | `qwen3-tts-flash-realtime` | TTS model (see Models below) |
-| `-f`, `--format` | `mp3` | Output format: pcm/wav/mp3/opus |
+| `-v`, `--voice` | Model-specific | Voice name or custom voice ID |
+| `-m`, `--model` | `qwen-audio-3.0-tts-flash` | TTS model (see Models below) |
+| `-f`, `--format` | `wav` | Output format: pcm/wav/mp3/opus |
 | `-r`, `--sample-rate` | `24000` | Sample rate: 8000/16000/22050/24000/44100/48000 Hz |
 | `-o`, `--output` | Auto | Output file path |
 | `--volume` | `50` | Volume level (0-100) |
 | `--speed` | `1.0` | Speech speed (0.5-2.0) |
 | `--pitch` | `1.0` | Pitch adjustment (0.5-2.0) |
+| `--instruction` | None | Natural-language control of emotion, dialect, or character (new models) |
+| `--language-hint` | None | Target language: zh/en (WebSocket new models) |
+| `--seed` | `0` | Reproducible seed, 0-65535 (new models) |
+| `--bit-rate` | None | Opus bitrate, 6-510 kbps |
+| `--ssml` | Off | Treat input as SSML (new models) |
 
 ## Models
 
 | Model | Description |
 | ----- | ----------- |
-| `qwen3-tts-flash-realtime` | Default model for system voices |
+| `qwen-audio-3.0-tts-flash` | Current low-latency Qwen-Audio-TTS model; default voice `longanhuan_v3.6` |
+| `qwen-audio-3.0-tts-plus` | Higher-quality Qwen-Audio-TTS model; default voice `longanlingxin` |
+| `qwen3-tts-flash-realtime` | Legacy realtime system-voice model; default voice `Cherry` |
 | `qwen3-tts-vd-realtime-2025-12-16` | Voice Design model (for designed voices) |
 | `qwen3-tts-vc-realtime-2026-01-15` | Voice Clone model (latest) |
 | `qwen3-tts-vc-realtime-2025-11-27` | Voice Clone model (snapshot) |
 
-**Important**: Custom voices must use their corresponding model:
+**Important**: A voice can only be used with the model family it belongs to. The two new Qwen-Audio-TTS models have separate voice lists and are not interchangeable with legacy Qwen3 voices:
 
+- Qwen-Audio-TTS system voices: `longanhuan_v3.6` / `longjielidou_v3.6` / `loongeva_v3.6` / `loongjohn` (Flash), `longanlingxin` / `longanlufeng` (Plus)
+- Qwen-Audio-TTS cloned voices: `qwen-audio-3.0-tts-flash-*` or `qwen-audio-3.0-tts-plus-*`, matching the target model used during cloning
 - Voice Design voices (`qwen-tts-vd-*`) require `qwen3-tts-vd-realtime-2025-12-16`
-- Voice Clone voices (`qwen-tts-vc-*`) require `qwen3-tts-vc-realtime-2026-01-15`
+- Legacy Voice Clone voices (`qwen-tts-vc-*`) require the corresponding `qwen3-tts-vc-realtime-*` model
+
+The Qwen-Audio-TTS non-realtime API is separate from this script. This skill uses the WebSocket API for low-latency synthesis. Set `DASHSCOPE_TTS_WS_URL` when using a workspace-specific endpoint:
+
+```env
+DASHSCOPE_TTS_WS_URL = "wss://{WorkspaceId}.cn-beijing.maas.aliyuncs.com/api-ws/v1/inference"
+```
+
+The public Beijing endpoint (`wss://dashscope.aliyuncs.com/api-ws/v1/inference`) is the default. Qwen-Audio-TTS realtime is currently documented for the Beijing region; use a Beijing API key.
+
+### Qwen-Audio-TTS Voices
+
+| Model | Voice | Language / character |
+| ----- | ----- | -------------------- |
+| Flash | `longanhuan_v3.6` | Chinese/English female |
+| Flash | `longjielidou_v3.6` | Chinese/English boy |
+| Flash | `loongeva_v3.6` | English female |
+| Flash | `loongjohn` | English male |
+| Plus | `longanlingxin` | Chinese/English female |
+| Plus | `longanlufeng` | Chinese/English male |
+
+Both models support emotion and rich-language tags directly in the text, for example `[excited]今天真开心！[laughing]`. Common tags include `[sad]`, `[angry]`, `[serious]`, `[very slowly]`, `[gasp]`, `[sighing]`, `[giggles]`, and `[cough]`.
 
 ## System Voices
 
@@ -151,34 +181,58 @@ Custom voices created with Voice Design or Voice Clone can be used by specifying
   -o cloned_voice.wav
 ```
 
+### TTS with a Qwen-Audio-TTS cloned voice
+
+```bash
+{python} {skill_dir}/scripts/dashscope-text-speech.py "你好，这是新版克隆音色测试" \
+  -v "qwen-audio-3.0-tts-flash-your-voice-id" \
+  -m "qwen-audio-3.0-tts-flash" \
+  -o qwen_audio_clone.wav
+```
+
 ## Examples
 
 ### Basic Chinese TTS
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-text-speech.py "你好，欢迎使用语音合成服务" -v Cherry -o hello.mp3
+{python} {skill_dir}/scripts/dashscope-text-speech.py "你好，欢迎使用语音合成服务" -v longanhuan_v3.6 -o hello.wav
 ```
 
 ### English TTS with Professional Voice
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-text-speech.py "Welcome to our product demonstration" -v Jennifer -o welcome.mp3
+{python} {skill_dir}/scripts/dashscope-text-speech.py "Welcome to our product demonstration" -m qwen3-tts-flash-realtime -v Jennifer -o welcome.mp3
 ```
 
 ### News Broadcast Style
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-text-speech.py "各位观众朋友，大家好，欢迎收看晚间新闻" -v Neil -o news.mp3
+{python} {skill_dir}/scripts/dashscope-text-speech.py "各位观众朋友，大家好，欢迎收看晚间新闻" -m qwen3-tts-flash-realtime -v Neil -o news.mp3
 ```
 
 ### Audiobook with Adjusted Speed
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-text-speech.py -i story.txt -v Serena --speed 0.9 -o audiobook.mp3
+{python} {skill_dir}/scripts/dashscope-text-speech.py -i story.txt -m qwen3-tts-flash-realtime -v Serena --speed 0.9 -o audiobook.mp3
 ```
 
 ### High Quality WAV Output
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-text-speech.py "高品质音频输出测试" -v Ethan -f wav -r 48000 -o high_quality.wav
+{python} {skill_dir}/scripts/dashscope-text-speech.py "高品质音频输出测试" -m qwen3-tts-flash-realtime -v Ethan -f wav -r 48000 -o high_quality.wav
 ```
+
+### Emotion and instruction control
+
+```bash
+{python} {skill_dir}/scripts/dashscope-text-speech.py \
+  "[excited]欢迎来到今天的节目！[laughing]" \
+  -v longanlingxin -m qwen-audio-3.0-tts-plus \
+  --instruction "温暖、亲切，像在和朋友聊天" -o expressive.wav
+```
+
+## Official References
+
+- [Realtime TTS user guide](https://help.aliyun.com/zh/model-studio/realtime-tts-user-guide)
+- [Qwen-Audio-TTS voice list](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list)
+- [WebSocket API reference](https://help.aliyun.com/zh/model-studio/cosyvoice-websocket-api)

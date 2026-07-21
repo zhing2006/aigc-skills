@@ -53,12 +53,13 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 - **Google Generative AI** (`google-genai`) - Image and Video generation
 - **OpenAI** (`openai`) - Image and Video generation
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
+- **Alibaba Bailian / DashScope** - Image generation and editing, Speech, and Video generation
 
 ### Current Skill Capabilities (genix)
 
-- **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT)
+- **Image**: Text-to-Image, Image-to-Image, Multi-Image Fusion (Google Gemini, OpenAI GPT, DashScope Qwen Image 3.0)
 - **Video**: Text-to-Video, Image-to-Video (Google Veo, OpenAI Sora)
-- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs)
+- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs, DashScope Qwen-Audio-TTS 3.0)
 - **Music**: Text-to-Music with vocals or instrumental (ElevenLabs)
 
 ## Environment Setup
@@ -69,6 +70,9 @@ Copy `.env.template` to `.env` and configure API keys:
 - `ELEVENLABS_API_KEY`
 - `OPENAI_API_KEY`
 - `OPENAI_API_BASE` (optional, defaults to OpenAI)
+- `DASHSCOPE_API_KEY`
+- `DASHSCOPE_IMAGE_BASE_URL` (optional, native Qwen Image API host)
+- `DASHSCOPE_TTS_WS_URL` (optional, Qwen-Audio-TTS WebSocket endpoint)
 
 ## Technical Stack
 

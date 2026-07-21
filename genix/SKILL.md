@@ -1,7 +1,6 @@
 ---
 name: genix
-description: AIGC image/video/audio/music generation skills
-compatibility: Designed for Claude Code (or similar products)
+description: Generate and edit images, videos, audio, music, and 3D assets with major AIGC providers, including DashScope Qwen Image 3.0. Use for media generation, image editing, multi-image fusion, speech, music, video, or 3D requests.
 license: Apache 2.0. LICENSE.txt has complete terms
 metadata:
   version: "0.4"
@@ -32,6 +31,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 - [Nano Banana Image](references/google-nano-banana.md)
 - [OpenAI GPT Image](references/openai-gpt-image.md)
 - [Volcengine Seedream Image](references/volcengine-seedream.md)
+- [DashScope Qwen Image 3.0](references/dashscope-qwen-image.md)
 
 ## Audio Generation Skills
 

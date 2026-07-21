@@ -11,12 +11,13 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Image** | Google Gemini | Text-to-Image, Image-to-Image, Image Search Grounding |
 | **Image** | OpenAI GPT | Text-to-Image, Image Edit |
 | **Image** | Volcengine Seedream | Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation (up to 4K) |
+| **Image** | DashScope Qwen Image 3.0 | Text-to-Image, Image Edit, Multi-Image Fusion (invite-only) |
 | **Video** | Volcengine Seedance | Text-to-Video, Image-to-Video, Multi-modal Reference, Video Edit/Extend (up to 4K) |
 | **Video** | DashScope HappyHorse | Text-to-Video, Image-to-Video, Reference-to-Video, Video Edit (physically realistic) |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
-| **Audio** | DashScope | Text-to-Speech, Voice Design, Voice Clone |
+| **Audio** | DashScope Qwen-Audio-TTS 3.0 | WebSocket Text-to-Speech, Voice Design, Voice Clone |
 | **Audio** | Volcengine | Text-to-Speech (streaming, voice tags/instructions), Voice Design, Voice Clone, Voice Management |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
 | **Music** | Google Lyria | Text-to-Music, Image-to-Music (full songs/clips) |
@@ -81,9 +82,11 @@ Edit the `.genix.env` file and fill in your API keys:
 
 #### DashScope API
 
-| Required Variables |
-| ------------------ |
+| Variables |
+| --------- |
 | `DASHSCOPE_API_KEY` |
+| `DASHSCOPE_IMAGE_BASE_URL` (optional, native image API host) |
+| `DASHSCOPE_TTS_WS_URL` (optional, Qwen-Audio-TTS WebSocket endpoint) |
 
 #### Volcengine API
 
@@ -119,6 +122,8 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 
 # DashScope API (Alibaba Cloud)
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # Optional; workspace domain recommended for Qwen Image
+DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # Optional; Qwen-Audio-TTS
 
 # Volcengine API (ByteDance)
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"

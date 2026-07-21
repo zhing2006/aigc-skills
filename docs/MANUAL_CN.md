@@ -17,6 +17,7 @@
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
   - [OpenAI GPT Image](#openai-gpt-image)
   - [Volcengine Seedream](#volcengine-seedream)
+  - [DashScope 千问图像 3.0](#dashscope-千问图像-30)
 - [视频生成](#视频生成)
   - [Volcengine Seedance](#volcengine-seedance)
   - [Google Veo](#google-veo)
@@ -48,7 +49,7 @@
 
 - **操作系统**：Windows 10+、macOS 10.15+ 或 Linux
 - **网络连接**：下载依赖和调用 API 时需要
-- **API 密钥**：至少需要一个支持的服务商（Google、OpenAI、ElevenLabs）的 API 密钥
+- **API 密钥**：至少需要一个支持的服务商（Google、OpenAI、ElevenLabs、DashScope、Volcengine 或 Tripo）的 API 密钥
 
 ### 下载安装包
 
@@ -135,8 +136,10 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 # Tripo API（用于 3D 模型生成）
 TRIPO_API_KEY = "your_tripo_api_key_here"
 
-# DashScope API（用于中文语音、音色设计、音色克隆）
+# DashScope API（用于千问图像、千问音频 TTS、音色设计、音色克隆）
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # 可选，建议使用业务空间专属域名
+DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # 可选，千问音频 TTS WebSocket
 
 # Volcengine API（用于 Seedance 视频和豆包语音）
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"               # 视频生成
@@ -205,6 +208,7 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 | Nano Banana | Google | 文字、图片 | 图像 | 高质量图像生成、风格迁移、图片搜索 Grounding |
 | GPT Image | OpenAI | 文字、图片 | 图像 | 图像生成、编辑、透明背景 |
 | Seedream | Volcengine | 文字、图片 | 图像 | 中英文文字渲染、多图融合、组图生成 |
+| 千问图像 3.0 | DashScope | 文字、1-3 张图片 | 图像 | 文字渲染、精准编辑、多图融合（邀测） |
 | Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认） |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
 | Sora | OpenAI | 文字、图片 | 视频 | 电影级视频生成 |
@@ -335,6 +339,39 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 - 尺寸：分辨率档位（`1K`/`2K`/`3K`/`4K`，因模型而异）或指定 `<宽>x<高>` 像素值
 - 组图生成：单次请求最多 15 张（仅 5.0 lite / 4.5 / 4.0）
 - 联网搜索：实时互联网信息参考（仅 5.0 lite）
+
+---
+
+### DashScope 千问图像 3.0
+
+最适合：中英文文字渲染、精准图像编辑，以及最多三张参考图的多图融合
+
+> 千问图像 3.0 目前处于邀测阶段，使用前需在阿里云百炼模型广场申请开通 `qwen-image-3.0-pro`。
+
+#### 基础文生图
+
+> "用千问图像 3.0 生成一张春季咖啡海报，标题准确写着'SPRING SPECIAL'，暖色自然光，现代杂志排版"
+
+#### 图像编辑
+
+> "把人物服装换成深灰色商务西装，保持面部、发型、姿势和背景不变"
+> （附上图片）
+
+#### 多图融合
+
+> "把图 1 中的人物放到图 2 的咖啡店中，穿上图 3 的衬衫，保持人物面部特征不变"
+> （附上 3 张图片）
+
+**支持的选项**：
+
+- 模型：`qwen-image-3.0-pro`
+- 参考图：1-3 张 JPG/JPEG、PNG、BMP、TIFF、WEBP 或 GIF，每张不超过 10MB
+- 尺寸：默认由模型推荐，或指定 `<宽>x<高>`，总像素范围为 `512x512` 至 `2048x2048`
+- 输出数量：每次 1-6 张 PNG 图片
+- 控制项：提示词智能改写（默认开启）、反向提示词、随机种子和水印
+- 配置：`DASHSCOPE_API_KEY`；可通过 `DASHSCOPE_IMAGE_BASE_URL` 指定北京或新加坡业务空间的原生 API 域名
+
+北京与新加坡地域的 API Key 和请求地址相互独立，不能混用。生成链接有效期为 24 小时，技能会立即下载结果。
 
 ---
 
@@ -531,13 +568,18 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 **支持的选项**：
 
 - 模型：
-  - `qwen3-tts-flash-realtime`：系统预置音色默认模型
+  - `qwen-audio-3.0-tts-flash`：当前低延迟千问音频模型（默认音色 `longanhuan_v3.6`）
+  - `qwen-audio-3.0-tts-plus`：更高品质千问音频模型（默认音色 `longanlingxin`）
+  - `qwen3-tts-flash-realtime`：旧版实时模型（默认音色 `Cherry`）
   - `qwen3-tts-vd-realtime-2025-12-16`：用于音色设计的自定义音色
   - `qwen3-tts-vc-realtime-2026-01-15`：用于音色克隆的自定义音色
-- 系统音色：40+ 种音色，包括中文、英文、日文、韩文等
+- 千问音频音色：`longanhuan_v3.6`、`longjielidou_v3.6`、`loongeva_v3.6`、`loongjohn`、`longanlingxin`、`longanlufeng`
 - 音色参数：音量（0-100）、语速（0.5-2.0）、音调（0.5-2.0）
 - 格式：PCM、WAV、MP3、Opus
 - 采样率：8000、16000、22050、24000、44100、48000 Hz
+- 新模型控制项：自然语言 `--instruction`、`--language-hint`、`--seed`、`--ssml`；可在文本中加入 `[excited]`、`[laughing]` 等情感标签
+
+脚本使用千问音频 TTS WebSocket 端点（`/api-ws/v1/inference`）。默认北京公共端点无需业务空间 ID；如需使用业务空间专属域名，设置 `DASHSCOPE_TTS_WS_URL`。请使用北京地域的 DashScope API Key。
 
 ---
 
@@ -598,7 +640,7 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 **支持的选项**：
 
 - 语言：中文、英文、德语、意大利语、葡萄牙语、西班牙语、日语、韩语、法语、俄语
-- 目标模型：`qwen3-tts-vc-realtime-2026-01-15`（最新）、`qwen3-tts-vc-realtime-2025-11-27`
+- 目标模型：`qwen-audio-3.0-tts-plus`、`qwen-audio-3.0-tts-flash`、`qwen3-tts-vc-realtime-2026-01-15`（最新）、`qwen3-tts-vc-realtime-2025-11-27`
 - 操作：创建、列表、删除
 
 ---

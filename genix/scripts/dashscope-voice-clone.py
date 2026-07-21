@@ -25,6 +25,8 @@ SUPPORTED_AUDIO_FORMATS = {
     ".m4a": "audio/mp4",
 }
 SUPPORTED_TARGET_MODELS = [
+    "qwen-audio-3.0-tts-plus",
+    "qwen-audio-3.0-tts-flash",
     "qwen3-tts-vc-realtime-2026-01-15",
     "qwen3-tts-vc-realtime-2025-11-27",
 ]

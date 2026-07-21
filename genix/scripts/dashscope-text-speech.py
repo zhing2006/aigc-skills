@@ -1,15 +1,16 @@
 """
-DashScope TTS - Real-time Text-to-Speech
+DashScope TTS - WebSocket Text-to-Speech
 
-Synthesize speech from text using DashScope Qwen TTS with system voices.
-Supported models: qwen3-tts-flash-realtime, qwen-tts-realtime
-Supported formats: PCM, WAV, MP3, Opus
+Synthesize speech from text using DashScope Qwen TTS with system or custom
+voices. The current Qwen-Audio-TTS models use the tts_v2 WebSocket protocol;
+older Qwen3 realtime models remain supported through their legacy protocol.
 """
 
 import argparse
 import asyncio
 import base64
 import os
+import struct
 import sys
 import threading
 from pathlib import Path
@@ -21,12 +22,22 @@ from dotenv import load_dotenv
 try:
     import dashscope
     from dashscope.audio.qwen_tts_realtime import QwenTtsRealtime, QwenTtsRealtimeCallback
+    from dashscope.audio.tts_v2 import (
+        AudioFormat as TTSV2AudioFormat,
+        ResultCallback as TTSV2ResultCallback,
+        SpeechSynthesizer as TTSV2SpeechSynthesizer,
+    )
 except ImportError:
     print("Error: dashscope package not installed. Run: uv add dashscope", file=sys.stderr)
     sys.exit(1)
 
 
-SUPPORTED_MODELS = [
+TTS_V2_MODELS = [
+    "qwen-audio-3.0-tts-flash",
+    "qwen-audio-3.0-tts-plus",
+]
+
+LEGACY_MODELS = [
     "qwen3-tts-flash-realtime",
     "qwen3-tts-flash-realtime-2025-11-27",
     "qwen-tts-realtime",
@@ -37,13 +48,20 @@ SUPPORTED_MODELS = [
     "qwen3-tts-vc-realtime-2026-01-15",
     "qwen3-tts-vc-realtime-2025-11-27",
 ]
-DEFAULT_MODEL = "qwen3-tts-flash-realtime"
+SUPPORTED_MODELS = TTS_V2_MODELS + LEGACY_MODELS
+DEFAULT_MODEL = "qwen-audio-3.0-tts-flash"
 DEFAULT_VOICE = "Cherry"
 DEFAULT_FORMAT = "wav"
 DEFAULT_SAMPLE_RATE = 24000
+DEFAULT_TTS_V2_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
 
 SUPPORTED_FORMATS = ["pcm", "wav", "mp3", "opus"]
 SUPPORTED_SAMPLE_RATES = [8000, 16000, 22050, 24000, 44100, 48000]
+SUPPORTED_LANGUAGE_HINTS = ["zh", "en"]
+DEFAULT_VOICES = {
+    "qwen-audio-3.0-tts-flash": "longanhuan_v3.6",
+    "qwen-audio-3.0-tts-plus": "longanlingxin",
+}
 
 # System voices (common ones)
 SYSTEM_VOICES = [
@@ -63,6 +81,67 @@ def get_api_key() -> str:
     if not api_key:
         raise ValueError("DASHSCOPE_API_KEY environment variable is not set")
     return api_key
+
+
+def get_tts_v2_ws_url() -> str:
+    """Get the WebSocket endpoint for the current Qwen-Audio-TTS API."""
+    return os.environ.get("DASHSCOPE_TTS_WS_URL", DEFAULT_TTS_V2_WS_URL).rstrip("/")
+
+
+def default_voice_for_model(model: str) -> str:
+    """Return a sensible system voice for a model family."""
+    return DEFAULT_VOICES.get(model, "Cherry")
+
+
+def get_tts_v2_audio_format(audio_format: str, sample_rate: int):
+    """Map CLI audio settings to the SDK enum when a matching value exists.
+
+    The SDK enum omits a few combinations that the service accepts. Those
+    combinations use DEFAULT plus explicit request parameters below.
+    """
+    prefix = {
+        "wav": "WAV",
+        "mp3": "MP3",
+        "pcm": "PCM",
+        "opus": "OGG_OPUS",
+    }[audio_format]
+    suffix = f"{sample_rate}HZ_MONO_16BIT"
+    if audio_format == "mp3":
+        bitrate = 128 if sample_rate in (8000, 16000) else 256
+        suffix = f"{sample_rate}HZ_MONO_{bitrate}KBPS"
+    elif audio_format == "opus":
+        opus_rate = {8000: "8", 16000: "16", 24000: "24", 48000: "48"}.get(sample_rate)
+        if opus_rate is None:
+            return TTSV2AudioFormat.DEFAULT
+        suffix = f"{opus_rate}KHZ_MONO_32KBPS"
+    try:
+        return getattr(TTSV2AudioFormat, f"{prefix}_{suffix}")
+    except AttributeError:
+        return TTSV2AudioFormat.DEFAULT
+
+
+def finalize_wav_header(audio_data: bytes) -> bytes:
+    """Replace streaming RIFF/data size placeholders with actual byte counts."""
+    if len(audio_data) < 12 or audio_data[:4] != b"RIFF" or audio_data[8:12] != b"WAVE":
+        return audio_data
+
+    result = bytearray(audio_data)
+    struct.pack_into("<I", result, 4, len(result) - 8)
+
+    offset = 12
+    while offset + 8 <= len(result):
+        chunk_id = bytes(result[offset:offset + 4])
+        if chunk_id == b"data":
+            struct.pack_into("<I", result, offset + 4, len(result) - offset - 8)
+            break
+
+        chunk_size = struct.unpack_from("<I", result, offset + 4)[0]
+        next_offset = offset + 8 + chunk_size + (chunk_size % 2)
+        if next_offset <= offset or next_offset > len(result):
+            break
+        offset = next_offset
+
+    return bytes(result)
 
 
 class TTSCallback(QwenTtsRealtimeCallback):
@@ -126,6 +205,98 @@ class TTSCallback(QwenTtsRealtimeCallback):
             raise self.error
 
 
+class TTSV2Callback(TTSV2ResultCallback):
+    """Collect audio from the current Qwen-Audio-TTS SDK protocol."""
+
+    def __init__(self):
+        self.audio_chunks: list[bytes] = []
+        self.error: Exception | None = None
+
+    def on_data(self, data: bytes) -> None:
+        self.audio_chunks.append(data)
+
+    def on_error(self, message) -> None:
+        self.error = RuntimeError(f"TTS error: {message}")
+
+    def get_audio_data(self) -> bytes:
+        return b"".join(self.audio_chunks)
+
+
+def synthesize_speech_v2(
+    text: str,
+    voice: str,
+    model: str,
+    audio_format: str = DEFAULT_FORMAT,
+    sample_rate: int = DEFAULT_SAMPLE_RATE,
+    volume: int = 50,
+    speed: float = 1.0,
+    pitch: float = 1.0,
+    bit_rate: int | None = None,
+    seed: int = 0,
+    instruction: str | None = None,
+    language_hint: str | None = None,
+    enable_ssml: bool = False,
+) -> bytes:
+    """Synthesize with Qwen-Audio-TTS via the current WebSocket protocol."""
+    api_key = get_api_key()
+    dashscope.api_key = api_key
+
+    if bit_rate is not None and audio_format != "opus":
+        raise ValueError("bit-rate is only supported when format is opus")
+
+    callback = TTSV2Callback()
+    additional_params = {
+        "format": audio_format,
+        "sample_rate": sample_rate,
+    }
+    if bit_rate is not None:
+        additional_params["bit_rate"] = bit_rate
+    if enable_ssml:
+        additional_params["enable_ssml"] = True
+
+    synthesizer = TTSV2SpeechSynthesizer(
+        model=model,
+        voice=voice,
+        format=get_tts_v2_audio_format(audio_format, sample_rate),
+        volume=volume,
+        speech_rate=speed,
+        pitch_rate=pitch,
+        seed=seed,
+        instruction=instruction,
+        language_hints=[language_hint] if language_hint else None,
+        callback=callback,
+        url=get_tts_v2_ws_url(),
+        additional_params=additional_params,
+    )
+
+    print(f"Voice: {voice}")
+    print(f"Model: {model}")
+    print(f"Format: {audio_format}, Sample rate: {sample_rate}Hz")
+    print("Synthesizing speech...")
+
+    try:
+        # Use streaming_call + streaming_complete instead of call(): dashscope
+        # 1.25.x forces enable_ssml in call(), even for plain text requests.
+        synthesizer.streaming_call(text)
+        synthesizer.streaming_complete(complete_timeout_millis=120000)
+    except Exception as e:
+        try:
+            synthesizer.close()
+        except Exception:
+            pass
+        raise RuntimeError(f"TTS synthesis failed: {e}") from e
+
+    if callback.error:
+        raise callback.error
+
+    audio_data = callback.get_audio_data()
+    if not audio_data:
+        raise RuntimeError("No audio data received from TTS")
+
+    print(f"Request ID: {synthesizer.get_last_request_id()}")
+    return audio_data
+
+
 def synthesize_speech(
     text: str,
     voice: str = DEFAULT_VOICE,
@@ -135,6 +306,7 @@ def synthesize_speech(
     volume: int = 50,
     speed: float = 1.0,
     pitch: float = 1.0,
+    bit_rate: int | None = None,
 ) -> bytes:
     """
     Synthesize speech from text using DashScope TTS.
@@ -148,6 +320,7 @@ def synthesize_speech(
         volume: Volume level (0-100)
         speed: Speech speed (0.5-2.0)
         pitch: Pitch adjustment (0.5-2.0)
+        bit_rate: Opus bitrate in kbps
 
     Returns:
         Audio data as bytes
@@ -182,6 +355,7 @@ def synthesize_speech(
             volume=volume,
             speech_rate=speed,
             pitch_rate=pitch,
+            bit_rate=bit_rate,
         )
 
         # Send text and commit
@@ -228,8 +402,8 @@ async def main():
     parser.add_argument(
         "-v", "--voice",
         type=str,
-        default=DEFAULT_VOICE,
-        help=f"Voice name (default: {DEFAULT_VOICE})",
+        default=None,
+        help="Voice name (defaults to a model-compatible system voice)",
     )
     parser.add_argument(
         "-m", "--model",
@@ -276,6 +450,35 @@ async def main():
         default=1.0,
         help="Pitch adjustment 0.5-2.0 (default: 1.0)",
     )
+    parser.add_argument(
+        "--instruction",
+        type=str,
+        default=None,
+        help="Natural-language instruction for emotion, dialect, or character (new models)",
+    )
+    parser.add_argument(
+        "--language-hint",
+        choices=SUPPORTED_LANGUAGE_HINTS,
+        default=None,
+        help="Target language hint (new models)",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="Random seed 0-65535 (new models; default: 0)",
+    )
+    parser.add_argument(
+        "--bit-rate",
+        type=int,
+        default=None,
+        help="Opus bitrate in kbps, 6-510 (only with --format opus)",
+    )
+    parser.add_argument(
+        "--ssml",
+        action="store_true",
+        help="Treat input as SSML (new models)",
+    )
 
     args = parser.parse_args()
 
@@ -306,18 +509,56 @@ async def main():
         print("Error: Pitch must be between 0.5 and 2.0", file=sys.stderr)
         sys.exit(1)
 
+    if args.seed < 0 or args.seed > 65535:
+        print("Error: Seed must be between 0 and 65535", file=sys.stderr)
+        sys.exit(1)
+
+    if args.bit_rate is not None and (args.bit_rate < 6 or args.bit_rate > 510):
+        print("Error: Bit rate must be between 6 and 510 kbps", file=sys.stderr)
+        sys.exit(1)
+
+    if args.bit_rate is not None and args.format != "opus":
+        print("Error: --bit-rate is only supported with --format opus", file=sys.stderr)
+        sys.exit(1)
+
+    if args.model not in TTS_V2_MODELS and (
+        args.instruction or args.language_hint or args.seed != 0 or args.ssml
+    ):
+        print(
+            "Error: --instruction, --language-hint, --seed, and --ssml "
+            "require a qwen-audio-3.0-tts-* model",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    voice = args.voice or default_voice_for_model(args.model)
+
     try:
         # Synthesize speech
-        audio_data = synthesize_speech(
-            text=text,
-            voice=args.voice,
-            model=args.model,
-            audio_format=args.format,
-            sample_rate=args.sample_rate,
-            volume=args.volume,
-            speed=args.speed,
-            pitch=args.pitch,
-        )
+        synthesis_args = {
+            "text": text,
+            "voice": voice,
+            "model": args.model,
+            "audio_format": args.format,
+            "sample_rate": args.sample_rate,
+            "volume": args.volume,
+            "speed": args.speed,
+            "pitch": args.pitch,
+            "bit_rate": args.bit_rate,
+        }
+        if args.model in TTS_V2_MODELS:
+            audio_data = synthesize_speech_v2(
+                **synthesis_args,
+                seed=args.seed,
+                instruction=args.instruction,
+                language_hint=args.language_hint,
+                enable_ssml=args.ssml,
+            )
+        else:
+            audio_data = synthesize_speech(**synthesis_args)
+
+        if args.format == "wav":
+            audio_data = finalize_wav_header(audio_data)
 
         # Determine output path
         if args.output:

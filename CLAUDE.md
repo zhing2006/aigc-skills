@@ -53,12 +53,12 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 - **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
 - **Volcengine** (`volcengine-python-sdk[ark]` + raw HTTP OpenSpeech v3) - Image generation (Seedream), Video generation (Seedance 2.0), Speech synthesis / Voice Clone / Voice Design (Doubao Seed-TTS 2.0)
-- **Alibaba Bailian / DashScope** (`dashscope`) - Text-to-Speech and Video generation (HappyHorse)
+- **Alibaba Bailian / DashScope** (`dashscope` + native HTTP) - Image generation/editing (Qwen Image 3.0), Text-to-Speech, and Video generation (HappyHorse)
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 
 ### Current Skill Capabilities (genix)
 
-- **Image**: Text-to-Image, Image-to-Image (Google Gemini, OpenAI GPT, Volcengine Seedream)
+- **Image**: Text-to-Image, Image-to-Image, Multi-Image Fusion (Google Gemini, OpenAI GPT, Volcengine Seedream, DashScope Qwen Image 3.0)
 - **Video**: Text-to-Video, Image-to-Video, Multi-modal Reference (Volcengine Seedance, DashScope HappyHorse, Google Veo, OpenAI Sora)
 - **Audio**: Sound Effects, Text-to-Speech, Voice Design, Voice Clone (ElevenLabs, DashScope, Volcengine)
 - **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
@@ -71,6 +71,9 @@ Copy `.env.template` to `.env` and configure API keys:
 - `ELEVENLABS_API_KEY`
 - `OPENAI_API_KEY`
 - `OPENAI_API_BASE` (optional, defaults to OpenAI)
+- `DASHSCOPE_API_KEY`
+- `DASHSCOPE_IMAGE_BASE_URL` (optional, native Qwen Image API host)
+- `DASHSCOPE_TTS_WS_URL` (optional, Qwen-Audio-TTS WebSocket endpoint)
 - `VOLCENGINE_API_KEY`
 - `VOLCENGINE_API_BASE` (optional, defaults to Volcengine official endpoint)
 - `VOLCENGINE_TTS_API_KEY` (speech: TTS / voice clone / voice design)

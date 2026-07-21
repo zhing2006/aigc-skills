@@ -17,6 +17,7 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [Google Gemini (Nano Banana Pro)](#google-gemini-nano-banana-pro)
   - [OpenAI GPT Image](#openai-gpt-image)
   - [Volcengine Seedream](#volcengine-seedream)
+  - [DashScope Qwen Image 3.0](#dashscope-qwen-image-30)
 - [Video Generation](#video-generation)
   - [Volcengine Seedance](#volcengine-seedance)
   - [Google Veo](#google-veo)
@@ -48,7 +49,7 @@ This manual provides detailed instructions for installing and using the Genix AI
 
 - **Operating System**: Windows 10+, macOS 10.15+, or Linux
 - **Internet Connection**: Required for downloading dependencies and API calls
-- **API Keys**: At least one API key from supported providers (Google, OpenAI, ElevenLabs)
+- **API Keys**: At least one API key from a supported provider (Google, OpenAI, ElevenLabs, DashScope, Volcengine, or Tripo)
 
 ### Download Package
 
@@ -135,8 +136,10 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 # Tripo API (for 3D model generation)
 TRIPO_API_KEY = "your_tripo_api_key_here"
 
-# DashScope API (for Chinese TTS, Voice Design, Voice Clone)
+# DashScope API (for Qwen Image, Qwen-Audio-TTS, Voice Design, Voice Clone)
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # Optional; workspace domain recommended
+DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # Optional; Qwen-Audio-TTS WebSocket
 
 # Volcengine API (for Seedance video and Doubao speech)
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"               # Video generation
@@ -205,6 +208,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Nano Banana | Google | Text, Images | Image | High-quality image generation, style transfer, Image Search grounding |
 | GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds |
 | Seedream | Volcengine | Text, Images | Image | Chinese/English text rendering, multi-image fusion, group generation |
+| Qwen Image 3.0 | DashScope | Text, 1-3 Images | Image | Text rendering, precise editing, multi-image fusion (invite-only) |
 | Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default) |
 | Veo | Google | Text, Image | Video | Video generation with audio |
 | Sora | OpenAI | Text, Image | Video | Cinematic video generation |
@@ -335,6 +339,39 @@ Best for: Chinese/English text rendering in images, multi-image fusion, group (s
 - Sizes: resolution presets (`1K`/`2K`/`3K`/`4K`, model-dependent) or explicit `<width>x<height>` pixels
 - Group Generation: up to 15 images per request (5.0 lite / 4.5 / 4.0 only)
 - Web Search: real-time internet grounding (5.0 lite only)
+
+---
+
+### DashScope Qwen Image 3.0
+
+Best for: Chinese/English text rendering, precise image editing, and combining up to three reference images
+
+> Qwen Image 3.0 is currently invite-only. Enable `qwen-image-3.0-pro` in the Alibaba Cloud Model Studio model marketplace before use.
+
+#### Basic Text-to-Image
+
+> "Use Qwen Image 3.0 to create a spring coffee poster with the exact title 'SPRING SPECIAL', warm natural light, modern editorial layout"
+
+#### Image Editing
+
+> "Change the person's clothing to a dark gray business suit while keeping the face, hairstyle, pose, and background unchanged"
+> (attach your image)
+
+#### Multi-Image Fusion
+
+> "Put the person from image 1 into the cafe from image 2, wearing the shirt from image 3; preserve the person's facial features"
+> (attach 3 images)
+
+**Supported Options**:
+
+- Model: `qwen-image-3.0-pro`
+- Reference images: 1-3 JPG/JPEG, PNG, BMP, TIFF, WEBP, or GIF files, up to 10MB each
+- Size: model-selected by default, or explicit `<width>x<height>` with total pixels from `512x512` to `2048x2048`
+- Output count: 1-6 PNG images per request
+- Controls: prompt extension (on by default), negative prompt, seed, and watermark
+- Configuration: `DASHSCOPE_API_KEY`; optional `DASHSCOPE_IMAGE_BASE_URL` for a workspace-specific Beijing or Singapore native API host
+
+Beijing and Singapore API keys and endpoints are separate and cannot be mixed. Generated URLs expire after 24 hours, but the skill downloads the files immediately.
 
 ---
 
@@ -531,13 +568,18 @@ Best for: Chinese/multilingual TTS, custom voice characters, game dialogue
 **Supported Options**:
 
 - Models:
-  - `qwen3-tts-flash-realtime`: Default for system voices
+  - `qwen-audio-3.0-tts-flash`: Current low-latency Qwen-Audio-TTS model (default voice `longanhuan_v3.6`)
+  - `qwen-audio-3.0-tts-plus`: Higher-quality Qwen-Audio-TTS model (default voice `longanlingxin`)
+  - `qwen3-tts-flash-realtime`: Legacy realtime model (default voice `Cherry`)
   - `qwen3-tts-vd-realtime-2025-12-16`: For Voice Design custom voices
   - `qwen3-tts-vc-realtime-2026-01-15`: For Voice Clone custom voices
-- System Voices: 40+ voices including Chinese, English, Japanese, Korean, and more
+- Qwen-Audio-TTS voices: `longanhuan_v3.6`, `longjielidou_v3.6`, `loongeva_v3.6`, `loongjohn`, `longanlingxin`, `longanlufeng`
 - Voice Parameters: Volume (0-100), Speed (0.5-2.0), Pitch (0.5-2.0)
 - Formats: PCM, WAV, MP3, Opus
 - Sample Rates: 8000, 16000, 22050, 24000, 44100, 48000 Hz
+- New model controls: natural-language `--instruction`, `--language-hint`, `--seed`, and `--ssml`; emotion tags such as `[excited]` and `[laughing]`
+
+The script uses the Qwen-Audio-TTS WebSocket endpoint (`/api-ws/v1/inference`). The default public Beijing endpoint works without a workspace ID; set `DASHSCOPE_TTS_WS_URL` to a workspace-specific Beijing endpoint when needed. Use a Beijing DashScope API key.
 
 ---
 
@@ -598,7 +640,7 @@ Best for: Cloning real voices, maintaining voice consistency, custom narrators
 **Supported Options**:
 
 - Languages: Chinese, English, German, Italian, Portuguese, Spanish, Japanese, Korean, French, Russian
-- Target Models: `qwen3-tts-vc-realtime-2026-01-15` (latest), `qwen3-tts-vc-realtime-2025-11-27`
+- Target Models: `qwen-audio-3.0-tts-plus`, `qwen-audio-3.0-tts-flash`, `qwen3-tts-vc-realtime-2026-01-15` (latest), `qwen3-tts-vc-realtime-2025-11-27`
 - Actions: Create, List, Delete
 
 ---

@@ -11,12 +11,13 @@
 | **图像** | Google Gemini | 文生图、图生图、图片搜索 Grounding |
 | **图像** | OpenAI GPT | 文生图、图像编辑 |
 | **图像** | Volcengine Seedream | 文生图、图生图、多图融合、组图生成（最高 4K） |
+| **图像** | DashScope 千问图像 3.0 | 文生图、图像编辑、多图融合（邀测） |
 | **视频** | Volcengine Seedance | 文生视频、图生视频、多模态参考、视频编辑/延长（最高 4K） |
 | **视频** | DashScope HappyHorse | 文生视频、图生视频、参考生视频、视频编辑（物理真实） |
 | **视频** | Google Veo | 文生视频、图生视频 |
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
 | **音频** | ElevenLabs | 文字转语音、音效生成 |
-| **音频** | DashScope | 文字转语音、音色设计、音色克隆 |
+| **音频** | DashScope 千问音频 TTS 3.0 | WebSocket 文字转语音、音色设计、音色克隆 |
 | **音频** | Volcengine | 文字转语音（流式、语音标签/指令）、音色设计、音色克隆、音色管理 |
 | **音乐** | ElevenLabs | 文生音乐（纯乐器/带人声） |
 | **音乐** | Google Lyria | 文生音乐、图生音乐（完整歌曲/短片段） |
@@ -81,9 +82,11 @@ setup.bat cursor
 
 #### DashScope API
 
-| 必需变量 |
-| -------- |
+| 变量 |
+| ---- |
 | `DASHSCOPE_API_KEY` |
+| `DASHSCOPE_IMAGE_BASE_URL`（可选，原生图像 API 地址） |
+| `DASHSCOPE_TTS_WS_URL`（可选，千问音频 TTS WebSocket 地址） |
 
 #### Volcengine API
 
@@ -119,6 +122,8 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 
 # DashScope API（阿里云）
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
+DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # 可选；千问图像建议使用业务空间专属域名
+DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # 可选；千问音频 TTS
 
 # Volcengine API（字节跳动）
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"

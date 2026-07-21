@@ -28,7 +28,7 @@ Clone voices from audio files using Alibaba DashScope Qwen Voice Clone API.
 | ------ | ------- | ----------- |
 | `-l`, `--language` | Auto | Audio language: zh/en/de/it/pt/es/ja/ko/fr/ru |
 | `-t`, `--text` | None | Transcript of the audio (for validation) |
-| `--target-model` | `qwen3-tts-vc-realtime-2026-01-15` | Target TTS model |
+| `--target-model` | `qwen3-tts-vc-realtime-2026-01-15` | Target TTS model (`qwen-audio-3.0-tts-plus` and `qwen-audio-3.0-tts-flash` are also supported) |
 
 ## List Options
 
