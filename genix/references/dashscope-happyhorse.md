@@ -5,6 +5,14 @@ realistic, smoothly-moving video. Four modes are supported, auto-detected from
 the inputs you provide. The native API is asynchronous (create task → poll →
 download), handled automatically by the script.
 
+## Contents
+
+- [Commands](#commands)
+- [Supported Models](#supported-models)
+- [Prompt Best Practices](#prompt-best-practices)
+- [Examples](#examples)
+- [Environment Variables](#environment-variables)
+
 | Mode | Trigger | Model suffix | Notes |
 | ---- | ------- | ------------ | ----- |
 | Text-to-Video (t2v) | prompt only | `-t2v` | supports `ratio` |
@@ -107,45 +115,101 @@ Pass `--no-watermark` to generate a clean video.
 
 ## Prompt Best Practices
 
-HappyHorse is tuned for **physical realism and smooth, continuous motion**.
-
-### Key Principles
-
-1. **One video = one subject + one core action**
-2. **Lean into physics** — "wind ripples the water", "snow crunches underfoot"
-3. **Prefer slow, smooth, continuous motion** — 缓慢、柔和、连续、自然、流畅
-4. **Be specific, not vague** — "warm golden light from the left at dusk" beats "nice lighting"
-5. **Reference-to-Video**: name the subject explicitly per image, e.g. `[Image 1]中身着红色旗袍的女性`,
-   and keep the `[Image N]` order aligned with the `--ref-image` order
+Prefer the first-party HappyHorse API examples for
+[text-to-video](https://help.aliyun.com/zh/model-studio/happyhorse-text-to-video-api-reference),
+[image-to-video](https://help.aliyun.com/zh/model-studio/happyhorse-image-to-video-api-reference),
+[reference-to-video](https://help.aliyun.com/zh/model-studio/happyhorse-reference-to-video-api-reference),
+and [video editing](https://help.aliyun.com/zh/model-studio/happyhorse-video-edit-api-reference)
+over generic prompt collections. The API pages provide examples rather than a
+standalone prompt guide, so use the conservative mode-specific patterns below.
 
 ### Prompt Length & Language
 
 - Max: 2500 Chinese characters or 5000 non-Chinese characters (excess auto-truncated)
 - Any language is supported
 
-### Camera & Shots
+### Mode-specific patterns
+
+#### Text-to-Video
+
+Describe visible content with concrete nouns and verbs:
+
+```text
+Subject + specific action + environment/lighting + camera + visual style
+```
+
+Prefer `warm golden light from the left at dusk` over `nice lighting`. Sequence
+multiple actions chronologically and describe physical effects only when they
+matter to the shot.
+
+#### Image-to-Video
+
+The first frame already defines the subject, style, composition, and aspect
+ratio. Spend the prompt on motion, camera behavior, environmental change, and
+what must remain consistent. Do not redescribe an appearance that conflicts
+with the image.
+
+```text
+首帧中的猫先压低前腿蓄力，随后沿草地向画面右侧自然奔跑，尾巴随步伐摆动，草叶被轻微带起。
+低机位平稳跟拍，速度逐渐加快；保持猫的花纹、体型和场景风格与首帧一致。
+```
+
+#### Reference-to-Video
+
+Refer to each image in exact `--ref-image` order as `[Image 1]`, `[Image 2]`,
+and so on. Identify the object within each image; do not write only "use Image
+1". Assign every reference a clear job and relationship.
+
+```text
+[Image 1]中的人物拿起[Image 2]中的产品，在[Image 3]中的场景里缓慢走向镜头。
+```
+
+#### Video Edit
+
+Use a **Change + Preserve** instruction: identify the target and replacement,
+then name the source properties that must remain unchanged. Iterate one major
+change at a time.
+
+```text
+将视频中角色原有的上衣替换为参考图片中的条纹毛衣；毛衣跟随身体动作自然形变，
+保持角色头部、身体比例、动作、背景、镜头运动、时长和音频不变。
+```
+
+### Cross-mode rules
+
+1. Use specific, observable actions rather than abstract adjectives.
+2. Sequence actions in event order and keep transitions physically connected.
+3. Keep camera instructions purposeful; use a cut when camera behavior changes.
+4. For reference inputs, assign each asset one clear responsibility.
+5. Fix `--seed` when repeatability matters, but do not promise identical output.
+6. Do not append an unsupported universal negative-prompt list.
+
+### Camera and shots
 
 Camera: 推/拉镜头 (dolly), 左/右摇 (pan), 上仰/下俯 (tilt), 跟镜头 (tracking),
 升/降镜头 (crane), 环绕运镜 (orbit), 固定机位 (static), 航拍 (aerial).
 Shots: 特写 / 近景 / 中景 / 全景 / 远景 / 大远景.
 
-### Quality Keywords
+Use quality and style words only when they add information. Resolution is
+controlled by `--resolution`; do not claim `4K` or `8K` when HappyHorse output
+is limited to 720P/1080P.
 
-`高清画质, 细节丰富, 画面稳定, 色彩自然, 电影质感, 运动流畅` /
-`4K, ultra HD, rich details, sharp clarity, cinematic texture, stable picture, smooth motion`
+```text
+细节丰富，画面稳定，色彩自然，电影质感，运动流畅
+```
 
 ## Examples
 
 ### Text-to-Video
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-happyhorse.py "一座由硬纸板和瓶盖搭建的微型城市，在夜晚焕发出生机。一列硬纸板火车缓缓驶过，小灯点缀其间，照亮前路。" -a 16:9 -d 8 -o mini_city.mp4
+{python} {skill_dir}/scripts/dashscope-happyhorse.py "一座由硬纸板和瓶盖搭建的微型城市，在夜晚焕发出生机。一列硬纸板火车缓缓驶过，小灯点缀其间，照亮前路。微距低机位平稳跟拍，定格动画质感。" -a 16:9 -d 8 -o mini_city.mp4
 ```
 
 ### Image-to-Video (First Frame)
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-happyhorse.py "一只猫在草地上奔跑" -i cat_first_frame.png -d 5 -o cat_run.mp4
+{python} {skill_dir}/scripts/dashscope-happyhorse.py "首帧中的猫先压低前腿蓄力，随后沿草地向画面右侧自然奔跑，尾巴随步伐摆动，草叶被轻微带起。低机位平稳跟拍，保持猫的花纹、体型和场景风格与首帧一致。" -i cat_first_frame.png -d 5 -o cat_run.mp4
 ```
 
 ### Reference-to-Video (Multi-image)
@@ -153,13 +217,13 @@ Shots: 特写 / 近景 / 中景 / 全景 / 远景 / 大远景.
 Refer to each image with `[Image N]` matching the `--ref-image` order:
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-happyhorse.py "[Image 1]中身着红色旗袍的女性，轻抬玉手展开[Image 2]中的折扇，[Image 3]中的流苏耳坠随头部转动轻盈摆动，多视角展现东方韵味" --ref-image girl.jpg --ref-image fan.jpg --ref-image earrings.jpg -a 16:9 -d 5 -o qipao.mp4
+{python} {skill_dir}/scripts/dashscope-happyhorse.py "[Image 1]中身着红色旗袍的女性，镜头先以侧面中景勾勒旗袍剪裁，随即切换至低角度仰拍；她轻抬右手展开[Image 2]中的折扇，[Image 3]中的流苏耳坠随头部转动轻盈摆动。最后推近至面部特写，定格在她指尖轻点扇骨、眼波流转的瞬间。" --ref-image girl.jpg --ref-image fan.jpg --ref-image earrings.jpg -a 9:16 -d 8 -o qipao.mp4
 ```
 
 ### Video Edit (instruction + reference image)
 
 ```bash
-{python} {skill_dir}/scripts/dashscope-happyhorse.py "让视频中的角色穿上图片中的条纹毛衣" --video "https://example.com/source.mp4" --ref-image sweater.webp -r 720P --audio-setting origin -o edited.mp4
+{python} {skill_dir}/scripts/dashscope-happyhorse.py "将视频中角色原有的上衣替换为参考图片中的条纹毛衣；毛衣跟随身体动作自然形变，保持角色头部、身体比例、动作、背景、镜头运动、时长和音频不变。" --video "https://example.com/source.mp4" --ref-image sweater.webp -r 720P --audio-setting origin -o edited.mp4
 ```
 
 ### Use the 1.0 Model / Clean Output

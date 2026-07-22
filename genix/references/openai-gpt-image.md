@@ -2,6 +2,15 @@
 
 Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 
+## Contents
+
+- [Usage](#usage)
+- [Supported Models](#supported-models)
+- [Model-Specific Notes](#model-specific-notes)
+- [Prompt Best Practices](#prompt-best-practices)
+- [Examples](#examples)
+- [Environment Variables](#environment-variables)
+
 ## Usage
 
 ```bash

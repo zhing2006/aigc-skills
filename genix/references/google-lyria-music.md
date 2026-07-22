@@ -2,6 +2,14 @@
 
 Text-to-Music and Image-to-Music generation using Google's Lyria 3 models.
 
+## Contents
+
+- [Usage](#usage)
+- [Supported Models](#supported-models)
+- [Prompt Best Practices](#prompt-best-practices)
+- [Examples](#examples)
+- [Environment Variables](#environment-variables)
+
 ## Usage
 
 ```bash

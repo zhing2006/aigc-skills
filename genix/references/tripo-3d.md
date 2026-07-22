@@ -2,6 +2,20 @@
 
 Text/Image/Multi-view to 3D model generation using Tripo API.
 
+## Contents
+
+- [Usage](#usage)
+- [Modes](#modes)
+- [Supported Model Versions](#supported-model-versions)
+- [Prompt Best Practices](#prompt-best-practices)
+- [Examples](#examples)
+- [Tripo Convert](#tripo-convert)
+- [Tripo Import](#tripo-import)
+- [Tripo Rig & Animate](#tripo-rig--animate)
+- [Tripo Segment](#tripo-segment)
+- [Tripo Complete](#tripo-complete)
+- [Environment Variables](#environment-variables)
+
 ## Usage
 
 ```bash

@@ -2,6 +2,14 @@
 
 Text-to-Video and Image-to-Video generation using Google's Veo 3.1 model.
 
+## Contents
+
+- [Usage](#usage)
+- [Supported Models](#supported-models)
+- [Prompt Best Practices](#prompt-best-practices)
+- [Examples](#examples)
+- [Environment Variables](#environment-variables)
+
 ## Usage
 
 ```bash
@@ -136,7 +144,7 @@ Ambient noise: gentle orchestral score swelling
 
 | Category | Examples |
 | -------- | -------- |
-| Realistic | "Photorealistic", "shot on 8K camera" |
+| Realistic | "Photorealistic", "detailed texture, natural color" |
 | Cinematic | "Cinematic", "shot on 35mm film" |
 | Animation | "Japanese anime style", "Pixar-like 3D animation" |
 | Art Movement | "In the style of Van Gogh", "Art Deco design" |

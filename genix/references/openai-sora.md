@@ -110,7 +110,7 @@ Medium shot, a tired corporate worker, rubbing his temples in exhaustion, in fro
 
 | Category | Examples |
 | -------- | -------- |
-| Realistic | "Photorealistic", "shot on 8K camera" |
+| Realistic | "Photorealistic", "detailed texture, natural color" |
 | Cinematic | "Cinematic", "shot on 35mm film" |
 | Animation | "Japanese anime style", "Pixar-like 3D animation" |
 | Art Movement | "In the style of Van Gogh", "Art Deco design" |

@@ -2,6 +2,15 @@
 
 Text-to-Video, Image-to-Video, and Multi-modal Reference video generation using Volcengine Seedance 2.0.
 
+## Contents
+
+- [Commands](#commands)
+- [Supported Models](#supported-models)
+- [Generation Modes](#generation-modes)
+- [Prompt Best Practices](#prompt-best-practices)
+- [Examples](#examples)
+- [Environment Variables](#environment-variables)
+
 ## Commands
 
 ### generate (default)
@@ -164,42 +173,107 @@ Provide both first and last frame images. The model generates smooth transition 
 Combine reference images, videos, and audio for maximum control. Use prompt to describe how references should be combined.
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "使用图片1作为主角，全程使用视频1的第一视角构图" --ref-image character.png --ref-video scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为主角，人物外观严格参考图片1；第一视角运镜参考视频1，但不复用其中的人物和场景；音乐节奏参考音频1。人物A在雨后街道缓慢向前行走，镜头平稳跟随，动作与音乐节拍自然同步。" --ref-image character.png --ref-video scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
 ```
 
 **Note**: First frame mode and multi-modal reference mode are mutually exclusive. Audio references require at least one image or video reference.
 
 ## Prompt Best Practices
 
-### Core Formula
+Use the first-party
+[Volcengine Seedance 2.0 prompt guide](https://www.volcengine.com/docs/82379/2222480)
+and [ByteDance product examples](https://seed.bytedance.com/zh/seedance2_0)
+instead of generic prompt collections.
 
+### Choose the task first
+
+| Task | Recommended wording |
+| ---- | ------------------- |
+| Text / first-frame video | `Subject + action + scene + shot/camera + audio + style/quality + constraints` |
+| Multi-modal reference | `Reference image/video/audio N for one named property, then describe the new video` |
+| Edit a video | `Strictly edit Video N: change X to Y; preserve A/B/C` |
+| Extend a video | `Extend Video N forward/backward: next action or story beat` |
+
+For an edit or extension, say `视频1` rather than `参考视频1`. The official
+guide warns that the latter can be interpreted as a new reference-generation
+task.
+
+### Write directing instructions
+
+Treat the prompt as a compact directing specification, not a pile of style
+adjectives:
+
+1. **Bind every subject.** With ordered references, consistently use
+   `人物A@图片1`, `产品@图片2`, `视频1`, and `音频1`. Do not alternate between
+   names, pronouns, and vague phrases such as "the other person".
+2. **Assign one responsibility to each asset.** For example: image 1 anchors
+   the face, image 2 anchors clothing, video 1 supplies movement, and audio 1
+   supplies voice or rhythm. Put the most important reference first and avoid
+   conflicting inputs.
+3. **Storyboard in event order.** For complex video, use `镜头1`, `镜头2`,
+   `镜头3`. Within each shot write the camera/cut, action and expression,
+   spatial change, then audio. Prefer natural pacing; exact intervals such as
+   `0-3秒` are not stable enough to use unless the user explicitly requires them.
+4. **Use one camera movement per shot.** `中景缓慢推近`, `平稳横移`, or
+   `固定机位` is clearer than push + pull + pan + orbit in one shot. Cut to a
+   new shot when camera behavior changes.
+5. **Make action observable.** Name the body part plus amplitude, speed, and
+   force: `右手缓慢抬至肩部`, `快速转头`, `用力蹬地`. Describe transitions:
+   `借转身惯性顺势抬手`. Express emotion through visible behavior rather than
+   only `very sad` or `very angry`.
+6. **Keep difficult motion achievable.** Prefer physically connected motion.
+   For dense fights, chases, or montage, generate shorter clips and edit them
+   together instead of overloading one prompt.
+7. **Close with relevant boundaries.** State style and quality, then only the
+   constraints that matter, such as `保持无字幕`, `不要生成 Logo`, or
+   `不要生成水印`. Do not append a universal boilerplate negative list.
+
+### First-frame prompting
+
+The first frame already anchors appearance and composition. Spend the prompt on
+motion, camera, environmental change, audio, and what must remain consistent.
+Do not redescribe a conflicting appearance.
+
+```text
+以首帧人物外观、服装和初始构图为准。固定中近景，她先轻轻眨眼，随后缓慢抬头看向窗外，
+右手将耳边一缕头发自然别到耳后，窗帘被微风轻微吹动。晨光逐渐变暖，动作幅度克制、衔接自然，
+人物面部与服装全程保持一致，无台词，只有轻微风声和室内环境声。
 ```
-Subject + Scene/Atmosphere + Action/Performance + Camera Movement + Style/Lighting
+
+### Multi-modal references
+
+Number images, videos, and audio in their respective argument order. Define the
+identity and role of every important input:
+
+```text
+将人物A@图片1定义为女剑客，将人物B@图片2定义为蒙面守卫。人物外观分别严格参考对应图片。
+动作节奏参考视频1，但不复用视频1中的人物和场景；鼓点节奏参考音频1。
 ```
 
-Or equivalently:
+- For one person, prefer one clean face close-up plus one full-body styling
+  image: `人物A的面部参考图片1，服装和体型参考图片2`.
+- Avoid a multi-view contact sheet for a person; the views may be read as
+  separate subjects. Clean single-person images are more reliable.
+- The official guide recommends roughly 4-5 purposeful assets for a complex
+  task instead of filling every input slot.
+- More than four referenced people is unstable. Split large casts into groups
+  or establish them in intermediate images first.
+- Use reference video for exact motion, camera language, or special-effect
+  behavior that is difficult to describe reliably in text.
 
+### Video editing
+
+Use a **Change + Preserve** instruction:
+
+```text
+严格编辑视频1：将桌上的透明香水瓶替换为图片1中的面霜罐，保持原视频的手部动作、运镜、
+灯光、背景、时长和音频不变；面霜罐的大小、透视、遮挡和桌面接触阴影与原场景一致。
 ```
-Scene description → Subject action → Camera movement → Audio cue
-```
-
-### Prompt Length
-
-- Max: 500 characters (Chinese) or 1000 words (English)
-- Too long causes information to scatter — the model may ignore details and only focus on the main points
-- **Language support**: all models support Chinese and English; Seedance 2.0 additionally supports Japanese, Indonesian, Spanish, and Portuguese
-
-### Key Principles
-
-1. **One video = one subject + one core action** — this is the iron rule
-2. **Use slow, smooth, continuous motion** — prioritize: 缓慢、柔和、连续、自然、流畅
-3. **Be specific, not vague** — "golden hour warm lighting from the left" beats "beautiful lighting"
-4. **Describe physics** — "wind blowing through hair", "water splashing on rocks" leverages the model's physics simulation
-5. **Use positive constraints** — Seedance does NOT support negative prompts; say what you want, not what to avoid
 
 ### Camera Movements (运镜)
 
-Seedance 2.0 has extremely strong recognition of camera terms. Use them to instantly elevate quality.
+Seedance 2.0 understands standard camera terms directly. Prefer one movement
+per shot.
 
 | Movement | Chinese | Description |
 | -------- | ------- | ----------- |
@@ -230,7 +304,7 @@ Seedance 2.0 has extremely strong recognition of camera terms. Use them to insta
 | Category | Keywords |
 | -------- | -------- |
 | Cinematic | "cinematic, film grain, 35mm film, Hollywood blockbuster" |
-| Photorealistic | "photorealistic, hyper-detailed, 8K, ultra HD" |
+| Photorealistic | "photorealistic, detailed texture, natural color" |
 | Golden hour | "golden hour, warm tones, soft light" |
 | Dramatic | "strong rim light, silhouette, high contrast" |
 | Neon/Cyberpunk | "neon-lit, cyberpunk, high contrast, saturated colors" |
@@ -244,51 +318,32 @@ Seedance 2.0 generates native synchronized audio (dialogue, SFX, music). Tips:
 - **Dialogue**: Put lines in double quotes: `男人说："你好，欢迎来到这里。"`
 - **Sound Effects**: Describe naturally: `脚步声踩在雪地上，咯吱作响`
 - **Background Music**: Include mood cues: `背景音乐为轻快的吉他弹唱`
-- **Language**: Supports 8+ languages for lip-sync (Chinese, English, Japanese, Korean, etc.)
+- **Language consistency**: Keep dialogue in one language except for necessary proper nouns
+- **Voice reference**: Keep the requested delivery close to the reference audio's tone and style
 
-### Timeline / Storyboard Prompting
+### Storyboard prompting
 
-For longer videos, describe events in chronological order:
+Use shot order rather than fragile exact timestamps:
 
-```
-0-3秒：近景，女孩站在窗前，柔和的晨光洒在脸上，微微侧头；
-3-6秒：中景，她转身走向桌边，拿起咖啡杯，缓慢推镜头；
-6-10秒：特写，咖啡杯中的热气袅袅升起，浅景深，暖色调。
-```
-
-### Quality Enhancement Keywords
-
-Append to any prompt for better output:
-
-```
-高清画质, 细节丰富, 画面稳定, 色彩自然, 电影质感
+```text
+镜头1：近景固定机位，女孩站在窗前，柔和晨光洒在脸上，她微微侧头。
+镜头2：切至中景缓慢推近，她转身走向桌边，右手自然拿起咖啡杯。
+镜头3：切至杯口特写，热气缓慢升起，浅景深，暖色调，只有轻微室内环境声。
 ```
 
-Or in English:
+### Quality and constraints
 
-```
-4K, ultra HD, rich details, sharp clarity, cinematic texture, stable picture
-```
+Resolution comes from `--resolution`; do not use `8K` as a substitute for the
+actual output setting. Add concise visual direction only when relevant:
 
-### What to Avoid
-
-| Don't | Why |
-| ----- | --- |
-| Complex multi-person interaction (fighting, hugging) | Causes body clipping |
-| Vague words ("nice", "beautiful", "cool") | AI can't interpret these |
-| Contradictory requirements ("super fast" + "extremely stable") | Conflicting instructions |
-| Excessive speed ("rapid", "lightning fast") | Creates chaos and artifacts |
-| Too many subjects with independent actions | Model focuses on one, ignores others |
-
-### Reference System
-
-When using multi-modal reference mode, use numbered references in the prompt:
-
-```
-图片1中的人物作为主角，全程使用视频1的第一视角构图，背景音乐使用音频1
+```text
+细节丰富，画面稳定，色彩自然，电影质感，动作衔接自然
 ```
 
-References are numbered in the order they appear in the `--ref-image`, `--ref-video`, `--ref-audio` arguments.
+Avoid vague wording, contradictory requirements, redundant references, and
+full screenplay text. If duplicate characters appear, restate every
+subject-to-image mapping and explicitly require each named person to appear only
+once; this reduces but cannot guarantee elimination of duplication.
 
 ## Examples
 
@@ -301,7 +356,7 @@ References are numbered in the order they appear in the `--ref-image`, `--ref-vi
 ### Image-to-Video with Audio
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "猫咪慢慢睁开眼睛，伸了个懒腰，发出轻微的喵呜声" -i sleeping_cat.jpg -d 6 -o cat_wakeup.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "以首帧猫咪外观和构图为准。固定近景，猫咪先慢慢睁开眼睛，前爪向前伸展完成一次自然的懒腰，随后轻轻抬头，发出一声短促的喵呜；保持毛色、体型和背景不变。" -i sleeping_cat.jpg -d 6 -o cat_wakeup.mp4
 ```
 
 ### Quick Preview with Fast Model
@@ -319,7 +374,7 @@ References are numbered in the order they appear in the `--ref-image`, `--ref-vi
 ### Ultra-wide Cinematic
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "Crane shot ascending over a misty mountain valley at dawn, golden light breaking through clouds, epic cinematic scale, 8K quality" -a 21:9 -d 10 -o epic_valley.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "Crane shot ascending over a misty mountain valley at dawn, golden light breaking through clouds, epic cinematic scale, detailed texture, natural color" -a 21:9 -d 10 -o epic_valley.mp4
 ```
 
 ### First + Last Frame Transition
@@ -331,7 +386,7 @@ References are numbered in the order they appear in the `--ref-image`, `--ref-vi
 ### Multi-modal Reference (Product Ad)
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "图片1中的模特手持图片2中的产品，面向镜头展示，清新简约背景，近景镜头，模特说：'这款面霜质地轻盈，一抹就吸收'" --ref-image model.jpg --ref-image product.jpg -a 9:16 -d 10 -o product_ad.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为模特，将产品@图片2定义为面霜罐，人物与产品外观严格参考对应图片。镜头1：清新简约的影棚中景缓慢推近，人物A右手自然拿起产品并将标签朝向镜头。镜头2：切至人物A近景，她保持产品位置稳定并说：'这款面霜质地轻盈，一抹就吸收。' 保持人物面部、产品包装和标签一致，不生成额外字幕或水印。" --ref-image model.jpg --ref-image product.jpg -a 9:16 -d 10 -o product_ad.mp4
 ```
 
 ### With Web Search Enhancement
