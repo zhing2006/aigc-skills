@@ -6,6 +6,8 @@ HTTP chunked unidirectional streaming API.
 Supported voices: official 2.0 voices (e.g. zh_female_vv_uranus_bigtts)
                   and cloned voices (S_xxxxxxxx, auto-routed to seed-icl-2.0)
 Supported formats: MP3, WAV, PCM, OGG_OPUS
+Delivery control: voice instructions (context_texts), dialects, pitch,
+                  CoT voice tags (cloned expressive voices only)
 """
 
 import argparse
@@ -26,15 +28,20 @@ from dotenv import load_dotenv
 DEFAULT_BASE_URL = "https://openspeech.bytedance.com"
 RESOURCE_ID_OFFICIAL = "seed-tts-2.0"  # Doubao Seed-TTS 2.0 official voices
 RESOURCE_ID_CLONE = "seed-icl-2.0"     # Voice Clone 2.0 voices (S_ prefix)
-CLONE_DEFAULT_MODEL = "seed-tts-2.0-standard"
+# Cloned-voice model versions: the standard model has lower latency but silently
+# drops voice instructions and CoT tags; the expressive model supports both.
+CLONE_MODEL_STANDARD = "seed-tts-2.0-standard"
+CLONE_MODEL_EXPRESSIVE = "seed-tts-2.0-expressive"
+CLONE_MODELS = [CLONE_MODEL_STANDARD, CLONE_MODEL_EXPRESSIVE]
 END_CODE = 20000000
 
 SUPPORTED_FORMATS = ["mp3", "wav", "pcm", "ogg_opus"]
 SUPPORTED_SAMPLE_RATES = [8000, 16000, 22050, 24000, 32000, 44100, 48000]
 SUPPORTED_LANGUAGES = [
-    "zh-cn", "en", "ja", "es-mx", "id", "pt-br", "pt", "ko", "de", "fr",
-    "th", "vi", "ru", "fil", "ms", "ar",
+    "zh-cn", "en", "ja", "es-mx", "id", "pt-br", "pt", "ko", "it", "de", "fr",
+    "th", "vi", "ru", "fil", "ms", "ar", "pl", "tr", "sv",
 ]
+SUPPORTED_DIALECTS = ["sichuan", "shaanxi", "dongbei"]
 DEFAULT_VOICE = "zh_female_vv_uranus_bigtts"
 DEFAULT_FORMAT = "mp3"
 DEFAULT_SAMPLE_RATE = 24000
@@ -54,8 +61,13 @@ def get_base_url() -> str:
 
 
 def detect_resource_id(speaker: str) -> str:
-    """Detect the resource ID from the speaker ID prefix."""
-    if speaker.startswith("S_"):
+    """Detect the resource ID from the speaker ID prefix.
+
+    Cloned voices use an ``S_`` ID or the lowercase ``icl_`` ID returned by the
+    voice query API; official catalog voices (including the uppercase
+    ``ICL_uranus_*_tob`` role-play family) stay on the TTS 2.0 resource.
+    """
+    if speaker.startswith("S_") or speaker.startswith("icl_"):
         return RESOURCE_ID_CLONE
     return RESOURCE_ID_OFFICIAL
 
@@ -93,19 +105,28 @@ async def synthesize_speech(
     loudness_rate: int = 0,
     enable_subtitle: bool = False,
     instructions: list[str] | None = None,
+    cot_tags: bool = False,
+    dialect: str | None = None,
+    pitch: int = 0,
+    section_id: str | None = None,
+    tone_fidelity: bool = False,
     ssml: bool = False,
     silence_duration: int | None = None,
     explicit_language: str | None = None,
     keep_markdown: bool = False,
+    strip_emoji: bool = False,
+    filter_parenthesis: bool = False,
+    latex: bool = False,
+    latex_v2: bool = False,
     watermark: bool = False,
 ) -> tuple[bytes, list[dict], dict]:
     """
     Synthesize speech from text using Volcengine streaming TTS.
 
     Args:
-        text: Text to synthesize (may contain [voice tags] before sentences)
+        text: Text to synthesize
         speaker: Voice ID (official voice or cloned S_ voice)
-        model: Model version (auto: seed-tts-2.0-standard for cloned voices)
+        model: Cloned-voice model version (auto-selected when not set)
         resource_id: X-Api-Resource-Id override (auto-detected from speaker)
         audio_format: Output format (mp3/wav/pcm/ogg_opus)
         sample_rate: Audio sample rate in Hz
@@ -113,11 +134,20 @@ async def synthesize_speech(
         speech_rate: Speed, -50 (0.5x) to 100 (2.0x)
         loudness_rate: Loudness, -50 (0.5x) to 100 (2.0x)
         enable_subtitle: Return word-level timestamps
-        instructions: Voice instructions (context_texts), official voices only
+        instructions: Voice instructions (context_texts); only the first is used
+        cot_tags: Parse <cot text=...>...</cot> tags (cloned expressive voices only)
+        dialect: Dialect (sichuan/shaanxi/dongbei), needs a dialect-capable voice
+        pitch: Pitch shift, -12 to 12
+        section_id: Shared ID that carries context across successive requests
+        tone_fidelity: Restore the training prompt's timbre/style (cloned voices)
         ssml: Parse text as SSML markup
         silence_duration: Trailing silence in ms (0-30000)
         explicit_language: Only read the specified language
         keep_markdown: Do not strip Markdown syntax before reading
+        strip_emoji: Strip emoji instead of reading them
+        filter_parenthesis: Skip text inside parentheses
+        latex: Read LaTeX formulas
+        latex_v2: Use the stronger LaTeX parser (implies latex)
         watermark: Add an audible AIGC watermark at the end
 
     Returns:
@@ -129,8 +159,23 @@ async def synthesize_speech(
         resource_id = detect_resource_id(speaker)
 
     is_clone_voice = resource_id == RESOURCE_ID_CLONE
+    needs_expressive = bool(instructions) or cot_tags
     if model is None and is_clone_voice:
-        model = CLONE_DEFAULT_MODEL
+        model = CLONE_MODEL_EXPRESSIVE if needs_expressive else CLONE_MODEL_STANDARD
+
+    if model and not is_clone_voice:
+        print("Warning: --model only applies to cloned voices; official 2.0 voices ignore it.",
+              file=sys.stderr)
+    if is_clone_voice and needs_expressive and model == CLONE_MODEL_STANDARD:
+        print(f"Warning: {CLONE_MODEL_STANDARD} drops voice instructions and CoT tags; "
+              f"use -m {CLONE_MODEL_EXPRESSIVE} to keep them.", file=sys.stderr)
+    if cot_tags and not is_clone_voice:
+        print("Warning: CoT voice tags only work with Voice Clone 2.0 expressive voices; "
+              "official 2.0 voices ignore them (use -I instructions instead).", file=sys.stderr)
+    if tone_fidelity and not is_clone_voice:
+        print("Warning: --tone-fidelity only applies to Voice Clone 2.0 voices.", file=sys.stderr)
+    if instructions and len(instructions) > 1:
+        print("Warning: only the first voice instruction takes effect.", file=sys.stderr)
 
     audio_params: dict = {
         "format": audio_format,
@@ -153,25 +198,38 @@ async def synthesize_speech(
     if ssml:
         req_params["ssml"] = text
 
-    if instructions:
-        if is_clone_voice:
-            print("Warning: voice instructions (context_texts) are not supported "
-                  "by cloned voices; ignoring them.", file=sys.stderr)
-        else:
-            req_params["context_texts"] = instructions
-
     additions: dict = {}
     if silence_duration is not None:
         additions["silence_duration"] = silence_duration
-    if explicit_language:
-        additions["explicit_language"] = explicit_language
+    if filter_parenthesis:
+        additions["max_length_to_filter_parenthesis"] = 100
     if not keep_markdown:
         additions["disable_markdown_filter"] = True
+    if strip_emoji:
+        additions["disable_emoji_filter"] = True
+    if latex or latex_v2:
+        additions["enable_latex_tn"] = True
+    if latex_v2:
+        additions["latex_parser"] = "v2"
+    if explicit_language:
+        additions["explicit_language"] = explicit_language
+    if dialect:
+        additions["explicit_dialect"] = dialect
     if watermark:
         additions["aigc_watermark"] = True
+    if pitch:
+        additions["post_process"] = {"pitch": pitch}
+    if instructions:
+        additions["context_texts"] = instructions
+    if section_id:
+        additions["section_id"] = section_id
+    if cot_tags:
+        additions["use_tag_parser"] = True
+    if tone_fidelity:
+        additions["tone_fidelity"] = True
     if additions:
         # additions must be a JSON-encoded string, not an object
-        req_params["additions"] = json.dumps(additions)
+        req_params["additions"] = json.dumps(additions, ensure_ascii=False)
 
     headers = {
         "Content-Type": "application/json",
@@ -184,6 +242,12 @@ async def synthesize_speech(
     print(f"Voice: {speaker}")
     print(f"Resource ID: {resource_id}" + (f", Model: {model}" if model else ""))
     print(f"Format: {audio_format}, Sample rate: {sample_rate}Hz")
+    if instructions:
+        print(f"Instruction: {instructions[0]}")
+    if dialect:
+        print(f"Dialect: {dialect}")
+    if pitch:
+        print(f"Pitch: {pitch:+d}")
     print("Synthesizing speech...")
 
     audio_parts: list[bytes] = []
@@ -233,7 +297,7 @@ async def main():
         "text",
         type=str,
         nargs="?",
-        help="Text to synthesize; may contain [voice tags] before sentences (or use -i for file input)",
+        help="Text to synthesize (or use -i for file input)",
     )
     parser.add_argument(
         "-i", "--input",
@@ -251,7 +315,9 @@ async def main():
         "-m", "--model",
         type=str,
         default=None,
-        help=f"Model version (default: auto, {CLONE_DEFAULT_MODEL} for cloned voices)",
+        choices=CLONE_MODELS,
+        help="Cloned-voice model version (default: auto, "
+             f"{CLONE_MODEL_EXPRESSIVE} when -I/--cot-tags is used, else {CLONE_MODEL_STANDARD})",
     )
     parser.add_argument(
         "--resource-id",
@@ -296,12 +362,41 @@ async def main():
         "-I", "--instruction",
         action="append",
         default=None,
-        help="Voice instruction (context_texts), e.g. \"用特别痛心的语气说话\"; repeatable; official voices only",
+        help="Voice instruction (context_texts), e.g. \"用特别痛心的语气说话\"; only the first takes effect",
+    )
+    parser.add_argument(
+        "--cot-tags",
+        action="store_true",
+        help="Parse <cot text=急促难耐>...</cot> voice tags (cloned expressive voices only)",
+    )
+    parser.add_argument(
+        "--dialect",
+        type=str,
+        default=None,
+        choices=SUPPORTED_DIALECTS,
+        help="Dialect; requires a dialect-capable voice (e.g. zh_female_vv_uranus_bigtts)",
+    )
+    parser.add_argument(
+        "--pitch",
+        type=int,
+        default=0,
+        help="Pitch shift, -12 to 12 (default: 0)",
+    )
+    parser.add_argument(
+        "--section-id",
+        type=str,
+        default=None,
+        help="Shared ID that carries context across successive calls (max 30 turns / 10 min)",
+    )
+    parser.add_argument(
+        "--tone-fidelity",
+        action="store_true",
+        help="Restore the training prompt's timbre and style (cloned voices, same language only)",
     )
     parser.add_argument(
         "--ssml",
         action="store_true",
-        help="Parse the text as SSML markup",
+        help="Parse the text as SSML markup (2.0 models support <phoneme> only)",
     )
     parser.add_argument(
         "--subtitle",
@@ -325,6 +420,26 @@ async def main():
         "--keep-markdown",
         action="store_true",
         help="Read Markdown syntax literally instead of stripping it",
+    )
+    parser.add_argument(
+        "--strip-emoji",
+        action="store_true",
+        help="Strip emoji instead of reading them out",
+    )
+    parser.add_argument(
+        "--filter-parenthesis",
+        action="store_true",
+        help="Skip text inside parentheses instead of reading it",
+    )
+    parser.add_argument(
+        "--latex",
+        action="store_true",
+        help="Read LaTeX formulas (education scenarios)",
+    )
+    parser.add_argument(
+        "--latex-v2",
+        action="store_true",
+        help="Use the stronger LaTeX parser (implies --latex, higher latency)",
     )
     parser.add_argument(
         "--watermark",
@@ -367,6 +482,14 @@ async def main():
         print("Error: Silence duration must be between 0 and 30000", file=sys.stderr)
         sys.exit(1)
 
+    if args.pitch < -12 or args.pitch > 12:
+        print("Error: Pitch must be between -12 and 12", file=sys.stderr)
+        sys.exit(1)
+
+    if args.latex_v2 and args.keep_markdown:
+        print("Error: --latex-v2 requires Markdown filtering; drop --keep-markdown", file=sys.stderr)
+        sys.exit(1)
+
     try:
         audio_data, sentences, usage = await synthesize_speech(
             text=text,
@@ -380,10 +503,19 @@ async def main():
             loudness_rate=args.loudness,
             enable_subtitle=args.subtitle,
             instructions=args.instruction,
+            cot_tags=args.cot_tags,
+            dialect=args.dialect,
+            pitch=args.pitch,
+            section_id=args.section_id,
+            tone_fidelity=args.tone_fidelity,
             ssml=args.ssml,
             silence_duration=args.silence_duration,
             explicit_language=args.explicit_language,
             keep_markdown=args.keep_markdown,
+            strip_emoji=args.strip_emoji,
+            filter_parenthesis=args.filter_parenthesis,
+            latex=args.latex,
+            latex_v2=args.latex_v2,
             watermark=args.watermark,
         )
 

@@ -101,6 +101,14 @@ After status reaches 2 (Success) or 4 (Active), synthesize with the cloned voice
 {python} {skill_dir}/scripts/volcengine-text-speech.py "你好，世界" -v S_abc12345
 ```
 
+Cloned voices default to `seed-tts-2.0-standard` (lower latency). Voice instructions (`-I`) and CoT voice tags (`--cot-tags`) only work on `seed-tts-2.0-expressive`, which the TTS script selects automatically when either is used:
+
+```bash
+{python} {skill_dir}/scripts/volcengine-text-speech.py "引航者……你为什么说这些话……" -v S_abc12345 -I "用最悲伤的语气演绎下面这句话："
+```
+
+`--tone-fidelity` makes the model stay closer to the training sample's timbre and style (same-language text only).
+
 ## Environment Variables
 
 | Variable | Used by | Description |

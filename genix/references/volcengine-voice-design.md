@@ -83,6 +83,8 @@ Describe the voice with **concrete, specific traits** across several dimensions 
 {python} {skill_dir}/scripts/volcengine-text-speech.py "夜色渐浓，城市的灯火次第亮起。" -v S_abc12345
 ```
 
+4. Voice instructions (`-I`) and CoT tags (`--cot-tags`) need the expressive model — the script switches to `seed-tts-2.0-expressive` automatically when either is used.
+
 ## Examples
 
 ### Design from a Text Description

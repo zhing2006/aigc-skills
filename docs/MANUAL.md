@@ -192,7 +192,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 
 ### New Features in v0.4.2
 
-- **Volcengine Speech**: Streaming TTS (Doubao Seed-TTS 2.0 with voice tags & instructions), Voice Design, Voice Clone, and voice instance management
+- **Volcengine Speech**: Streaming TTS (Doubao Seed-TTS 2.0 with voice instructions & dialects), Voice Design, Voice Clone, and voice instance management
 - **New Environment Variables**: `VOLCENGINE_TTS_API_KEY`, plus `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` for voice management
 
 ### New Features in v0.4.3
@@ -217,7 +217,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Text-to-Speech | DashScope | Text | Audio | Chinese/multilingual TTS, custom voices |
 | Voice Design | DashScope | Text | Voice | AI-designed custom voices |
 | Voice Clone | DashScope | Audio | Voice | Clone voices from audio samples |
-| Text-to-Speech | Volcengine | Text | Audio | Streaming TTS with voice tags/instructions, cloned voices |
+| Text-to-Speech | Volcengine | Text | Audio | Streaming TTS with voice instructions, dialects, cloned voices |
 | Voice Design | Volcengine | Text, Image | Voice | Design voices from text descriptions or images |
 | Voice Clone | Volcengine | Audio | Voice | Clone voices, manage/renew voice instances |
 | Music | ElevenLabs | Text | Audio | Background music, songs |
@@ -653,13 +653,15 @@ Best for: Expressive Chinese TTS, emotional narration, dialects, synthesizing wi
 
 > "Use Volcengine to generate Chinese speech saying '夜色渐浓，城市的灯火次第亮起'"
 
-#### Emotional Delivery with Voice Tags
+#### Emotional Delivery with a Voice Instruction
 
-> "Generate speech: '[怒目圆睁，冲着你大声怒吼]放肆！我是龙族的女王！'"
-
-#### Overall Mood with a Voice Instruction
+> "Read this line with a furious, roaring tone: '放肆！我是龙族的女王！'"
 
 > "Read this line with a trembling, heartbroken crying tone: '我逆转时空九十九次救你……'"
+
+#### Dialect Delivery
+
+> "Read this line in Sichuan dialect with the Vivi voice: '巴适得板，走嘛一起去吃火锅'"
 
 #### Synthesize with a Cloned Voice
 
@@ -668,10 +670,11 @@ Best for: Expressive Chinese TTS, emotional narration, dialects, synthesizing wi
 **Supported Options**:
 
 - Voices: Official Seed-TTS 2.0 voices (`*_uranus_bigtts`) and cloned/designed voices (`S_xxx`, auto-routed)
-- Voice Tags: `[表情/心理/肢体动作描述]` before sentences (selected 2.0 voices + all cloned 2.0 voices)
-- Voice Instructions: overall emotion/dialect/tone/speed control, plus quoting context (official voices only, free)
+- Voice Instructions: emotion/tone/speed/volume control for the whole request, plus quoting the previous turn (official 2.0 voices and cloned expressive voices, free, one per request)
+- CoT Voice Tags: inline `<cot text=急促难耐>…</cot>` per-sentence control (cloned voices on `seed-tts-2.0-expressive` only)
+- Dialects: Sichuan, Shaanxi, Dongbei (dialect-capable voices such as Vivi 2.0)
 - Formats: MP3, WAV, PCM, OGG_OPUS; Sample Rates: 8000-48000 Hz
-- Extras: speed/loudness (-50 to 100), SSML, word-level subtitles, trailing silence, AIGC watermark
+- Extras: speed/loudness (-50 to 100), pitch (-12 to 12), `section_id` context across calls, `<phoneme>` SSML, word-level subtitles, trailing silence, LaTeX reading, AIGC watermark
 
 ---
 

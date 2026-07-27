@@ -18,7 +18,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
 | **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
 | **Audio** | DashScope Qwen-Audio-TTS 3.0 | WebSocket Text-to-Speech, Voice Design, Voice Clone |
-| **Audio** | Volcengine | Text-to-Speech (streaming, voice tags/instructions), Voice Design, Voice Clone, Voice Management |
+| **Audio** | Volcengine | Text-to-Speech (streaming, voice instructions, dialects), Voice Design, Voice Clone, Voice Management |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |
 | **Music** | Google Lyria | Text-to-Music, Image-to-Music (full songs/clips) |
 | **3D Model** | Tripo | Text-to-3D, Image-to-3D, Multiview-to-3D, Model Import, Rigging & Animation, Mesh Segmentation, Mesh Completion |

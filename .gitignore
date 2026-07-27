@@ -214,5 +214,6 @@ uv.lock
 .cursor/
 .codex/
 .opencode/
+.agents/
 .vscode/
 .*.env
