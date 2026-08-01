@@ -20,6 +20,8 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [DashScope Qwen Image 3.0](#dashscope-qwen-image-30)
 - [Video Generation](#video-generation)
   - [Volcengine Seedance](#volcengine-seedance)
+  - [MiniMax Hailuo](#minimax-hailuo)
+  - [DashScope HappyHorse](#dashscope-happyhorse)
   - [Google Veo](#google-veo)
   - [OpenAI Sora](#openai-sora)
 - [Audio Generation](#audio-generation)
@@ -49,7 +51,7 @@ This manual provides detailed instructions for installing and using the Genix AI
 
 - **Operating System**: Windows 10+, macOS 10.15+, or Linux
 - **Internet Connection**: Required for downloading dependencies and API calls
-- **API Keys**: At least one API key from a supported provider (Google, OpenAI, ElevenLabs, DashScope, Volcengine, or Tripo)
+- **API Keys**: At least one API key from a supported provider (Google, OpenAI, ElevenLabs, DashScope, Volcengine, MiniMax, or Tripo)
 
 ### Download Package
 
@@ -147,6 +149,10 @@ VOLCENGINE_TTS_API_KEY = "your_volcengine_tts_api_key_here"       # Speech (TTS/
 VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # Voice management only
 VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # Voice management only
 VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # Voice management only
+
+# MiniMax API (for Hailuo video)
+MINIMAX_API_KEY = "your_minimax_api_key_here"
+MINIMAX_API_BASE = "https://api.minimaxi.com"                     # Optional
 ```
 
 **Note**: You only need to configure the API keys for the providers you plan to use.
@@ -199,6 +205,12 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 
 - **Volcengine Seedream**: Image generation with Doubao Seedream 5.0 pro / 5.0 lite / 4.5 / 4.0 — Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation, and web search (reuses `VOLCENGINE_API_KEY`)
 
+### New Features in v0.6
+
+- **MiniMax Hailuo Video**: 2K video generation with native synchronized audio using `MiniMax-H3` — Text-to-Video, Image-to-Video (first frame, last frame, or both), and Multi-modal Reference with voice transfer from reference audio. Durations are any integer from 4 to 15 seconds
+- **New Environment Variables**: `MINIMAX_API_KEY`, plus optional `MINIMAX_API_BASE`
+- **Documentation**: The DashScope HappyHorse video skill (shipped earlier) is now documented in this manual
+
 ---
 
 ## Skills Overview
@@ -210,6 +222,8 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Seedream | Volcengine | Text, Images | Image | Chinese/English text rendering, multi-image fusion, group generation |
 | Qwen Image 3.0 | DashScope | Text, 1-3 Images | Image | Text rendering, precise editing, multi-image fusion (invite-only) |
 | Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default) |
+| Hailuo | MiniMax | Text, Image, Video, Audio | Video | 2K video with native audio, voice transfer from reference audio |
+| HappyHorse | DashScope | Text, Image, Video | Video | Physically realistic motion, reference-to-video, video editing |
 | Veo | Google | Text, Image | Video | Video generation with audio |
 | Sora | OpenAI | Text, Image | Video | Cinematic video generation |
 | Sound Effects | ElevenLabs | Text | Audio | Sound effects, ambient sounds |
@@ -410,12 +424,92 @@ Best for: Multi-modal video generation, video editing/extending, synchronized au
 
 **Supported Options**:
 
-- Models: `doubao-seedance-2-0-260128` (highest quality, default), `doubao-seedance-2-0-fast-260128` (faster)
+- Models: `doubao-seedance-2-0-260128` (highest quality, default), `doubao-seedance-2-0-fast-260128` (faster), `doubao-seedance-2-0-mini-260615` (cheapest)
 - Aspect Ratios: `16:9`, `4:3`, `1:1`, `3:4`, `9:16`, `21:9`, `adaptive` (default)
 - Durations: `4` to `15` seconds, or `-1` for auto
-- Resolutions: `480p`, `720p`
+- Resolutions: `480p`, `720p` (default), `1080p`, `4k` — `1080p` and `4k` require the full model
 - Audio: Enabled by default (synchronized dialogue, SFX, music)
 - Multi-modal input: Up to 9 reference images, 3 reference videos, 3 reference audios
+
+---
+
+### MiniMax Hailuo
+
+Best for: 2K output, native synchronized audio, voice transfer from a reference audio clip
+
+#### Basic Text-to-Video
+
+> "Create a cinematic 10 second trailer of a starship fleet jumping away, leaving the captain alone at the observation window"
+
+#### Image-to-Video (First Frame)
+
+> "Animate this image, push the camera slowly toward the figure in the background and add more steam to the bowl"
+> (attach your image)
+
+#### Last Frame Only
+
+> "Have the character walk down the corridor and end exactly on this frame"
+> (attach one image as the last frame)
+
+#### First + Last Frame
+
+> "Generate a smooth transition from this winter scene to this summer scene"
+> (attach two images)
+
+#### Multi-modal Reference with Voice Transfer
+
+> "The character says 'Follow the wind, live free' using the timbre of audio 1, appearance from image 1, and the camera rhythm of video 1"
+> (attach reference image, video, audio)
+
+#### Product Ad with Asset Mapping
+
+> "Mood and film texture from image 1, character from image 2, product from image 3, ending logo from image 4 — a three-shot vertical ad"
+
+**Supported Options**:
+
+- Models: `MiniMax-H3` (the only model on this API)
+- Aspect Ratios: `21:9`, `16:9`, `4:3`, `1:1`, `3:4`, `9:16`, `adaptive` — text-to-video requires a concrete ratio, image-to-video always follows the input image
+- Durations: any integer from `4` to `15` seconds (default `5`)
+- Resolutions: `2K` only
+- Audio: Native synchronized audio; reference audio can transfer voice timbre
+- Multi-modal input: Up to 9 reference images, 3 reference videos, 3 reference audios (12 assets combined)
+
+**Note**: A text prompt is required in every mode, including image-to-video. First/last frame mode and multi-modal reference mode cannot be combined in one request.
+
+---
+
+### DashScope HappyHorse
+
+Best for: Physically realistic motion, reference-to-video, editing an existing video
+
+#### Basic Text-to-Video
+
+> "Create a video of a gymnast performing a backflip on a beam, natural physics, smooth motion"
+
+#### Image-to-Video
+
+> "Animate this image, the character raises their hand and waves"
+> (attach your image)
+
+#### Reference-to-Video
+
+> "Use [Image 1] as the character and [Image 2] as the outfit, have them walk through a rainy street"
+> (attach 1-9 reference images)
+
+#### Video Edit
+
+> "Edit this video: replace the perfume bottle on the table with the cream jar, keep the camera and lighting unchanged"
+> (provide a public video URL)
+
+**Supported Options**:
+
+- Models: auto-derived from the mode and version — `happyhorse-1.1-t2v` / `-i2v` / `-r2v` (default version `1.1`), `happyhorse-1.0-video-edit`
+- Aspect Ratios: `16:9` (default), `9:16`, `1:1`, `4:3`, `3:4`, `4:5`, `5:4`, `9:21`, `21:9` — text-to-video and reference-to-video only
+- Durations: `3` to `15` seconds (default `5`); video edit follows the source
+- Resolutions: `720P`, `1080P` (default)
+- Watermark: A "Happy Horse" watermark is added by default; it can be disabled
+
+**Note**: The source video for editing must be a public http(s) URL. A prompt is optional for image-to-video.
 
 ---
 
@@ -957,6 +1051,9 @@ Result: A complete set of game assets from a single creative session, ready for 
 3. **Use Appropriate Tools**:
    - Google Gemini: Best for initial concepts and style transfer
    - OpenAI GPT: Best for precise edits and transparent assets
+   - Volcengine Seedance: Best all-round default, and the only option for 4K or video editing
+   - MiniMax Hailuo: Best for 2K output and transferring a voice from reference audio
+   - DashScope HappyHorse: Best for physically realistic motion
    - Google Veo: Best when you need audio with video
    - OpenAI Sora: Best for cinematic quality
 

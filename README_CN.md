@@ -13,6 +13,7 @@
 | **图像** | Volcengine Seedream | 文生图、图生图、多图融合、组图生成（最高 4K） |
 | **图像** | DashScope 千问图像 3.0 | 文生图、图像编辑、多图融合（邀测） |
 | **视频** | Volcengine Seedance | 文生视频、图生视频、多模态参考、视频编辑/延长（最高 4K） |
+| **视频** | MiniMax 海螺 | 文生视频、图生视频（首/尾帧）、多模态参考含音色迁移（2K 原生音频） |
 | **视频** | DashScope HappyHorse | 文生视频、图生视频、参考生视频、视频编辑（物理真实） |
 | **视频** | Google Veo | 文生视频、图生视频 |
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
@@ -99,6 +100,13 @@ setup.bat cursor
 | `VOLCENGINE_TTS_APPID`（仅音色管理需要） |
 | `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY`（仅音色管理需要） |
 
+#### MiniMax API
+
+| 变量 |
+| ---- |
+| `MINIMAX_API_KEY`（视频生成） |
+| `MINIMAX_API_BASE`（可选，默认使用官方地址） |
+
 #### `.genix.env` 文件示例
 
 ```env
@@ -133,6 +141,10 @@ VOLCENGINE_TTS_BASE = "https://openspeech.bytedance.com"      # 可选
 VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # 仅音色管理需要
 VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # 仅音色管理需要
 VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管理需要
+
+# MiniMax API（海螺视频）
+MINIMAX_API_KEY = "your_minimax_api_key_here"
+MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 ```
 
 ## 使用方法

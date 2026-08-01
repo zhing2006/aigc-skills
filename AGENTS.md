@@ -50,17 +50,21 @@ Skills are self-contained modules installed to tool-specific directories:
 
 The project integrates with multiple AIGC APIs (configured via `.env`):
 
-- **Google Generative AI** (`google-genai`) - Image and Video generation
+- **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
+- **Volcengine** (`volcengine-python-sdk[ark]` + raw HTTP OpenSpeech v3) - Image generation (Seedream), Video generation (Seedance 2.0), Speech synthesis / Voice Clone / Voice Design (Doubao Seed-TTS 2.0)
+- **Alibaba Bailian / DashScope** (`dashscope` + native HTTP) - Image generation/editing (Qwen Image 3.0), Text-to-Speech, and Video generation (HappyHorse)
+- **MiniMax** (raw HTTP video generation V2) - Video generation (Hailuo-03 / `MiniMax-H3`, 2K with native audio)
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
-- **Alibaba Bailian / DashScope** - Image generation and editing, Speech, and Video generation
+- **Tripo** (`tripo3d`) - 3D model generation, rigging, segmentation, and completion
 
 ### Current Skill Capabilities (genix)
 
-- **Image**: Text-to-Image, Image-to-Image, Multi-Image Fusion (Google Gemini, OpenAI GPT, DashScope Qwen Image 3.0)
-- **Video**: Text-to-Video, Image-to-Video (Google Veo, OpenAI Sora)
-- **Audio**: Sound Effects, Text-to-Speech (ElevenLabs, DashScope Qwen-Audio-TTS 3.0)
-- **Music**: Text-to-Music with vocals or instrumental (ElevenLabs)
+- **Image**: Text-to-Image, Image-to-Image, Multi-Image Fusion (Google Gemini, OpenAI GPT, Volcengine Seedream, DashScope Qwen Image 3.0)
+- **Video**: Text-to-Video, Image-to-Video, Multi-modal Reference (Volcengine Seedance, MiniMax Hailuo, DashScope HappyHorse, Google Veo, OpenAI Sora)
+- **Audio**: Sound Effects, Text-to-Speech, Voice Design, Voice Clone (ElevenLabs, DashScope, Volcengine)
+- **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
+- **3D Model**: Text-to-3D, Image-to-3D, Multiview-to-3D, Rigging & Animation, Segmentation, Completion (Tripo)
 
 ## Environment Setup
 
@@ -73,6 +77,16 @@ Copy `.env.template` to `.env` and configure API keys:
 - `DASHSCOPE_API_KEY`
 - `DASHSCOPE_IMAGE_BASE_URL` (optional, native Qwen Image API host)
 - `DASHSCOPE_TTS_WS_URL` (optional, Qwen-Audio-TTS WebSocket endpoint)
+- `DASHSCOPE_VIDEO_BASE_URL` (optional, native HappyHorse video API host)
+- `VOLCENGINE_API_KEY`
+- `VOLCENGINE_API_BASE` (optional, defaults to Volcengine official endpoint)
+- `VOLCENGINE_TTS_API_KEY` (speech: TTS / voice clone / voice design)
+- `VOLCENGINE_TTS_BASE` (optional, defaults to OpenSpeech official endpoint)
+- `VOLCENGINE_TTS_APPID` / `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` (voice management only)
+- `MINIMAX_API_KEY` (video generation)
+- `MINIMAX_API_BASE` (optional, defaults to MiniMax official endpoint)
+- `TRIPO_API_KEY`
+- `TRIPO_API_BASE_URL` (optional, defaults to Tripo official endpoint)
 
 ## Technical Stack
 

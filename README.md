@@ -13,6 +13,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Image** | Volcengine Seedream | Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation (up to 4K) |
 | **Image** | DashScope Qwen Image 3.0 | Text-to-Image, Image Edit, Multi-Image Fusion (invite-only) |
 | **Video** | Volcengine Seedance | Text-to-Video, Image-to-Video, Multi-modal Reference, Video Edit/Extend (up to 4K) |
+| **Video** | MiniMax Hailuo | Text-to-Video, Image-to-Video (first/last frame), Multi-modal Reference with voice transfer (2K native audio) |
 | **Video** | DashScope HappyHorse | Text-to-Video, Image-to-Video, Reference-to-Video, Video Edit (physically realistic) |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
@@ -99,6 +100,13 @@ Edit the `.genix.env` file and fill in your API keys:
 | `VOLCENGINE_TTS_APPID` (voice management only) |
 | `VOLCENGINE_ACCESS_KEY` / `VOLCENGINE_SECRET_KEY` (voice management only) |
 
+#### MiniMax API
+
+| Variables |
+| --------- |
+| `MINIMAX_API_KEY` (video generation) |
+| `MINIMAX_API_BASE` (optional, defaults to official endpoint) |
+
 #### Example `.genix.env` file
 
 ```env
@@ -133,6 +141,10 @@ VOLCENGINE_TTS_BASE = "https://openspeech.bytedance.com"      # Optional
 VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # Voice management only
 VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # Voice management only
 VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # Voice management only
+
+# MiniMax API (Hailuo video)
+MINIMAX_API_KEY = "your_minimax_api_key_here"
+MINIMAX_API_BASE = "https://api.minimaxi.com"                     # Optional
 ```
 
 ## Usage

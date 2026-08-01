@@ -20,6 +20,8 @@
   - [DashScope 千问图像 3.0](#dashscope-千问图像-30)
 - [视频生成](#视频生成)
   - [Volcengine Seedance](#volcengine-seedance)
+  - [MiniMax 海螺](#minimax-海螺)
+  - [DashScope HappyHorse](#dashscope-happyhorse)
   - [Google Veo](#google-veo)
   - [OpenAI Sora](#openai-sora)
 - [音频生成](#音频生成)
@@ -49,7 +51,7 @@
 
 - **操作系统**：Windows 10+、macOS 10.15+ 或 Linux
 - **网络连接**：下载依赖和调用 API 时需要
-- **API 密钥**：至少需要一个支持的服务商（Google、OpenAI、ElevenLabs、DashScope、Volcengine 或 Tripo）的 API 密钥
+- **API 密钥**：至少需要一个支持的服务商（Google、OpenAI、ElevenLabs、DashScope、Volcengine、MiniMax 或 Tripo）的 API 密钥
 
 ### 下载安装包
 
@@ -147,6 +149,10 @@ VOLCENGINE_TTS_API_KEY = "your_volcengine_tts_api_key_here"       # 语音（合
 VOLCENGINE_TTS_APPID = "your_volcengine_tts_appid_here"           # 仅音色管理需要
 VOLCENGINE_ACCESS_KEY = "your_volcengine_access_key_here"         # 仅音色管理需要
 VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管理需要
+
+# MiniMax API（用于海螺视频）
+MINIMAX_API_KEY = "your_minimax_api_key_here"
+MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 ```
 
 **注意**：你只需要配置你计划使用的服务商的 API 密钥。
@@ -199,6 +205,12 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 
 - **火山引擎 Seedream 生图**：豆包 Seedream 5.0 pro / 5.0 lite / 4.5 / 4.0 图片生成——文生图、图生图、多图融合、组图生成、联网搜索（复用 `VOLCENGINE_API_KEY`）
 
+### v0.6 新功能
+
+- **MiniMax 海螺视频**：使用 `MiniMax-H3` 生成 2K 视频，自带同步音频——文生视频、图生视频（首帧、尾帧或首尾帧）、多模态参考并支持从参考音频迁移音色。时长为 4 到 15 秒之间的任意整数
+- **新增环境变量**：`MINIMAX_API_KEY`，以及可选的 `MINIMAX_API_BASE`
+- **文档补齐**：此前已发布的 DashScope HappyHorse 视频技能现已写入本手册
+
 ---
 
 ## 技能概览
@@ -210,6 +222,8 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 | Seedream | Volcengine | 文字、图片 | 图像 | 中英文文字渲染、多图融合、组图生成 |
 | 千问图像 3.0 | DashScope | 文字、1-3 张图片 | 图像 | 文字渲染、精准编辑、多图融合（邀测） |
 | Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认） |
+| 海螺 | MiniMax | 文字、图片、视频、音频 | 视频 | 2K 视频，原生音频，可从参考音频迁移音色 |
+| HappyHorse | DashScope | 文字、图片、视频 | 视频 | 物理真实的运动、参考生视频、视频编辑 |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
 | Sora | OpenAI | 文字、图片 | 视频 | 电影级视频生成 |
 | Sound Effects | ElevenLabs | 文字 | 音频 | 音效、环境音 |
@@ -410,12 +424,92 @@ VOLCENGINE_SECRET_KEY = "your_volcengine_secret_key_here"         # 仅音色管
 
 **支持的选项**：
 
-- 模型：`doubao-seedance-2-0-260128`（最高质量，默认）、`doubao-seedance-2-0-fast-260128`（更快）
+- 模型：`doubao-seedance-2-0-260128`（最高质量，默认）、`doubao-seedance-2-0-fast-260128`（更快）、`doubao-seedance-2-0-mini-260615`（最便宜）
 - 宽高比：`16:9`、`4:3`、`1:1`、`3:4`、`9:16`、`21:9`、`adaptive`（自适应，默认）
 - 时长：`4` 到 `15` 秒，或 `-1` 自动选择
-- 分辨率：`480p`、`720p`
+- 分辨率：`480p`、`720p`（默认）、`1080p`、`4k`——`1080p` 与 `4k` 仅完整版模型支持
 - 音频：默认开启（同步对话、音效、音乐）
 - 多模态输入：最多 9 张参考图片、3 个参考视频、3 段参考音频
+
+---
+
+### MiniMax 海螺
+
+最适合：2K 输出、原生同步音频、从参考音频迁移音色
+
+#### 基础文生视频
+
+> "创建一段 10 秒的电影级预告：最后一支舰队跃迁离去，女舰长独自被留在观景窗前"
+
+#### 图生视频（首帧）
+
+> "把这张图片做成动画，镜头缓慢推近背景中的人物，让碗上的蒸汽更浓一些"
+> （附上你的图片）
+
+#### 仅尾帧
+
+> "让角色一步步走过走廊，最终精确停在这个画面上"
+> （附上一张图片作为尾帧）
+
+#### 首尾帧视频
+
+> "生成一段从冬季场景到夏季场景的平滑过渡视频"
+> （附上两张图片）
+
+#### 多模态参考 + 音色迁移
+
+> "角色说'随风而行，自在生活'，音色参考音频 1，人物外观参考图 1，运镜节奏参考视频 1"
+> （附上参考图片、视频、音频）
+
+#### 素材映射式产品广告
+
+> "整体氛围与胶片质感参考图 1，人物参考图 2，产品参考图 3，品牌 logo 定版参考图 4，做一条三镜头竖版广告"
+
+**支持的选项**：
+
+- 模型：`MiniMax-H3`（该接口目前唯一的模型）
+- 宽高比：`21:9`、`16:9`、`4:3`、`1:1`、`3:4`、`9:16`、`adaptive`——文生视频必须指定具体比例，图生视频恒定跟随输入图片
+- 时长：`4` 到 `15` 秒之间的任意整数（默认 `5`）
+- 分辨率：仅 `2K`
+- 音频：原生同步音频；参考音频可迁移音色
+- 多模态输入：最多 9 张参考图片、3 个参考视频、3 段参考音频（合计不超过 12 个素材）
+
+**注意**：每种模式都必须提供文字提示词，图生视频也不例外。首尾帧模式与多模态参考模式不能在同一次请求中混用。
+
+---
+
+### DashScope HappyHorse
+
+最适合：物理真实的运动、参考生视频、编辑已有视频
+
+#### 基础文生视频
+
+> "创建一段体操运动员在平衡木上后空翻的视频，物理真实，动作流畅"
+
+#### 图生视频
+
+> "把这张图片做成动画，人物抬手挥动"
+> （附上你的图片）
+
+#### 参考生视频
+
+> "以 [Image 1] 作为角色、[Image 2] 作为服装，让人物走过雨后的街道"
+> （附上 1-9 张参考图片）
+
+#### 视频编辑
+
+> "编辑这段视频：把桌上的香水瓶替换为面霜罐，保持运镜和灯光不变"
+> （提供视频的公网 URL）
+
+**支持的选项**：
+
+- 模型：根据模式与版本自动推导——`happyhorse-1.1-t2v` / `-i2v` / `-r2v`（默认版本 `1.1`）、`happyhorse-1.0-video-edit`
+- 宽高比：`16:9`（默认）、`9:16`、`1:1`、`4:3`、`3:4`、`4:5`、`5:4`、`9:21`、`21:9`——仅文生视频与参考生视频可用
+- 时长：`3` 到 `15` 秒（默认 `5`）；视频编辑跟随源视频
+- 分辨率：`720P`、`1080P`（默认）
+- 水印：默认烧入"Happy Horse"水印，可关闭
+
+**注意**：视频编辑的源视频必须是公网 http(s) URL。图生视频的提示词可选。
 
 ---
 
@@ -957,6 +1051,9 @@ AI 会创建图像（如 `lion_savanna.png`）。
 3. **使用合适的工具**：
    - Google Gemini：最适合初始概念和风格迁移
    - OpenAI GPT：最适合精确编辑和透明素材
+   - Volcengine Seedance：综合最优的默认选择，也是 4K 与视频编辑的唯一选项
+   - MiniMax 海螺：需要 2K 输出或从参考音频迁移音色时使用
+   - DashScope HappyHorse：追求物理真实的运动时使用
    - Google Veo：需要视频带音频时使用
    - OpenAI Sora：追求电影级画质时使用
 

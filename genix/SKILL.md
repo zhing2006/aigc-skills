@@ -3,7 +3,7 @@ name: genix
 description: Generate and edit images, videos, audio, music, and 3D assets with major AIGC providers, including DashScope Qwen Image 3.0. Use for media generation, image editing, multi-image fusion, speech, music, video, or 3D requests.
 license: Apache 2.0. LICENSE.txt has complete terms
 metadata:
-  version: "0.5"
+  version: "0.6"
   author: zhing2006
 ---
 
@@ -47,6 +47,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 ## Video Generation Skills
 
 - [Volcengine Seedance Video](references/volcengine-seedance.md)
+- [MiniMax Hailuo Video](references/minimax-hailuo.md)
 - [DashScope HappyHorse Video](references/dashscope-happyhorse.md)
 - [Google Veo Video](references/google-veo.md)
 - [OpenAI Sora Video](references/openai-sora.md)
