@@ -205,14 +205,11 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 - **火山引擎 Seedream 生图**：豆包 Seedream 5.0 pro / 5.0 lite / 4.5 / 4.0 图片生成——文生图、图生图、多图融合、组图生成、联网搜索（复用 `VOLCENGINE_API_KEY`）
 
-### v0.6 新功能
+### v0.5.3 新功能
 
 - **MiniMax 海螺视频**：使用 `MiniMax-H3` 生成 2K 视频，自带同步音频——文生视频、图生视频（首帧、尾帧或首尾帧）、多模态参考并支持从参考音频迁移音色。时长为 4 到 15 秒之间的任意整数
 - **新增环境变量**：`MINIMAX_API_KEY`，以及可选的 `MINIMAX_API_BASE`
 - **文档补齐**：此前已发布的 DashScope HappyHorse 视频技能现已写入本手册
-
-### v0.7 新功能
-
 - **火山引擎 Seedance 2.5**：`doubao-seedance-2-5-260628` 成为默认视频模型——30 秒连贯直出、最多 30 张参考图 / 10 个参考视频 / 10 段参考音频，并支持仅音频输入（无需参考图或视频）。最高分辨率为 720p，因此 1080p 与 4K 仍只能用 `doubao-seedance-2-0-260128`
 - **`mov` 输出**：Seedance 2.5 可输出高色彩精度的 `mov`（yuv444p + PCM），适用于调色、抠像、合成；视频编辑/延长链路建议输入输出都用 mov
 - **排队与超时控制**：Seedance 技能新增 `--priority`（0-9，插队到低优先级排队任务之前）与 `--expires-after`（3600-259200 秒后未完成的任务标记为 `expired`）

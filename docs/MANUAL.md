@@ -205,14 +205,11 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 
 - **Volcengine Seedream**: Image generation with Doubao Seedream 5.0 pro / 5.0 lite / 4.5 / 4.0 — Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation, and web search (reuses `VOLCENGINE_API_KEY`)
 
-### New Features in v0.6
+### New Features in v0.5.3
 
 - **MiniMax Hailuo Video**: 2K video generation with native synchronized audio using `MiniMax-H3` — Text-to-Video, Image-to-Video (first frame, last frame, or both), and Multi-modal Reference with voice transfer from reference audio. Durations are any integer from 4 to 15 seconds
 - **New Environment Variables**: `MINIMAX_API_KEY`, plus optional `MINIMAX_API_BASE`
 - **Documentation**: The DashScope HappyHorse video skill (shipped earlier) is now documented in this manual
-
-### New Features in v0.7
-
 - **Volcengine Seedance 2.5**: `doubao-seedance-2-5-260628` is now the default video model — 30-second coherent single-pass output, up to 30 reference images / 10 reference videos / 10 reference audio clips, and audio-only input (no reference image or video needed). Maximum resolution is 720p, so `doubao-seedance-2-0-260128` remains the only choice for 1080p and 4K
 - **`mov` Output**: Seedance 2.5 can render high colour-precision `mov` (yuv444p + PCM) for grading, keying, and compositing — recommended on both sides of a video edit/extend chain
 - **Queue and Timeout Control**: New `--priority` (0-9, jumps ahead of lower-priority queued tasks) and `--expires-after` (3600-259200 seconds before an unfinished task is marked `expired`) options on the Seedance skill
