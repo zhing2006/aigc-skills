@@ -12,7 +12,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Image** | OpenAI GPT | Text-to-Image, Image Edit |
 | **Image** | Volcengine Seedream | Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation (up to 4K) |
 | **Image** | DashScope Qwen Image 3.0 | Text-to-Image, Image Edit, Multi-Image Fusion (invite-only) |
-| **Video** | Volcengine Seedance | Text-to-Video, Image-to-Video, Audio-to-Video, Multi-modal Reference, Video Edit/Extend (up to 30s, or 4K on Seedance 2.0) |
+| **Video** | Volcengine Seedance 2.5 / 2.0 | Text-to-Video, Image-to-Video, Audio-to-Video, Multi-modal Reference, Video Edit/Extend (30s single take on 2.5, up to 4K on 2.0) |
 | **Video** | MiniMax Hailuo | Text-to-Video, Image-to-Video (first/last frame), Multi-modal Reference with voice transfer (2K native audio) |
 | **Video** | DashScope HappyHorse | Text-to-Video, Image-to-Video, Reference-to-Video, Video Edit (physically realistic) |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
