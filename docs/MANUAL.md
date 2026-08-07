@@ -211,6 +211,13 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 - **New Environment Variables**: `MINIMAX_API_KEY`, plus optional `MINIMAX_API_BASE`
 - **Documentation**: The DashScope HappyHorse video skill (shipped earlier) is now documented in this manual
 
+### New Features in v0.7
+
+- **Volcengine Seedance 2.5**: `doubao-seedance-2-5-260628` is now the default video model — 30-second coherent single-pass output, up to 30 reference images / 10 reference videos / 10 reference audio clips, and audio-only input (no reference image or video needed). Maximum resolution is 720p, so `doubao-seedance-2-0-260128` remains the only choice for 1080p and 4K
+- **`mov` Output**: Seedance 2.5 can render high colour-precision `mov` (yuv444p + PCM) for grading, keying, and compositing — recommended on both sides of a video edit/extend chain
+- **Queue and Timeout Control**: New `--priority` (0-9, jumps ahead of lower-priority queued tasks) and `--expires-after` (3600-259200 seconds before an unfinished task is marked `expired`) options on the Seedance skill
+- **Reuses `VOLCENGINE_API_KEY`** — no new environment variables
+
 ---
 
 ## Skills Overview
@@ -221,7 +228,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds |
 | Seedream | Volcengine | Text, Images | Image | Chinese/English text rendering, multi-image fusion, group generation |
 | Qwen Image 3.0 | DashScope | Text, 1-3 Images | Image | Text rendering, precise editing, multi-image fusion (invite-only) |
-| Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default) |
+| Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default). 2.5 for 30-second takes and audio-only input; 2.0 for 1080p/4K |
 | Hailuo | MiniMax | Text, Image, Video, Audio | Video | 2K video with native audio, voice transfer from reference audio |
 | HappyHorse | DashScope | Text, Image, Video | Video | Physically realistic motion, reference-to-video, video editing |
 | Veo | Google | Text, Image | Video | Video generation with audio |
@@ -422,14 +429,25 @@ Best for: Multi-modal video generation, video editing/extending, synchronized au
 
 > "Create a silent video of dewdrops sliding off flower petals in slow motion, macro lens"
 
+#### 30-Second Single Take (Seedance 2.5)
+
+> "Make a 30 second video in one take: an old bookshop at dawn, the owner opens the door, dust drifts in the light, a young woman walks in, and he points to a book in the corner and says 'What you're looking for has always been right there.'"
+
+#### Audio-Driven Video (Seedance 2.5)
+
+> "Generate a video driven by this drum track — a neon-lit rainy street where the light pulses with the beat"
+> (attach only an audio file)
+
 **Supported Options**:
 
-- Models: `doubao-seedance-2-0-260128` (highest quality, default), `doubao-seedance-2-0-fast-260128` (faster), `doubao-seedance-2-0-mini-260615` (cheapest)
-- Aspect Ratios: `16:9`, `4:3`, `1:1`, `3:4`, `9:16`, `21:9`, `adaptive` (default)
-- Durations: `4` to `15` seconds, or `-1` for auto
-- Resolutions: `480p`, `720p` (default), `1080p`, `4k` — `1080p` and `4k` require the full model
-- Audio: Enabled by default (synchronized dialogue, SFX, music)
-- Multi-modal input: Up to 9 reference images, 3 reference videos, 3 reference audios
+- Models: `doubao-seedance-2-5-260628` (default, 30 s / audio-only / `mov`, max 720p), `doubao-seedance-2-0-260128` (the only 1080p and 4K option), `doubao-seedance-2-0-fast-260128` (faster), `doubao-seedance-2-0-mini-260615` (cheapest)
+- Aspect Ratios: `16:9`, `4:3`, `1:1`, `3:4`, `9:16`, `21:9`, `adaptive` (default) — Seedance 2.5 forces `adaptive` for first-frame and video edit/extend tasks
+- Durations: Seedance 2.5 `4` to `30` seconds, 2.0 series `4` to `15` seconds, or `-1` for auto
+- Resolutions: `480p`, `720p` (default), `1080p`, `4k` — `1080p` and `4k` require `doubao-seedance-2-0-260128`
+- Output format: `mp4` (default) or `mov` for high colour precision (Seedance 2.5 only)
+- Audio: Enabled by default (synchronized dialogue, SFX, music), always mono
+- Multi-modal input: Seedance 2.5 up to 30 reference images, 10 videos, 10 audios (≤30 s total each); 2.0 series up to 9 / 3 / 3 (≤15 s total each). Audio alone works on 2.5 only
+- Queue control: priority `0`-`9`, and a task timeout of `3600`-`259200` seconds (default 48 h)
 
 ---
 
@@ -1051,7 +1069,7 @@ Result: A complete set of game assets from a single creative session, ready for 
 3. **Use Appropriate Tools**:
    - Google Gemini: Best for initial concepts and style transfer
    - OpenAI GPT: Best for precise edits and transparent assets
-   - Volcengine Seedance: Best all-round default, and the only option for 4K or video editing
+   - Volcengine Seedance: Best all-round default, and the only option for video editing. Seedance 2.5 for 30-second takes and audio-driven video; `doubao-seedance-2-0-260128` for 1080p or 4K
    - MiniMax Hailuo: Best for 2K output and transferring a voice from reference audio
    - DashScope HappyHorse: Best for physically realistic motion
    - Google Veo: Best when you need audio with video

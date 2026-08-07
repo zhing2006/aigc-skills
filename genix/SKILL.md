@@ -3,7 +3,7 @@ name: genix
 description: Generate and edit images, videos, audio, music, and 3D assets with major AIGC providers, including DashScope Qwen Image 3.0. Use for media generation, image editing, multi-image fusion, speech, music, video, or 3D requests.
 license: Apache 2.0. LICENSE.txt has complete terms
 metadata:
-  version: "0.6"
+  version: "0.7"
   author: zhing2006
 ---
 

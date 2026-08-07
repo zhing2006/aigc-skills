@@ -1,11 +1,17 @@
-# Volcengine Seedance 2.0 Video Generation
+# Volcengine Seedance 2.5 / 2.0 Video Generation
 
-Text-to-Video, Image-to-Video, and Multi-modal Reference video generation using Volcengine Seedance 2.0.
+Text-to-Video, Image-to-Video, Audio-to-Video, and Multi-modal Reference video
+generation using Volcengine Seedance 2.5 and the Seedance 2.0 series.
 
 ## Contents
 
 - [Commands](#commands)
 - [Supported Models](#supported-models)
+- [Supported Resolutions](#supported-resolutions)
+- [Supported Aspect Ratios](#supported-aspect-ratios)
+- [Supported Durations](#supported-durations)
+- [Parameter Applicability](#parameter-applicability)
+- [Media Input Limits](#media-input-limits)
 - [Generation Modes](#generation-modes)
 - [Prompt Best Practices](#prompt-best-practices)
 - [Examples](#examples)
@@ -28,7 +34,8 @@ Generate a video. This is the default command — the `generate` keyword can be 
 | -------- | -------- | ----------- |
 | `prompt` | No* | Text prompt for video generation |
 
-*At least one of `prompt`, `--first-frame`, `--ref-image`, or `--ref-video` is required.
+*At least one of `prompt`, `--first-frame`, `--ref-image`, `--ref-video`, or
+`--ref-audio` is required.
 
 #### Options
 
@@ -36,18 +43,21 @@ Generate a video. This is the default command — the `generate` keyword can be 
 | ------ | ------- | ----------- |
 | `-i`, `--first-frame` | None | First frame image for image-to-video |
 | `--last-frame` | None | Last frame image (requires `--first-frame`) |
-| `--ref-image` | None | Reference image (repeatable, max 9) |
-| `--ref-video` | None | Reference video URL (repeatable, max 3) |
-| `--ref-audio` | None | Reference audio (repeatable, max 3, requires ref image/video) |
-| `-m`, `--model` | `doubao-seedance-2-0-260128` | Model to use |
-| `-r`, `--resolution` | `720p` | Video resolution (`480p`, `720p`, `1080p`, `4k`) |
-| `-a`, `--ratio` | `adaptive` | Aspect ratio |
-| `-d`, `--duration` | `5` | Duration in seconds (4-15 or -1 for auto) |
+| `--ref-image` | None | Reference image (repeatable; max 30 on 2.5, 9 on 2.0) |
+| `--ref-video` | None | Reference video URL (repeatable; max 10 on 2.5, 3 on 2.0) |
+| `--ref-audio` | None | Reference audio (repeatable; max 10 on 2.5, 3 on 2.0). 2.5 accepts audio alone; 2.0 also needs a reference image or video |
+| `-m`, `--model` | `doubao-seedance-2-5-260628` | Model to use |
+| `-r`, `--resolution` | `720p` | Video resolution (`480p`, `720p`, `1080p`, `4k`) — see the per-model matrix below |
+| `-a`, `--ratio` | `adaptive` | Aspect ratio. 2.5 forces `adaptive` for first-frame / first+last-frame and video edit/extend tasks |
+| `-d`, `--duration` | `5` | Duration in seconds (2.5: `4`-`30`; 2.0 series: `4`-`15`; `-1` for auto) |
 | `--no-audio` | false | Disable synchronized audio generation |
 | `--watermark` | false | Add watermark |
 | `--web-search` | false | Enable web search enhancement (text-to-video only) |
 | `--return-last-frame` | false | Also save the video's last frame as `<name>_last_frame.png` (for chaining clips) |
-| `-o`, `--output` | `generated_video.mp4` | Output file path |
+| `--output-format` | `mp4` | Output container: `mp4` or `mov` (**Seedance 2.5 only**) |
+| `--priority` | None | Queue priority `0`-`9`; higher jumps ahead of lower-priority queued tasks on the same endpoint |
+| `--expires-after` | `172800` (48h) | Seconds after creation before an unfinished task is marked `expired` (`3600`-`259200`) |
+| `-o`, `--output` | `generated_video.<format>` | Output file path |
 
 ### get
 
@@ -75,7 +85,7 @@ List video generation tasks with optional filters.
 
 | Option | Default | Description |
 | ------ | ------- | ----------- |
-| `-s`, `--status` | None | Filter by status: `queued`, `running`, `succeeded`, `failed`, `cancelled` |
+| `-s`, `--status` | None | Filter by status: `queued`, `running`, `succeeded`, `failed`, `cancelled`, `expired` |
 | `-m`, `--model` | None | Filter by model ID |
 | `--task-ids` | None | Filter by specific task IDs (space-separated) |
 | `-p`, `--page` | `1` | Page number |
@@ -99,11 +109,14 @@ Delete a video generation task.
 
 | Model | Model ID | Description |
 | ----- | -------- | ----------- |
-| Seedance 2.0 | `doubao-seedance-2-0-260128` | Highest quality (default), supports up to 4k |
-| Seedance 2.0 fast | `doubao-seedance-2-0-fast-260128` | Faster, lower cost, max 720p |
-| Seedance 2.0 mini | `doubao-seedance-2-0-mini-260615` | Cheapest/fastest, max 720p |
+| Seedance 2.5 | `doubao-seedance-2-5-260628` | Default. 30 s coherent single-pass output, up to 30 reference images, `mov` output, audio-only input. Max 720p |
+| Seedance 2.0 | `doubao-seedance-2-0-260128` | The only model with 1080p and 4k. Max 15 s |
+| Seedance 2.0 fast | `doubao-seedance-2-0-fast-260128` | Faster, lower cost, max 720p / 15 s |
+| Seedance 2.0 mini | `doubao-seedance-2-0-mini-260615` | Cheapest/fastest, max 720p / 15 s |
 
-**Note**: If the user does not specify model, use `doubao-seedance-2-0-260128` as default. For quick previews or drafts, recommend the fast or mini model.
+**Note**: If the user does not specify a model, use `doubao-seedance-2-5-260628`.
+Switch to `doubao-seedance-2-0-260128` when the user needs 1080p or 4k, and to the
+fast or mini model for quick previews and drafts.
 
 ## Supported Resolutions
 
@@ -113,12 +126,13 @@ Resolution support depends on the model:
 
 | Model | 480p | 720p | 1080p | 4k |
 | ----- | :--: | :--: | :---: | :-: |
+| `doubao-seedance-2-5-260628` | ✅ | ✅ | ❌ | ❌ |
 | `doubao-seedance-2-0-260128` (full) | ✅ | ✅ | ✅ | ✅ |
 | `doubao-seedance-2-0-fast-260128` | ✅ | ✅ | ❌ | ❌ |
 | `doubao-seedance-2-0-mini-260615` | ✅ | ✅ | ❌ | ❌ |
 
 **Notes**:
-- `1080p` is **not** supported by the fast or mini models; `4k` is **only** supported by the full model.
+- Seedance 2.5 tops out at `720p`. `1080p` and `4k` require `doubao-seedance-2-0-260128`.
 - The script validates resolution against the chosen model and errors early if unsupported.
 - `4k` output uses 10-bit H.265 encoding (HDR-ready). Some players may not support it — use VLC, MPV, or QuickTime Player if playback fails.
 
@@ -134,13 +148,77 @@ Resolution support depends on the model:
 | `3:4` | Portrait (classic) |
 | `9:16` | Portrait (mobile/vertical) |
 | `21:9` | Ultra-wide (cinematic) |
-| `adaptive` | Auto-select based on input (default) |
+| `adaptive` | Auto-select based on task and input (default) |
+
+Not every task lets you pick the ratio:
+
+| Task | Seedance 2.5 | Seedance 2.0 series |
+| ---- | ------------ | ------------------- |
+| Text-to-Video | Free choice or `adaptive` | Free choice or `adaptive` |
+| Multi-modal reference (new video) | Free choice or `adaptive` | Free choice or `adaptive` |
+| First frame / first+last frame | **`adaptive` only** — output follows the first frame | Free choice or `adaptive` |
+| Video edit / video extend | **`adaptive` only** — output follows the source video | Free choice or `adaptive` |
+
+The script rejects a non-`adaptive` `-a` on Seedance 2.5 first-frame tasks before
+sending the request. Video edit/extend is inferred by the model from the prompt, so
+that case is not caught locally — leave `-a` unset for those.
 
 ## Supported Durations
 
-`4` to `15` seconds (integer), or `-1` for model auto-select.
+| Model | Range | `-1` behaviour |
+| ----- | ----- | -------------- |
+| `doubao-seedance-2-5-260628` | `4`-`30` s | Model picks a length; for a video edit it matches the source (±0.4 s) |
+| `doubao-seedance-2-0-*` | `4`-`15` s | Model picks a length in range |
 
 Default: `5` seconds. Longer durations cost more tokens.
+
+**Seedance 2.5 video-edit tasks accept only `-d -1`** — an explicit duration errors
+out server-side, and the source video must itself be 4-30 s.
+
+The `duration` returned by `get` / `list` is `total_frames / 24` rounded down, so it
+can read 1 s shorter than the actual file.
+
+## Parameter Applicability
+
+| Capability | Seedance 2.5 | Seedance 2.0 | 2.0 fast | 2.0 mini |
+| ---------- | :----------: | :----------: | :------: | :------: |
+| Max resolution | 720p | 4k | 720p | 720p |
+| Duration range | 4-30 s | 4-15 s | 4-15 s | 4-15 s |
+| Free choice of `-a` | Text/reference tasks only | ✅ | ✅ | ✅ |
+| `--output-format mov` | ✅ | ❌ | ❌ | ❌ |
+| `--priority` | ✅ | ✅ | ✅ | ✅ |
+| `--expires-after` | ✅ | ✅ | ✅ | ✅ |
+| `--no-audio` / synced audio | ✅ | ✅ | ✅ | ✅ |
+| `--web-search` | ✅ | ✅ | ✅ | ✅ |
+| Audio-only input | ✅ | ❌ | ❌ | ❌ |
+| Max reference images | 30 | 9 | 9 | 9 |
+| Max reference videos | 10 (≤30 s total) | 3 (≤15 s total) | 3 | 3 |
+| Max reference audios | 10 (≤30 s total) | 3 (≤15 s total) | 3 | 3 |
+
+**Not exposed by this script**: `seed`, `frames`, `camera_fixed`, `draft`, and
+`service_tier` are unsupported by Seedance 2.5 and the 2.0 series (they belong to
+Seedance 1.5 pro and the 1.0 models), so there are no CLI flags for them.
+
+## Media Input Limits
+
+Applies to every image/video/audio passed to `-i`, `--last-frame`, `--ref-image`,
+`--ref-video`, `--ref-audio`. Local files are base64-encoded automatically; `http(s)://`
+URLs and `asset://<ASSET_ID>` material IDs are passed through unchanged.
+
+| Kind | Formats | Size | Other limits |
+| ---- | ------- | ---- | ------------ |
+| Image | `jpeg`, `png`, `webp`, `bmp`, `tiff`, `gif` | < 30 MB each | Aspect ratio 0.4-2.5; each side 300-6000 px |
+| Video | `mp4`, `mov` (H.264/H.265 video, AAC/MP3 audio) | ≤ 200 MB each | 480p-4k; 24-60 fps; aspect ratio 0.4-2.5; 2.5: 2-30 s each and ≤30 s total, 2.0: 2-15 s each and ≤15 s total |
+| Audio | `wav`, `mp3` | ≤ 15 MB each | 2.5: 2-30 s each and ≤30 s total, 2.0: 2-15 s each and ≤15 s total |
+
+**Request body must stay under 64 MB.** For large files pass a public URL rather than
+a local path, since local paths are inlined as base64.
+
+**Real faces**: Seedance 2.5 and the 2.0 series reject reference images and videos
+containing real human faces uploaded directly. Use one of the platform's routes
+instead — output previously generated by these models on the same account within the
+last 30 days, a preset virtual persona (`asset://<ASSET_ID>` from the console's
+material library), or licensed footage.
 
 ## Generation Modes
 
@@ -172,18 +250,49 @@ Provide both first and last frame images. The model generates smooth transition 
 
 Combine reference images, videos, and audio for maximum control. Use prompt to describe how references should be combined.
 
+Seedance 2.5 accepts up to 30 images, 10 videos, and 10 audio clips per request
+(2.0 series: 9 / 3 / 3). This mode also covers **video editing** and **video
+extension** — the model infers which from the prompt, so word it explicitly
+(see [Video editing](#video-editing)).
+
 ```bash
 {python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为主角，人物外观严格参考图片1；第一视角运镜参考视频1，但不复用其中的人物和场景；音乐节奏参考音频1。人物A在雨后街道缓慢向前行走，镜头平稳跟随，动作与音乐节拍自然同步。" --ref-image character.png --ref-video scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
 ```
 
-**Note**: First frame mode and multi-modal reference mode are mutually exclusive. Audio references require at least one image or video reference.
+**Note**: First frame mode and multi-modal reference mode are mutually exclusive.
+
+### Audio Reference Only (Seedance 2.5)
+
+Seedance 2.5 can drive a video from audio alone — no reference image or video needed.
+The prompt is optional but strongly recommended to fix the subject and setting;
+without it the model has nothing but the audio to work from.
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "画面随音频1的鼓点切换：中景，霓虹灯下的雨夜街道，光斑随节拍明暗起伏，镜头平稳横移。" --ref-audio drums.mp3 -a 21:9 -d 12 -o rhythm.mp4
+```
+
+On the 2.0 series this errors out — audio there must accompany at least one reference
+image or video.
 
 ## Prompt Best Practices
 
 Use the first-party
-[Volcengine Seedance 2.0 prompt guide](https://www.volcengine.com/docs/82379/2222480)
+[Volcengine Seedance prompt guide](https://www.volcengine.com/docs/82379/2222480),
+the [Seedance 2.5 prompt guide](https://www.volcengine.com/docs/82379/2607689),
 and [ByteDance product examples](https://seed.bytedance.com/zh/seedance2_0)
 instead of generic prompt collections.
+
+### Prompt length and language
+
+Keep Chinese prompts under 500 characters and English prompts under 1000 words.
+Past that, the model tends to latch onto the highlights and silently drop details.
+
+All models accept Chinese and English. Beyond that:
+
+| Model | Additional languages |
+| ----- | -------------------- |
+| Seedance 2.5 | Spanish, Indonesian, Portuguese, Japanese, Malay, Thai, Arabic, Vietnamese, Korean |
+| Seedance 2.0 series | Spanish, Indonesian, Portuguese, Japanese |
 
 ### Choose the task first
 
@@ -224,6 +333,9 @@ adjectives:
 6. **Keep difficult motion achievable.** Prefer physically connected motion.
    For dense fights, chases, or montage, generate shorter clips and edit them
    together instead of overloading one prompt.
+   Seedance 2.5 can hold 30 seconds in one pass, but a long take still needs a
+   storyboard: 3-5 numbered shots with one clear action each beats a wall of
+   simultaneous events. Beyond that, chain clips via `--return-last-frame`.
 7. **Close with relevant boundaries.** State style and quality, then only the
    constraints that matter, such as `保持无字幕`, `不要生成 Logo`, or
    `不要生成水印`. Do not append a universal boilerplate negative list.
@@ -270,9 +382,13 @@ Use a **Change + Preserve** instruction:
 灯光、背景、时长和音频不变；面霜罐的大小、透视、遮挡和桌面接触阴影与原场景一致。
 ```
 
+On Seedance 2.5 an edit or extension must run with `-d -1` and no explicit `-a`; the
+output length and ratio track the source video. Use `--output-format mov` on both
+sides of an edit chain to avoid a second generation loss.
+
 ### Camera Movements (运镜)
 
-Seedance 2.0 understands standard camera terms directly. Prefer one movement
+Seedance understands standard camera terms directly. Prefer one movement
 per shot.
 
 | Movement | Chinese | Description |
@@ -313,7 +429,9 @@ per shot.
 
 ### Audio Prompting
 
-Seedance 2.0 generates native synchronized audio (dialogue, SFX, music). Tips:
+Seedance generates native synchronized audio (dialogue, SFX, music) unless
+`--no-audio` is passed. Generated audio is always mono, regardless of how many
+channels a reference audio clip has. Tips:
 
 - **Dialogue**: Put lines in double quotes: `男人说："你好，欢迎来到这里。"`
 - **Sound Effects**: Describe naturally: `脚步声踩在雪地上，咯吱作响`
@@ -395,10 +513,44 @@ once; this reduces but cannot guarantee elimination of duplication.
 {python} {skill_dir}/scripts/volcengine-seedance.py "微距镜头拍摄一只玻璃蛙，透明腹部可见心脏跳动，热带雨林背景" --web-search -a 16:9 -d 8 -o glass_frog.mp4
 ```
 
-### 4K Output (full model only)
+### 4K Output (Seedance 2.0 full model only)
 
 ```bash
 {python} {skill_dir}/scripts/volcengine-seedance.py "航拍，云雾缭绕的山谷在日出时分，金色阳光穿透云层，史诗级电影质感" -m doubao-seedance-2-0-260128 -r 4k -a 16:9 -d 8 -o valley_4k.mp4
+```
+
+### 30-Second Single Take (Seedance 2.5)
+
+Storyboard the whole thing; do not rely on one sentence to fill 30 seconds.
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "镜头1：清晨的旧书店，中景固定机位，老店主推开木门，铜铃轻响。镜头2：切至书架特写缓慢横移，尘埃在斜射晨光中浮动。镜头3：切至中景，一位年轻女子推门进来，抬头环视，脚步声在木地板上回响。镜头4：切至两人近景过肩镜头，店主指向角落的一本旧书并说：'你要找的，一直在那里。' 全程暖色调，电影质感，动作衔接自然，只有环境声与轻微钢琴单音。" -d 30 -r 720p -a 16:9 -o bookstore_30s.mp4
+```
+
+### High-Fidelity mov for Editing (Seedance 2.5)
+
+`mov` keeps higher colour precision (yuv444p + PCM audio) for grading, keying, and
+compositing. Use it on both sides of an edit/extend chain. Play it with VLC, mpv,
+IINA, or ffplay — many consumer players cannot.
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "严格编辑视频1：将桌上的透明香水瓶替换为图片1中的面霜罐，保持原视频的手部动作、运镜、灯光、背景、时长和音频不变。" --ref-video product_shot.mov --ref-image cream_jar.png -d -1 --output-format mov -o product_edit.mov
+```
+
+### Audio-Driven Video (Seedance 2.5)
+
+Audio alone is a valid input on 2.5 — no reference image or video required.
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "画面随音频1的鼓点切换：中景，霓虹灯下的雨夜街道，光斑随节拍明暗起伏，镜头平稳横移，冷色调，赛博朋克质感。" --ref-audio drums.mp3 -a 21:9 -d 12 -o rhythm.mp4
+```
+
+### Priority and Timeout
+
+Jump the queue for an urgent render and give up after an hour instead of the default 48 h.
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "特写，咖啡从壶口缓缓注入杯中，热气升腾，浅景深" --priority 7 --expires-after 3600 -d 5 -o pour.mp4
 ```
 
 ### Chaining Clips via Last Frame
@@ -428,8 +580,11 @@ Save the final frame, then feed it as the first frame of the next clip for a sea
 # List only succeeded tasks
 {python} {skill_dir}/scripts/volcengine-seedance.py list -s succeeded
 
+# List only expired tasks
+{python} {skill_dir}/scripts/volcengine-seedance.py list -s expired
+
 # List tasks filtered by model, page 2
-{python} {skill_dir}/scripts/volcengine-seedance.py list -m doubao-seedance-2-0-fast-260128 -p 2
+{python} {skill_dir}/scripts/volcengine-seedance.py list -m doubao-seedance-2-5-260628 -p 2
 
 # List specific tasks by ID
 {python} {skill_dir}/scripts/volcengine-seedance.py list --task-ids cgt-20260401194138-w8xgn cgt-20260401200000-abc12

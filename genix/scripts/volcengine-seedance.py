@@ -1,19 +1,26 @@
 """
-Volcengine Seedance 2.0 - Text/Image/Multi-modal to Video Generation
+Volcengine Seedance 2.5 / 2.0 - Text/Image/Audio/Multi-modal to Video Generation
 
 Subcommands:
   generate  Create a video generation task (default)
+  get       Get a single video generation task
   list      List video generation tasks
   delete    Delete a video generation task
 
-Supported models: doubao-seedance-2-0-260128, doubao-seedance-2-0-fast-260128,
-                  doubao-seedance-2-0-mini-260615
-Supported resolutions: 480p, 720p, 1080p, 4k
-  - doubao-seedance-2-0-260128 (full):  480p, 720p, 1080p, 4k
-  - doubao-seedance-2-0-fast-260128:    480p, 720p
-  - doubao-seedance-2-0-mini-260615:    480p, 720p
+Supported models (resolutions | duration | max ref images/videos/audios):
+  - doubao-seedance-2-5-260628 (default):  480p, 720p                | 4-30s | 30/10/10
+  - doubao-seedance-2-0-260128 (full):     480p, 720p, 1080p, 4k     | 4-15s | 9/3/3
+  - doubao-seedance-2-0-fast-260128:       480p, 720p                | 4-15s | 9/3/3
+  - doubao-seedance-2-0-mini-260615:       480p, 720p                | 4-15s | 9/3/3
 Supported ratios: 16:9, 4:3, 1:1, 3:4, 9:16, 21:9, adaptive
-Supported durations: 4-15 seconds, or -1 (auto)
+  - Seedance 2.5 forces `adaptive` for first-frame / first+last-frame tasks; the
+    output ratio follows the first frame.
+Durations accept -1 to let the model pick a length.
+
+Seedance 2.5 only:
+  - mov output (--output-format mov) for high colour-precision editing pipelines
+  - audio-only input (--ref-audio with no reference image or video)
+  - 30-second coherent single-pass output
 """
 
 import argparse
@@ -30,22 +37,61 @@ from dotenv import load_dotenv
 from volcenginesdkarkruntime import Ark
 
 
+MODEL_SEEDANCE_2_5 = "doubao-seedance-2-5-260628"
+
 SUPPORTED_MODELS = [
+    MODEL_SEEDANCE_2_5,
     "doubao-seedance-2-0-260128",
     "doubao-seedance-2-0-fast-260128",
     "doubao-seedance-2-0-mini-260615",
 ]
 SUPPORTED_RESOLUTIONS = ["480p", "720p", "1080p", "4k"]
-# Per-model resolution support. Fast/mini variants top out at 720p; 4k is full-model only.
+# Per-model resolution support. Seedance 2.5 and the 2.0 fast/mini variants top out
+# at 720p; 1080p and 4k are exclusive to the full 2.0 model.
 RESOLUTION_SUPPORT = {
+    MODEL_SEEDANCE_2_5: ["480p", "720p"],
     "doubao-seedance-2-0-260128": ["480p", "720p", "1080p", "4k"],
     "doubao-seedance-2-0-fast-260128": ["480p", "720p"],
     "doubao-seedance-2-0-mini-260615": ["480p", "720p"],
 }
 SUPPORTED_RATIOS = ["16:9", "4:3", "1:1", "3:4", "9:16", "21:9", "adaptive"]
-SUPPORTED_STATUSES = ["queued", "running", "succeeded", "failed", "cancelled"]
-DEFAULT_MODEL = "doubao-seedance-2-0-260128"
+SUPPORTED_STATUSES = ["queued", "running", "succeeded", "failed", "cancelled", "expired"]
+# Statuses that end a task without producing a video. Polling must stop on these.
+TERMINAL_FAILURE_STATUSES = {"failed", "cancelled", "expired"}
+DEFAULT_MODEL = MODEL_SEEDANCE_2_5
 DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+POLL_INTERVAL = 10
+
+# Seedance 2.5 generates up to 30 coherent seconds; the 2.0 series stops at 15.
+DURATION_RANGE = {MODEL_SEEDANCE_2_5: (4, 30)}
+DEFAULT_DURATION_RANGE = (4, 15)
+
+# Per-request reference-asset counts. `seconds` is the combined video/audio duration
+# cap the API enforces — reported in error messages, not checked locally (the script
+# never decodes media).
+MEDIA_LIMITS = {
+    MODEL_SEEDANCE_2_5: {"images": 30, "videos": 10, "audios": 10, "seconds": 30},
+}
+DEFAULT_MEDIA_LIMITS = {"images": 9, "videos": 3, "audios": 3, "seconds": 15}
+
+# Seedance 2.5 exclusives.
+AUDIO_ONLY_MODELS = {MODEL_SEEDANCE_2_5}
+OUTPUT_FORMAT_MODELS = {MODEL_SEEDANCE_2_5}
+ADAPTIVE_ONLY_FRAME_MODELS = {MODEL_SEEDANCE_2_5}
+SUPPORTED_OUTPUT_FORMATS = ["mp4", "mov"]
+
+PRIORITY_RANGE = (0, 9)
+EXPIRES_AFTER_RANGE = (3600, 259200)
+
+
+def duration_range(model: str) -> tuple[int, int]:
+    """Return the (min, max) duration in seconds allowed for a model."""
+    return DURATION_RANGE.get(model, DEFAULT_DURATION_RANGE)
+
+
+def media_limits(model: str) -> dict[str, int]:
+    """Return the reference-asset limits for a model."""
+    return MEDIA_LIMITS.get(model, DEFAULT_MEDIA_LIMITS)
 
 
 def get_client() -> Ark:
@@ -120,15 +166,18 @@ async def generate_video(
     ref_audios: list[str] | None = None,
     model: str = DEFAULT_MODEL,
     resolution: str = "720p",
-    ratio: str = "adaptive",
+    ratio: str | None = None,
     duration: int = 5,
     generate_audio: bool = True,
     watermark: bool = False,
     web_search: bool = False,
     return_last_frame: bool = False,
+    output_format: str | None = None,
+    priority: int | None = None,
+    expires_after: int | None = None,
     output_path: str | None = None,
 ) -> Path:
-    """Generate a video using Volcengine Seedance 2.0."""
+    """Generate a video using Volcengine Seedance 2.5 / 2.0."""
     if model not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model}. Supported: {SUPPORTED_MODELS}")
 
@@ -139,11 +188,67 @@ async def generate_video(
             f"Supported: {allowed_resolutions}"
         )
 
-    if ratio not in SUPPORTED_RATIOS:
+    if ratio is not None and ratio not in SUPPORTED_RATIOS:
         raise ValueError(f"Unsupported ratio: {ratio}. Supported: {SUPPORTED_RATIOS}")
 
-    if duration != -1 and (duration < 4 or duration > 15):
-        raise ValueError("Duration must be 4-15 seconds, or -1 for auto")
+    # Seedance 2.5 always matches the output ratio to the first frame, so an explicit
+    # ratio is rejected by the API rather than ignored.
+    if model in ADAPTIVE_ONLY_FRAME_MODELS and first_frame and ratio not in (None, "adaptive"):
+        raise ValueError(
+            f"Model {model} only supports ratio 'adaptive' for first-frame / "
+            f"first+last-frame tasks; the output follows the first frame's ratio"
+        )
+    effective_ratio = ratio or "adaptive"
+
+    min_duration, max_duration = duration_range(model)
+    if duration != -1 and not min_duration <= duration <= max_duration:
+        raise ValueError(
+            f"Model {model} requires duration {min_duration}-{max_duration} seconds, "
+            f"or -1 for auto"
+        )
+
+    if output_format is not None:
+        if output_format not in SUPPORTED_OUTPUT_FORMATS:
+            raise ValueError(
+                f"Unsupported output format: {output_format}. "
+                f"Supported: {SUPPORTED_OUTPUT_FORMATS}"
+            )
+        if model not in OUTPUT_FORMAT_MODELS:
+            raise ValueError(
+                f"Model {model} does not support --output-format. "
+                f"Supported models: {sorted(OUTPUT_FORMAT_MODELS)}"
+            )
+
+    if priority is not None and not PRIORITY_RANGE[0] <= priority <= PRIORITY_RANGE[1]:
+        raise ValueError(
+            f"Priority must be {PRIORITY_RANGE[0]}-{PRIORITY_RANGE[1]} (higher jumps the queue)"
+        )
+
+    if expires_after is not None and not (
+        EXPIRES_AFTER_RANGE[0] <= expires_after <= EXPIRES_AFTER_RANGE[1]
+    ):
+        raise ValueError(
+            f"Expires-after must be {EXPIRES_AFTER_RANGE[0]}-{EXPIRES_AFTER_RANGE[1]} seconds"
+        )
+
+    if last_frame and not first_frame:
+        raise ValueError("Last frame requires first frame to be set")
+
+    # First-frame, first+last-frame and multi-modal reference are three distinct task
+    # types server-side and cannot be combined.
+    if first_frame and (ref_images or ref_videos):
+        raise ValueError(
+            "First/last frame mode and multi-modal reference mode are mutually exclusive"
+        )
+
+    limits = media_limits(model)
+    for kind, items in (("images", ref_images), ("videos", ref_videos), ("audios", ref_audios)):
+        if items and len(items) > limits[kind]:
+            raise ValueError(
+                f"Model {model} accepts at most {limits[kind]} reference {kind} "
+                f"(got {len(items)}). Combined reference video/audio duration must also "
+                f"stay within {limits['seconds']}s."
+            )
 
     client = get_client()
 
@@ -161,8 +266,6 @@ async def generate_video(
         })
 
     if last_frame:
-        if not first_frame:
-            raise ValueError("Last frame requires first frame to be set")
         content.append({
             "type": "image_url",
             "image_url": {"url": resolve_image_url(last_frame)},
@@ -170,8 +273,6 @@ async def generate_video(
         })
 
     if ref_images:
-        if first_frame:
-            raise ValueError("Reference images and first/last frame modes are mutually exclusive")
         for img in ref_images:
             content.append({
                 "type": "image_url",
@@ -180,8 +281,6 @@ async def generate_video(
             })
 
     if ref_videos:
-        if first_frame:
-            raise ValueError("Reference videos and first/last frame modes are mutually exclusive")
         for vid in ref_videos:
             content.append({
                 "type": "video_url",
@@ -190,8 +289,11 @@ async def generate_video(
             })
 
     if ref_audios:
-        if not ref_images and not ref_videos:
-            raise ValueError("Reference audio requires at least one reference image or video")
+        if not ref_images and not ref_videos and model not in AUDIO_ONLY_MODELS:
+            raise ValueError(
+                f"Model {model} requires at least one reference image or video alongside "
+                f"reference audio. Audio-only input: {sorted(AUDIO_ONLY_MODELS)}"
+            )
         for aud in ref_audios:
             content.append({
                 "type": "audio_url",
@@ -207,7 +309,7 @@ async def generate_video(
         "model": model,
         "content": content,
         "resolution": resolution,
-        "ratio": ratio,
+        "ratio": effective_ratio,
         "duration": duration,
         "generate_audio": generate_audio,
         "watermark": watermark,
@@ -219,7 +321,24 @@ async def generate_video(
     if web_search:
         create_kwargs["tools"] = [{"type": "web_search"}]
 
-    output_file = Path(output_path) if output_path else Path("generated_video.mp4")
+    if expires_after is not None:
+        create_kwargs["execution_expires_after"] = expires_after
+
+    # `output_format` and `priority` are absent from the installed Ark SDK's create()
+    # signature, so they travel in extra_body, which the client merges into the JSON
+    # body. Move them to named arguments once the SDK exposes them.
+    extra_body = {}
+    if output_format is not None:
+        extra_body["output_format"] = output_format
+    if priority is not None:
+        extra_body["priority"] = priority
+    if extra_body:
+        create_kwargs["extra_body"] = extra_body
+
+    if output_path:
+        output_file = Path(output_path)
+    else:
+        output_file = Path(f"generated_video.{output_format or 'mp4'}")
 
     # Determine mode
     if first_frame and last_frame:
@@ -228,11 +347,16 @@ async def generate_video(
         mode = "First Frame to Video"
     elif ref_images or ref_videos:
         mode = "Multi-modal Reference to Video"
+    elif ref_audios:
+        mode = "Audio Reference to Video"
     else:
         mode = "Text-to-Video"
 
     print(f"Prompt: {prompt or '(none)'}")
-    print(f"Generating video ({mode}, {ratio}, {duration}s, {resolution}, audio={generate_audio}, model: {model})...")
+    print(
+        f"Generating video ({mode}, {effective_ratio}, {duration}s, {resolution}, "
+        f"{output_format or 'mp4'}, audio={generate_audio}, model: {model})..."
+    )
 
     # Create task
     result = client.content_generation.tasks.create(**create_kwargs)
@@ -248,13 +372,13 @@ async def generate_video(
         if status == "succeeded":
             print("Task succeeded!")
             break
-        elif status == "failed":
-            error_msg = task.error if hasattr(task, "error") else "Unknown error"
-            raise Exception(f"Video generation failed: {error_msg}")
+        elif status in TERMINAL_FAILURE_STATUSES:
+            error_msg = getattr(task, "error", None) or "Unknown error"
+            raise Exception(f"Video generation {status}: {error_msg}")
         else:
             poll_count += 1
-            print(f"Status: {status}, waiting... ({poll_count * 10}s elapsed)")
-            await asyncio.sleep(10)
+            print(f"Status: {status}, waiting... ({poll_count * POLL_INTERVAL}s elapsed)")
+            await asyncio.sleep(POLL_INTERVAL)
 
     # Download video from result
     video_url = None
@@ -373,15 +497,18 @@ def delete_task(task_id: str) -> None:
 
 
 SUBCOMMANDS = {"generate", "get", "list", "delete"}
+HELP_FLAGS = {"-h", "--help"}
 
 
 async def main():
-    # Default to "generate" if first arg is not a known subcommand
-    if len(sys.argv) > 1 and sys.argv[1] not in SUBCOMMANDS and not sys.argv[1].startswith("-"):
+    # Default to "generate" if first arg is not a known subcommand. Options are
+    # included so a prompt-less invocation still reaches generate, e.g. audio-only
+    # (`--ref-audio bgm.mp3`) or first-frame-only (`-i cat.png`).
+    if len(sys.argv) > 1 and sys.argv[1] not in SUBCOMMANDS and sys.argv[1] not in HELP_FLAGS:
         sys.argv.insert(1, "generate")
 
     parser = argparse.ArgumentParser(
-        description="Volcengine Seedance 2.0 Video Generation"
+        description="Volcengine Seedance 2.5 / 2.0 Video Generation"
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -401,15 +528,16 @@ async def main():
     )
     gen_parser.add_argument(
         "--ref-image", type=str, action="append", default=None,
-        help="Reference image path/URL (repeatable, max 9)",
+        help="Reference image path/URL (repeatable; max 30 for Seedance 2.5, 9 for 2.0)",
     )
     gen_parser.add_argument(
         "--ref-video", type=str, action="append", default=None,
-        help="Reference video URL (repeatable, max 3)",
+        help="Reference video URL (repeatable; max 10 for Seedance 2.5, 3 for 2.0)",
     )
     gen_parser.add_argument(
         "--ref-audio", type=str, action="append", default=None,
-        help="Reference audio path/URL (repeatable, max 3, requires ref image/video)",
+        help="Reference audio path/URL (repeatable; max 10 for Seedance 2.5, 3 for 2.0). "
+             "Seedance 2.5 accepts audio alone; 2.0 also needs a ref image or video.",
     )
     gen_parser.add_argument(
         "-m", "--model", type=str, default=DEFAULT_MODEL, choices=SUPPORTED_MODELS,
@@ -417,16 +545,19 @@ async def main():
     )
     gen_parser.add_argument(
         "-r", "--resolution", type=str, default="720p", choices=SUPPORTED_RESOLUTIONS,
-        help="Video resolution (default: 720p). 1080p/4k require the full model "
-             "(fast model supports 480p/720p only); 4k is full-model only.",
+        help="Video resolution (default: 720p). Seedance 2.5 and the 2.0 fast/mini "
+             "variants support 480p/720p only; 1080p and 4k require "
+             "doubao-seedance-2-0-260128.",
     )
     gen_parser.add_argument(
-        "-a", "--ratio", type=str, default="adaptive", choices=SUPPORTED_RATIOS,
-        help="Aspect ratio (default: adaptive)",
+        "-a", "--ratio", type=str, default=None, choices=SUPPORTED_RATIOS,
+        help="Aspect ratio (default: adaptive). Seedance 2.5 forces adaptive for "
+             "first-frame/first+last-frame and video edit/extend tasks.",
     )
     gen_parser.add_argument(
         "-d", "--duration", type=int, default=5,
-        help="Duration in seconds, 4-15 or -1 for auto (default: 5)",
+        help="Duration in seconds (default: 5). Seedance 2.5: 4-30; 2.0 series: 4-15; "
+             "-1 lets the model choose. Seedance 2.5 video-edit tasks require -1.",
     )
     gen_parser.add_argument(
         "--no-audio", action="store_true",
@@ -445,8 +576,23 @@ async def main():
         help="Also save the video's last frame as a PNG (for chaining clips)",
     )
     gen_parser.add_argument(
+        "--output-format", type=str, default=None, choices=SUPPORTED_OUTPUT_FORMATS,
+        help="Container/encoding of the generated video (Seedance 2.5 only, default mp4). "
+             "mov keeps higher colour precision for editing/compositing pipelines.",
+    )
+    gen_parser.add_argument(
+        "--priority", type=int, default=None,
+        help="Queue priority 0-9; higher jumps ahead of lower-priority queued tasks "
+             "on the same endpoint",
+    )
+    gen_parser.add_argument(
+        "--expires-after", type=int, default=None,
+        help="Seconds after creation before an unfinished task is marked expired "
+             "(3600-259200, default 48h)",
+    )
+    gen_parser.add_argument(
         "-o", "--output", type=str, default=None,
-        help="Output file path (default: generated_video.mp4)",
+        help="Output file path (default: generated_video.<output-format>)",
     )
 
     # ── get ──
@@ -494,8 +640,13 @@ async def main():
 
     try:
         if args.command == "generate":
-            if not args.prompt and not args.first_frame and not args.ref_image and not args.ref_video:
-                gen_parser.error("At least a prompt, --first-frame, --ref-image, or --ref-video is required")
+            if not any(
+                (args.prompt, args.first_frame, args.ref_image, args.ref_video, args.ref_audio)
+            ):
+                gen_parser.error(
+                    "At least a prompt, --first-frame, --ref-image, --ref-video, "
+                    "or --ref-audio is required"
+                )
             await generate_video(
                 prompt=args.prompt,
                 first_frame=args.first_frame,
@@ -511,6 +662,9 @@ async def main():
                 watermark=args.watermark,
                 web_search=args.web_search,
                 return_last_frame=args.return_last_frame,
+                output_format=args.output_format,
+                priority=args.priority,
+                expires_after=args.expires_after,
                 output_path=args.output,
             )
         elif args.command == "get":
