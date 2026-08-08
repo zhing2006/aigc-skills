@@ -44,7 +44,7 @@ Generate a video. This is the default command — the `generate` keyword can be 
 | `-i`, `--first-frame` | None | First frame image for image-to-video |
 | `--last-frame` | None | Last frame image (requires `--first-frame`) |
 | `--ref-image` | None | Reference image (repeatable; max 30 on 2.5, 9 on 2.0) |
-| `--ref-video` | None | Reference video URL (repeatable; max 10 on 2.5, 3 on 2.0) |
+| `--ref-video` | None | Reference video — publicly accessible `http(s)://` URL or `asset://` ID only, local paths are not supported (repeatable; max 10 on 2.5, 3 on 2.0) |
 | `--ref-audio` | None | Reference audio (repeatable; max 10 on 2.5, 3 on 2.0). 2.5 accepts audio alone; 2.0 also needs a reference image or video |
 | `-m`, `--model` | `doubao-seedance-2-5-260628` | Model to use |
 | `-r`, `--resolution` | `720p` | Video resolution (`480p`, `720p`, `1080p`, `4k`) — see the per-model matrix below |
@@ -202,8 +202,14 @@ Seedance 1.5 pro and the 1.0 models), so there are no CLI flags for them.
 ## Media Input Limits
 
 Applies to every image/video/audio passed to `-i`, `--last-frame`, `--ref-image`,
-`--ref-video`, `--ref-audio`. Local files are base64-encoded automatically; `http(s)://`
-URLs and `asset://<ASSET_ID>` material IDs are passed through unchanged.
+`--ref-video`, `--ref-audio`. Local image and audio files are base64-encoded
+automatically; `http(s)://` URLs and `asset://<ASSET_ID>` material IDs are passed
+through unchanged.
+
+**Reference videos are URL-only**: `--ref-video` must be a publicly accessible
+`http(s)://` URL or an `asset://` material ID. Local video paths are not encoded
+or uploaded — upload the clip to public storage first, or reuse the result URL of
+a previous generation task (`get <task_id>` returns a fresh one).
 
 | Kind | Formats | Size | Other limits |
 | ---- | ------- | ---- | ------------ |
@@ -256,10 +262,13 @@ extension** — the model infers which from the prompt, so word it explicitly
 (see [Video editing](#video-editing)).
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为主角，人物外观严格参考图片1；第一视角运镜参考视频1，但不复用其中的人物和场景；音乐节奏参考音频1。人物A在雨后街道缓慢向前行走，镜头平稳跟随，动作与音乐节拍自然同步。" --ref-image character.png --ref-video scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为主角，人物外观严格参考图片1；第一视角运镜参考视频1，但不复用其中的人物和场景；音乐节奏参考音频1。人物A在雨后街道缓慢向前行走，镜头平稳跟随，动作与音乐节拍自然同步。" --ref-image character.png --ref-video https://example.com/scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
 ```
 
 **Note**: First frame mode and multi-modal reference mode are mutually exclusive.
+
+**Note**: `--ref-video` only accepts publicly accessible URLs (or `asset://` IDs);
+local video files cannot be passed directly — see [Media Input Limits](#media-input-limits).
 
 ### Audio Reference Only (Seedance 2.5)
 
@@ -534,7 +543,7 @@ compositing. Use it on both sides of an edit/extend chain. Play it with VLC, mpv
 IINA, or ffplay — many consumer players cannot.
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "严格编辑视频1：将桌上的透明香水瓶替换为图片1中的面霜罐，保持原视频的手部动作、运镜、灯光、背景、时长和音频不变。" --ref-video product_shot.mov --ref-image cream_jar.png -d -1 --output-format mov -o product_edit.mov
+{python} {skill_dir}/scripts/volcengine-seedance.py "严格编辑视频1：将桌上的透明香水瓶替换为图片1中的面霜罐，保持原视频的手部动作、运镜、灯光、背景、时长和音频不变。" --ref-video https://example.com/product_shot.mov --ref-image cream_jar.png -d -1 --output-format mov -o product_edit.mov
 ```
 
 ### Audio-Driven Video (Seedance 2.5)

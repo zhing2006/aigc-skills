@@ -286,6 +286,7 @@ async def generate_image(
 
             size_info = f" ({item['size']})" if item.get("size") else ""
             print(f"Image saved to: {target}{size_info}")
+            print(f"Image URL (expires in 24h): {item['url']}")
             saved_files.append(target)
 
     usage = result.get("usage") or {}
