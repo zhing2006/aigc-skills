@@ -109,13 +109,13 @@ Delete a video generation task.
 
 | Model | Model ID | Description |
 | ----- | -------- | ----------- |
-| Seedance 2.5 | `doubao-seedance-2-5-260628` | Default. 30 s coherent single-pass output, up to 30 reference images, `mov` output, audio-only input. Max 720p |
-| Seedance 2.0 | `doubao-seedance-2-0-260128` | The only model with 1080p and 4k. Max 15 s |
+| Seedance 2.5 | `doubao-seedance-2-5-260628` | Default. 30 s coherent single-pass output, up to 30 reference images, `mov` output, audio-only input. Max 1080p (10-bit H.265) |
+| Seedance 2.0 | `doubao-seedance-2-0-260128` | The only model with 4k. Max 15 s |
 | Seedance 2.0 fast | `doubao-seedance-2-0-fast-260128` | Faster, lower cost, max 720p / 15 s |
 | Seedance 2.0 mini | `doubao-seedance-2-0-mini-260615` | Cheapest/fastest, max 720p / 15 s |
 
 **Note**: If the user does not specify a model, use `doubao-seedance-2-5-260628`.
-Switch to `doubao-seedance-2-0-260128` when the user needs 1080p or 4k, and to the
+Switch to `doubao-seedance-2-0-260128` when the user needs 4k, and to the
 fast or mini model for quick previews and drafts.
 
 ## Supported Resolutions
@@ -126,15 +126,15 @@ Resolution support depends on the model:
 
 | Model | 480p | 720p | 1080p | 4k |
 | ----- | :--: | :--: | :---: | :-: |
-| `doubao-seedance-2-5-260628` | ✅ | ✅ | ❌ | ❌ |
+| `doubao-seedance-2-5-260628` | ✅ | ✅ | ✅ | ❌ |
 | `doubao-seedance-2-0-260128` (full) | ✅ | ✅ | ✅ | ✅ |
 | `doubao-seedance-2-0-fast-260128` | ✅ | ✅ | ❌ | ❌ |
 | `doubao-seedance-2-0-mini-260615` | ✅ | ✅ | ❌ | ❌ |
 
 **Notes**:
-- Seedance 2.5 tops out at `720p`. `1080p` and `4k` require `doubao-seedance-2-0-260128`.
+- Seedance 2.5 tops out at `1080p`; `4k` requires `doubao-seedance-2-0-260128`.
 - The script validates resolution against the chosen model and errors early if unsupported.
-- `4k` output uses 10-bit H.265 encoding (HDR-ready). Some players may not support it — use VLC, MPV, or QuickTime Player if playback fails.
+- Seedance 2.5 `1080p` and Seedance 2.0 `4k` output use 10-bit H.265 encoding (HDR-ready). Some players may not support it — use VLC, MPV, or QuickTime Player if playback fails.
 
 **Tip**: Draft at 480p to iterate quickly, then re-run at 720p/1080p/4k for final output.
 
@@ -182,7 +182,7 @@ can read 1 s shorter than the actual file.
 
 | Capability | Seedance 2.5 | Seedance 2.0 | 2.0 fast | 2.0 mini |
 | ---------- | :----------: | :----------: | :------: | :------: |
-| Max resolution | 720p | 4k | 720p | 720p |
+| Max resolution | 1080p | 4k | 720p | 720p |
 | Duration range | 4-30 s | 4-15 s | 4-15 s | 4-15 s |
 | Free choice of `-a` | Text/reference tasks only | ✅ | ✅ | ✅ |
 | `--output-format mov` | ✅ | ❌ | ❌ | ❌ |
@@ -520,6 +520,15 @@ once; this reduces but cannot guarantee elimination of duplication.
 
 ```bash
 {python} {skill_dir}/scripts/volcengine-seedance.py "微距镜头拍摄一只玻璃蛙，透明腹部可见心脏跳动，热带雨林背景" --web-search -a 16:9 -d 8 -o glass_frog.mp4
+```
+
+### 1080p Output (Seedance 2.5)
+
+`1080p` is 10-bit H.265 — play it with VLC, MPV, or QuickTime Player if a consumer
+player refuses it.
+
+```bash
+{python} {skill_dir}/scripts/volcengine-seedance.py "特写，雨滴落在青石板上溅起细小水花，背景霓虹灯牌在雨幕中晕开成柔和光斑，固定机位，浅景深，冷色调，电影质感，只有雨声" -r 1080p -a 16:9 -d 8 -o rain_1080p.mp4
 ```
 
 ### 4K Output (Seedance 2.0 full model only)

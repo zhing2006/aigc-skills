@@ -8,7 +8,7 @@ Subcommands:
   delete    Delete a video generation task
 
 Supported models (resolutions | duration | max ref images/videos/audios):
-  - doubao-seedance-2-5-260628 (default):  480p, 720p                | 4-30s | 30/10/10
+  - doubao-seedance-2-5-260628 (default):  480p, 720p, 1080p         | 4-30s | 30/10/10
   - doubao-seedance-2-0-260128 (full):     480p, 720p, 1080p, 4k     | 4-15s | 9/3/3
   - doubao-seedance-2-0-fast-260128:       480p, 720p                | 4-15s | 9/3/3
   - doubao-seedance-2-0-mini-260615:       480p, 720p                | 4-15s | 9/3/3
@@ -46,10 +46,10 @@ SUPPORTED_MODELS = [
     "doubao-seedance-2-0-mini-260615",
 ]
 SUPPORTED_RESOLUTIONS = ["480p", "720p", "1080p", "4k"]
-# Per-model resolution support. Seedance 2.5 and the 2.0 fast/mini variants top out
-# at 720p; 1080p and 4k are exclusive to the full 2.0 model.
+# Per-model resolution support. The 2.0 fast/mini variants top out at 720p; 4k is
+# exclusive to the full 2.0 model. Seedance 2.5 renders 1080p in 10-bit H.265.
 RESOLUTION_SUPPORT = {
-    MODEL_SEEDANCE_2_5: ["480p", "720p"],
+    MODEL_SEEDANCE_2_5: ["480p", "720p", "1080p"],
     "doubao-seedance-2-0-260128": ["480p", "720p", "1080p", "4k"],
     "doubao-seedance-2-0-fast-260128": ["480p", "720p"],
     "doubao-seedance-2-0-mini-260615": ["480p", "720p"],
@@ -545,9 +545,9 @@ async def main():
     )
     gen_parser.add_argument(
         "-r", "--resolution", type=str, default="720p", choices=SUPPORTED_RESOLUTIONS,
-        help="Video resolution (default: 720p). Seedance 2.5 and the 2.0 fast/mini "
-             "variants support 480p/720p only; 1080p and 4k require "
-             "doubao-seedance-2-0-260128.",
+        help="Video resolution (default: 720p). Seedance 2.5 supports 480p/720p/1080p "
+             "(1080p is 10-bit H.265); the 2.0 fast/mini variants support 480p/720p "
+             "only; 4k requires doubao-seedance-2-0-260128.",
     )
     gen_parser.add_argument(
         "-a", "--ratio", type=str, default=None, choices=SUPPORTED_RATIOS,

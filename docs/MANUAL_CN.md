@@ -210,10 +210,14 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 - **MiniMax 海螺视频**：使用 `MiniMax-H3` 生成 2K 视频，自带同步音频——文生视频、图生视频（首帧、尾帧或首尾帧）、多模态参考并支持从参考音频迁移音色。时长为 4 到 15 秒之间的任意整数
 - **新增环境变量**：`MINIMAX_API_KEY`，以及可选的 `MINIMAX_API_BASE`
 - **文档补齐**：此前已发布的 DashScope HappyHorse 视频技能现已写入本手册
-- **火山引擎 Seedance 2.5**：`doubao-seedance-2-5-260628` 成为默认视频模型——30 秒连贯直出、最多 30 张参考图 / 10 个参考视频 / 10 段参考音频，并支持仅音频输入（无需参考图或视频）。最高分辨率为 720p，因此 1080p 与 4K 仍只能用 `doubao-seedance-2-0-260128`
+- **火山引擎 Seedance 2.5**：`doubao-seedance-2-5-260628` 成为默认视频模型——30 秒连贯直出、最多 30 张参考图 / 10 个参考视频 / 10 段参考音频，并支持仅音频输入（无需参考图或视频）。4K 仍只能用 `doubao-seedance-2-0-260128`
 - **`mov` 输出**：Seedance 2.5 可输出高色彩精度的 `mov`（yuv444p + PCM），适用于调色、抠像、合成；视频编辑/延长链路建议输入输出都用 mov
 - **排队与超时控制**：Seedance 技能新增 `--priority`（0-9，插队到低优先级排队任务之前）与 `--expires-after`（3600-259200 秒后未完成的任务标记为 `expired`）
 - **复用 `VOLCENGINE_API_KEY`**——无需新增环境变量
+
+### v0.5.5 新功能
+
+- **Seedance 2.5 支持 1080p**：`doubao-seedance-2-5-260628` 现已支持 `-r 1080p`，输出采用 10bit 位深 + H.265/HEVC 编码（满足 HDR 需求）——若播放器不兼容，请使用 VLC、MPV 或 QuickTime Player。4K 仍只有 `doubao-seedance-2-0-260128` 支持
 
 ---
 
@@ -225,7 +229,7 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 | GPT Image | OpenAI | 文字、图片 | 图像 | 图像生成、编辑、透明背景 |
 | Seedream | Volcengine | 文字、图片 | 图像 | 中英文文字渲染、多图融合、组图生成 |
 | 千问图像 3.0 | DashScope | 文字、1-3 张图片 | 图像 | 文字渲染、精准编辑、多图融合（邀测） |
-| Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认）。2.5 用于 30 秒长镜头与仅音频输入；2.0 用于 1080p/4K |
+| Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认）。2.5 用于 30 秒长镜头、仅音频输入与最高 1080p；2.0 用于 4K |
 | 海螺 | MiniMax | 文字、图片、视频、音频 | 视频 | 2K 视频，原生音频，可从参考音频迁移音色 |
 | HappyHorse | DashScope | 文字、图片、视频 | 视频 | 物理真实的运动、参考生视频、视频编辑 |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
@@ -437,10 +441,10 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 **支持的选项**：
 
-- 模型：`doubao-seedance-2-5-260628`（默认，30 秒 / 仅音频输入 / `mov`，最高 720p）、`doubao-seedance-2-0-260128`（1080p 与 4K 的唯一选项）、`doubao-seedance-2-0-fast-260128`（更快）、`doubao-seedance-2-0-mini-260615`（最便宜）
+- 模型：`doubao-seedance-2-5-260628`（默认，30 秒 / 仅音频输入 / `mov`，最高 1080p）、`doubao-seedance-2-0-260128`（4K 的唯一选项）、`doubao-seedance-2-0-fast-260128`（更快）、`doubao-seedance-2-0-mini-260615`（最便宜）
 - 宽高比：`16:9`、`4:3`、`1:1`、`3:4`、`9:16`、`21:9`、`adaptive`（自适应，默认）——Seedance 2.5 的首帧任务与视频编辑/延长任务强制 `adaptive`
 - 时长：Seedance 2.5 为 `4` 到 `30` 秒，2.0 系列为 `4` 到 `15` 秒，或 `-1` 自动选择
-- 分辨率：`480p`、`720p`（默认）、`1080p`、`4k`——`1080p` 与 `4k` 需要 `doubao-seedance-2-0-260128`
+- 分辨率：`480p`、`720p`（默认）、`1080p`、`4k`——fast/mini 模型最高 `720p`，`4k` 需要 `doubao-seedance-2-0-260128`。Seedance 2.5 的 `1080p` 与 Seedance 2.0 的 `4k` 均为 10bit H.265 编码
 - 输出格式：`mp4`（默认）或高色彩精度的 `mov`（仅 Seedance 2.5）
 - 音频：默认开启（同步对话、音效、音乐），输出始终为单声道
 - 多模态输入：Seedance 2.5 最多 30 张参考图片、10 个视频、10 段音频（视频与音频总时长各 ≤30 秒）；2.0 系列为 9 / 3 / 3（总时长各 ≤15 秒）。仅传音频只有 2.5 支持
@@ -1066,7 +1070,7 @@ AI 会创建图像（如 `lion_savanna.png`）。
 3. **使用合适的工具**：
    - Google Gemini：最适合初始概念和风格迁移
    - OpenAI GPT：最适合精确编辑和透明素材
-   - Volcengine Seedance：综合最优的默认选择，也是视频编辑的唯一选项。30 秒长镜头与音频驱动视频用 Seedance 2.5；1080p 或 4K 用 `doubao-seedance-2-0-260128`
+   - Volcengine Seedance：综合最优的默认选择，也是视频编辑的唯一选项。30 秒长镜头、音频驱动视频与 1080p 用 Seedance 2.5；4K 用 `doubao-seedance-2-0-260128`
    - MiniMax 海螺：需要 2K 输出或从参考音频迁移音色时使用
    - DashScope HappyHorse：追求物理真实的运动时使用
    - Google Veo：需要视频带音频时使用
