@@ -47,6 +47,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 ## Video Generation Skills
 
 - [Volcengine Seedance Video](references/volcengine-seedance.md)
+- [DashScope Wan 3.0 Video](references/dashscope-wan-video.md)
 - [MiniMax Hailuo Video](references/minimax-hailuo.md)
 - [DashScope HappyHorse Video](references/dashscope-happyhorse.md)
 - [Google Veo Video](references/google-veo.md)

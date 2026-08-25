@@ -20,6 +20,7 @@ This manual provides detailed instructions for installing and using the Genix AI
   - [DashScope Qwen Image 3.0](#dashscope-qwen-image-30)
 - [Video Generation](#video-generation)
   - [Volcengine Seedance](#volcengine-seedance)
+  - [DashScope Wan 3.0](#dashscope-wan-30)
   - [MiniMax Hailuo](#minimax-hailuo)
   - [DashScope HappyHorse](#dashscope-happyhorse)
   - [Google Veo](#google-veo)
@@ -138,10 +139,12 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 # Tripo API (for 3D model generation)
 TRIPO_API_KEY = "your_tripo_api_key_here"
 
-# DashScope API (for Qwen Image, Qwen-Audio-TTS, Voice Design, Voice Clone)
+# DashScope API (for Qwen Image, Qwen-Audio-TTS, Voice Design, Voice Clone, Wan 3.0 / HappyHorse video)
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # Optional; workspace domain recommended
-DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # Optional; Qwen-Audio-TTS WebSocket
+DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # Optional; Qwen-Audio-TTS
+DASHSCOPE_WORKSPACE_ID = "your_dashscope_workspace_id_here"   # Optional; business space for Wan 3.0 video
+DASHSCOPE_VIDEO_BASE_URL = "https://dashscope.aliyuncs.com"   # Optional; async video API host WebSocket
 
 # Volcengine API (for Seedance video and Doubao speech)
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"               # Video generation
@@ -219,6 +222,11 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 
 - **Seedance 2.5 at 1080p**: `doubao-seedance-2-5-260628` now accepts `-r 1080p`, output in 10-bit H.265 (HDR-ready) — use VLC, MPV, or QuickTime Player if a consumer player refuses it. `doubao-seedance-2-0-260128` is still the only model that reaches 4K
 
+### New Features in v0.5.6
+
+- **DashScope Wan 3.0 Video**: All-in-one reference video generation with `wan3.0-video` (and the high-speed `wan3.0-video-prime`) — Text-to-Video, First/Last Frame, Multi-modal Reference, and, uniquely in this skill set, **Document-to-Video** (pptx/pdf/docx/xlsx/md, ≤50 pages) and **Webpage-to-Video**. Up to 30 seconds at a fixed 30fps, with `adaptive` framing and `-d -1` auto duration
+- **New Environment Variable**: optional `DASHSCOPE_WORKSPACE_ID` (business-space ID). The shared `https://dashscope.aliyuncs.com` host serves Wan 3.0, so this is only needed for a business-space domain; `DASHSCOPE_VIDEO_BASE_URL` also accepts a `{WorkspaceId}` placeholder for non-Beijing regions. Reuses `DASHSCOPE_API_KEY`
+
 ---
 
 ## Skills Overview
@@ -230,6 +238,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Seedream | Volcengine | Text, Images | Image | Chinese/English text rendering, multi-image fusion, group generation |
 | Qwen Image 3.0 | DashScope | Text, 1-3 Images | Image | Text rendering, precise editing, multi-image fusion (invite-only) |
 | Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default). 2.5 for 30-second takes, audio-only input and up to 1080p; 2.0 for 4K |
+| Wan 3.0 | DashScope | Text, Image, Video, Audio, Document, Webpage | Video | All-in-one reference video; the only skill that turns a document or webpage into video. 30s at 30fps |
 | Hailuo | MiniMax | Text, Image, Video, Audio | Video | 2K video with native audio, voice transfer from reference audio |
 | HappyHorse | DashScope | Text, Image, Video | Video | Physically realistic motion, reference-to-video, video editing |
 | Veo | Google | Text, Image | Video | Video generation with audio |
@@ -449,6 +458,58 @@ Best for: Multi-modal video generation, video editing/extending, synchronized au
 - Audio: Enabled by default (synchronized dialogue, SFX, music), always mono
 - Multi-modal input: Seedance 2.5 up to 30 reference images, 10 videos, 10 audios (≤30 s total each); 2.0 series up to 9 / 3 / 3 (≤15 s total each). Audio alone works on 2.5 only
 - Queue control: priority `0`-`9`, and a task timeout of `3600`-`259200` seconds (default 48 h)
+
+---
+
+### DashScope Wan 3.0
+
+Best for: Turning a document or webpage into video, all-in-one reference input, adaptive framing, 30-second output
+
+#### Basic Text-to-Video
+
+> "Create a 10 second video of an old bookshop at dawn, the owner opens the door and dust drifts in the light, cinematic warm tones"
+
+#### First Frame
+
+> "Animate this image, the cat lowers its front legs then runs off to the right across the grass"
+> (attach your image)
+
+#### First + Last Frame
+
+> "Transition from this winter courtyard to this summer courtyard, snow melting and branches blossoming"
+> (attach two images)
+
+#### Multi-modal Reference
+
+> "The woman from image 1 walks into the alley from image 2, camera rhythm following video 1, her steps synced to the drums in audio 1"
+> (attach reference images, videos, audio)
+
+#### Document to Video (PPT / PDF)
+
+> "Turn this product deck into a minimal, futuristic 10 second ad — black, silver and ice blue, macro shots of the material detail, ending on the logo"
+> (provide a public URL to the pptx or pdf)
+
+#### Webpage to Video
+
+> "Turn this article into a vertical social explainer: a hook, three points with matching visuals, and a one-line summary"
+> (provide a public webpage URL)
+
+#### Auto Duration
+
+> "Make a video of dewdrops sliding off a petal in slow motion and pick whatever length fits"
+
+**Supported Options**:
+
+- Models: `wan3.0-video` (default, standard) and `wan3.0-video-prime` (high-speed, same capabilities)
+- Aspect Ratios: `adaptive` (default, inferred from the input media and intent), `16:9`, `4:3`, `1:1`, `3:4`, `9:16`
+- Durations: `2` to `30` seconds (default `5`), or `-1` for auto duration. Output is always **30fps**
+- Resolutions: `480P`, `720P`, `1080P` (default)
+- Audio: On by default (silent output costs the same)
+- Prompt rewriting: On by default — it lifts short prompts noticeably but adds latency, and only the original prompt is echoed back
+- Multi-modal input: Up to 10 reference images, 5 reference videos, 5 reference audio clips (each clip 1-15 s, 15 s combined per type), or 1 document (≤50 pages), or 1 webpage
+- Watermark: Off by default
+
+**Note**: Frame inputs (first/last frame) and reference inputs (reference images/videos/audio, document, webpage) cannot be combined in one request, and a document and a webpage cannot be combined either. Only images may be local files — video, audio and document inputs must already be a public URL. Reference assets are addressed in the prompt with Chinese ordinals (`图1`, `视频1`, `音频1`), not HappyHorse's `[Image 1]`. The shared `dashscope.aliyuncs.com` host serves Wan 3.0, so no extra configuration is normally needed; set `DASHSCOPE_WORKSPACE_ID` only if a request is rejected for an unknown model or missing permission. Generation takes several minutes even for a 2-second clip.
 
 ---
 
@@ -1071,6 +1132,7 @@ Result: A complete set of game assets from a single creative session, ready for 
    - Google Gemini: Best for initial concepts and style transfer
    - OpenAI GPT: Best for precise edits and transparent assets
    - Volcengine Seedance: Best all-round default, and the only option for video editing. Seedance 2.5 for 30-second takes, audio-driven video and 1080p; `doubao-seedance-2-0-260128` for 4K
+   - DashScope Wan 3.0: The only option for turning a document or webpage into video; also good for all-in-one reference input and adaptive framing in a single model
    - MiniMax Hailuo: Best for 2K output and transferring a voice from reference audio
    - DashScope HappyHorse: Best for physically realistic motion
    - Google Veo: Best when you need audio with video

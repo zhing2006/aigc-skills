@@ -13,6 +13,7 @@
 | **图像** | Volcengine Seedream | 文生图、图生图、多图融合、组图生成（最高 4K） |
 | **图像** | DashScope 千问图像 3.0 | 文生图、图像编辑、多图融合（邀测） |
 | **视频** | Volcengine Seedance 2.5 / 2.0 | 文生视频、图生视频、音频生视频、多模态参考、视频编辑/延长（2.5 支持 30 秒一镜到底与 1080p，2.0 最高 4K） |
+| **视频** | DashScope 万相 3.0 | 文生视频、首帧/首尾帧、多模态参考、文档生视频、网页生视频（全能参考模型，最长 30 秒 / 30fps） |
 | **视频** | MiniMax 海螺 | 文生视频、图生视频（首/尾帧）、多模态参考含音色迁移（2K 原生音频） |
 | **视频** | DashScope HappyHorse | 文生视频、图生视频、参考生视频、视频编辑（物理真实） |
 | **视频** | Google Veo | 文生视频、图生视频 |
@@ -88,6 +89,8 @@ setup.bat cursor
 | `DASHSCOPE_API_KEY` |
 | `DASHSCOPE_IMAGE_BASE_URL`（可选，原生图像 API 地址） |
 | `DASHSCOPE_TTS_WS_URL`（可选，千问音频 TTS WebSocket 地址） |
+| `DASHSCOPE_WORKSPACE_ID`（可选，万相 3.0 视频的业务空间 ID） |
+| `DASHSCOPE_VIDEO_BASE_URL`（可选，原生异步视频 API 地址） |
 
 #### Volcengine API
 
@@ -132,6 +135,8 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # 可选；千问图像建议使用业务空间专属域名
 DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # 可选；千问音频 TTS
+DASHSCOPE_WORKSPACE_ID = "your_dashscope_workspace_id_here"   # 可选；万相 3.0 视频的业务空间 ID
+DASHSCOPE_VIDEO_BASE_URL = "https://dashscope.aliyuncs.com"   # 可选；HappyHorse / 万相 3.0 视频地址
 
 # Volcengine API（字节跳动）
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"

@@ -20,6 +20,7 @@
   - [DashScope 千问图像 3.0](#dashscope-千问图像-30)
 - [视频生成](#视频生成)
   - [Volcengine Seedance](#volcengine-seedance)
+  - [DashScope 万相 3.0](#dashscope-万相-30)
   - [MiniMax 海螺](#minimax-海螺)
   - [DashScope HappyHorse](#dashscope-happyhorse)
   - [Google Veo](#google-veo)
@@ -138,10 +139,12 @@ OPENAI_API_BASE = "https://api.openai.com/v1"
 # Tripo API（用于 3D 模型生成）
 TRIPO_API_KEY = "your_tripo_api_key_here"
 
-# DashScope API（用于千问图像、千问音频 TTS、音色设计、音色克隆）
+# DashScope API（用于千问图像、千问音频 TTS、音色设计、音色克隆、万相 3.0 / HappyHorse 视频）
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # 可选，建议使用业务空间专属域名
 DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # 可选，千问音频 TTS WebSocket
+DASHSCOPE_WORKSPACE_ID = "your_dashscope_workspace_id_here"   # 可选，万相 3.0 视频的业务空间 ID
+DASHSCOPE_VIDEO_BASE_URL = "https://dashscope.aliyuncs.com"   # 可选，异步视频 API 地址
 
 # Volcengine API（用于 Seedance 视频和豆包语音）
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"               # 视频生成
@@ -219,6 +222,11 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 - **Seedance 2.5 支持 1080p**：`doubao-seedance-2-5-260628` 现已支持 `-r 1080p`，输出采用 10bit 位深 + H.265/HEVC 编码（满足 HDR 需求）——若播放器不兼容，请使用 VLC、MPV 或 QuickTime Player。4K 仍只有 `doubao-seedance-2-0-260128` 支持
 
+### v0.5.6 新功能
+
+- **DashScope 万相 3.0 视频**：使用 `wan3.0-video`（以及高速版 `wan3.0-video-prime`）的全能参考视频生成——文生视频、首帧/首尾帧、多模态参考，以及本技能集中独有的 **文档生视频**（pptx/pdf/docx/xlsx/md，≤50 页）与 **网页生视频**。最长 30 秒、帧率固定 30fps，支持 `adaptive` 自适应构图与 `-d -1` 智能时长
+- **新增环境变量**：可选的 `DASHSCOPE_WORKSPACE_ID`（业务空间 ID）。公共域名 `https://dashscope.aliyuncs.com` 即可调用万相 3.0，因此该变量仅在需要走业务空间专属域名时设置；`DASHSCOPE_VIDEO_BASE_URL` 同时支持 `{WorkspaceId}` 占位符以指向非北京地域。复用 `DASHSCOPE_API_KEY`
+
 ---
 
 ## 技能概览
@@ -230,6 +238,7 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 | Seedream | Volcengine | 文字、图片 | 图像 | 中英文文字渲染、多图融合、组图生成 |
 | 千问图像 3.0 | DashScope | 文字、1-3 张图片 | 图像 | 文字渲染、精准编辑、多图融合（邀测） |
 | Seedance | Volcengine | 文字、图片、视频、音频 | 视频 | 多模态视频生成，带同步音频（默认）。2.5 用于 30 秒长镜头、仅音频输入与最高 1080p；2.0 用于 4K |
+| 万相 3.0 | DashScope | 文字、图片、视频、音频、文档、网页 | 视频 | 全能参考视频生成；本技能集中唯一支持把文档或网页变成视频的选项。最长 30 秒 / 30fps |
 | 海螺 | MiniMax | 文字、图片、视频、音频 | 视频 | 2K 视频，原生音频，可从参考音频迁移音色 |
 | HappyHorse | DashScope | 文字、图片、视频 | 视频 | 物理真实的运动、参考生视频、视频编辑 |
 | Veo | Google | 文字、图片 | 视频 | 带音频的视频生成 |
@@ -449,6 +458,58 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 - 音频：默认开启（同步对话、音效、音乐），输出始终为单声道
 - 多模态输入：Seedance 2.5 最多 30 张参考图片、10 个视频、10 段音频（视频与音频总时长各 ≤30 秒）；2.0 系列为 9 / 3 / 3（总时长各 ≤15 秒）。仅传音频只有 2.5 支持
 - 排队控制：优先级 `0`-`9`，任务超时 `3600`-`259200` 秒（默认 48 小时）
+
+---
+
+### DashScope 万相 3.0
+
+最适合：把文档或网页变成视频、全能参考输入、自适应构图、30 秒时长
+
+#### 基础文生视频
+
+> "做一段 10 秒的视频：清晨的老书店，店主推开木门，尘埃在斜射的光束中浮动，暖色调电影质感"
+
+#### 首帧生视频
+
+> "让这张图动起来，猫先压低前腿蓄力，然后沿草地向画面右侧奔跑"
+> （附上你的图片）
+
+#### 首尾帧生视频
+
+> "从这张冬季庭院过渡到这张夏日庭院，积雪消融、枝头抽芽开花"
+> （附上两张图片）
+
+#### 多模态参考
+
+> "图1中的女性走进图2的巷道，镜头运动参考视频1的跟拍节奏，脚步与音频1的鼓点同步"
+> （附上参考图片、视频、音频）
+
+#### 文档生视频（PPT / PDF）
+
+> "把这份产品 PPT 做成一支 10 秒的极简未来感广告，黑色/银灰/冰蓝主色调，微距展现材质细节，结尾落在 logo 上"
+> （提供 pptx 或 pdf 的公网 URL）
+
+#### 网页生视频
+
+> "把这篇文章做成竖屏社交科普短片：开场一句钩子，中段三个要点各配画面，结尾一句总结"
+> （提供公开网页的 URL）
+
+#### 智能时长
+
+> "做一段露珠从花瓣滑落的慢动作视频，时长你来定"
+
+**支持的选项**：
+
+- 模型：`wan3.0-video`（默认，标准版）与 `wan3.0-video-prime`（高速版，能力对齐标准版）
+- 宽高比：`adaptive`（默认，按输入媒体与意图自动推荐）、`16:9`、`4:3`、`1:1`、`3:4`、`9:16`
+- 时长：`2` 到 `30` 秒（默认 `5`），或 `-1` 为智能时长。输出帧率固定 **30fps**
+- 分辨率：`480P`、`720P`、`1080P`（默认）
+- 音频：默认开启（关闭声音价格相同）
+- Prompt 智能改写：默认开启——对短 prompt 提升明显，但会增加耗时，且返回结果只包含原始 prompt
+- 多模态输入：最多 10 张参考图、5 个参考视频、5 段参考音频（单个 1-15 秒，每类总时长 ≤15 秒），或 1 个文档（≤50 页），或 1 个网页
+- 水印：默认不添加
+
+**注意**：首帧/尾帧输入与参考类输入（参考图/视频/音频、文档、网页）不能在同一请求中混用，文档与网页也不能同时输入。只有图片可以传本地文件——视频、音频、文档必须是公网 URL。prompt 中用中文序号（`图1`、`视频1`、`音频1`）指代参考素材，而不是 HappyHorse 的 `[Image 1]`。公共域名 `dashscope.aliyuncs.com` 即可调用万相 3.0，通常无需额外配置；仅当请求报模型不存在或无权限时才需设置 `DASHSCOPE_WORKSPACE_ID`。即使只生成 2 秒，也需要数分钟。
 
 ---
 
@@ -1071,6 +1132,7 @@ AI 会创建图像（如 `lion_savanna.png`）。
    - Google Gemini：最适合初始概念和风格迁移
    - OpenAI GPT：最适合精确编辑和透明素材
    - Volcengine Seedance：综合最优的默认选择，也是视频编辑的唯一选项。30 秒长镜头、音频驱动视频与 1080p 用 Seedance 2.5；4K 用 `doubao-seedance-2-0-260128`
+   - DashScope 万相 3.0：把文档或网页变成视频的唯一选项；也适合在单一模型内做全能参考输入与自适应构图
    - MiniMax 海螺：需要 2K 输出或从参考音频迁移音色时使用
    - DashScope HappyHorse：追求物理真实的运动时使用
    - Google Veo：需要视频带音频时使用

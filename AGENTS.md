@@ -53,7 +53,7 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 - **Google Generative AI** (`google-genai`) - Image, Video, and Music generation
 - **OpenAI** (`openai`) - Image and Video generation
 - **Volcengine** (`volcengine-python-sdk[ark]` + raw HTTP OpenSpeech v3) - Image generation (Seedream), Video generation (Seedance 2.5 / 2.0), Speech synthesis / Voice Clone / Voice Design (Doubao Seed-TTS 2.0)
-- **Alibaba Bailian / DashScope** (`dashscope` + native HTTP) - Image generation/editing (Qwen Image 3.0), Text-to-Speech, and Video generation (HappyHorse)
+- **Alibaba Bailian / DashScope** (`dashscope` + native HTTP) - Image generation/editing (Qwen Image 3.0), Text-to-Speech, and Video generation (Wan 3.0 all-in-one reference, HappyHorse)
 - **MiniMax** (raw HTTP video generation V2) - Video generation (Hailuo-03 / `MiniMax-H3`, 2K with native audio)
 - **ElevenLabs** (`elevenlabs`) - Audio, Speech, and Music generation
 - **Tripo** (`tripo3d`) - 3D model generation, rigging, segmentation, and completion
@@ -61,7 +61,7 @@ The project integrates with multiple AIGC APIs (configured via `.env`):
 ### Current Skill Capabilities (genix)
 
 - **Image**: Text-to-Image, Image-to-Image, Multi-Image Fusion (Google Gemini, OpenAI GPT, Volcengine Seedream, DashScope Qwen Image 3.0)
-- **Video**: Text-to-Video, Image-to-Video, Audio-to-Video, Multi-modal Reference (Volcengine Seedance, MiniMax Hailuo, DashScope HappyHorse, Google Veo, OpenAI Sora)
+- **Video**: Text-to-Video, Image-to-Video, Audio-to-Video, Multi-modal Reference, Document/Webpage-to-Video (Volcengine Seedance, DashScope Wan 3.0, MiniMax Hailuo, DashScope HappyHorse, Google Veo, OpenAI Sora)
 - **Audio**: Sound Effects, Text-to-Speech, Voice Design, Voice Clone (ElevenLabs, DashScope, Volcengine)
 - **Music**: Text-to-Music with vocals or instrumental (ElevenLabs, Google Lyria)
 - **3D Model**: Text-to-3D, Image-to-3D, Multiview-to-3D, Rigging & Animation, Segmentation, Completion (Tripo)
@@ -77,7 +77,8 @@ Copy `.env.template` to `.env` and configure API keys:
 - `DASHSCOPE_API_KEY`
 - `DASHSCOPE_IMAGE_BASE_URL` (optional, native Qwen Image API host)
 - `DASHSCOPE_TTS_WS_URL` (optional, Qwen-Audio-TTS WebSocket endpoint)
-- `DASHSCOPE_VIDEO_BASE_URL` (optional, native HappyHorse video API host)
+- `DASHSCOPE_WORKSPACE_ID` (optional, business-space ID for Wan 3.0 video)
+- `DASHSCOPE_VIDEO_BASE_URL` (optional, native async video API host for Wan 3.0 / HappyHorse)
 - `VOLCENGINE_API_KEY`
 - `VOLCENGINE_API_BASE` (optional, defaults to Volcengine official endpoint)
 - `VOLCENGINE_TTS_API_KEY` (speech: TTS / voice clone / voice design)

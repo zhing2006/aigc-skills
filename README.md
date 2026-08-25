@@ -13,6 +13,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Image** | Volcengine Seedream | Text-to-Image, Image-to-Image, Multi-Image Fusion, Group Generation (up to 4K) |
 | **Image** | DashScope Qwen Image 3.0 | Text-to-Image, Image Edit, Multi-Image Fusion (invite-only) |
 | **Video** | Volcengine Seedance 2.5 / 2.0 | Text-to-Video, Image-to-Video, Audio-to-Video, Multi-modal Reference, Video Edit/Extend (30s single take & 1080p on 2.5, up to 4K on 2.0) |
+| **Video** | DashScope Wan 3.0 | Text-to-Video, First/Last Frame, Multi-modal Reference, Document-to-Video, Webpage-to-Video (all-in-one model, 30s at 30fps) |
 | **Video** | MiniMax Hailuo | Text-to-Video, Image-to-Video (first/last frame), Multi-modal Reference with voice transfer (2K native audio) |
 | **Video** | DashScope HappyHorse | Text-to-Video, Image-to-Video, Reference-to-Video, Video Edit (physically realistic) |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
@@ -88,6 +89,8 @@ Edit the `.genix.env` file and fill in your API keys:
 | `DASHSCOPE_API_KEY` |
 | `DASHSCOPE_IMAGE_BASE_URL` (optional, native image API host) |
 | `DASHSCOPE_TTS_WS_URL` (optional, Qwen-Audio-TTS WebSocket endpoint) |
+| `DASHSCOPE_WORKSPACE_ID` (optional, business-space ID for Wan 3.0 video) |
+| `DASHSCOPE_VIDEO_BASE_URL` (optional, native async video API host) |
 
 #### Volcengine API
 
@@ -132,6 +135,8 @@ TRIPO_API_KEY = "your_tripo_api_key_here"
 DASHSCOPE_API_KEY = "your_dashscope_api_key_here"
 DASHSCOPE_IMAGE_BASE_URL = "https://dashscope.aliyuncs.com"  # Optional; workspace domain recommended for Qwen Image
 DASHSCOPE_TTS_WS_URL = "wss://dashscope.aliyuncs.com/api-ws/v1/inference"  # Optional; Qwen-Audio-TTS
+DASHSCOPE_WORKSPACE_ID = "your_dashscope_workspace_id_here"   # Optional; business space for Wan 3.0 video
+DASHSCOPE_VIDEO_BASE_URL = "https://dashscope.aliyuncs.com"   # Optional; HappyHorse / Wan 3.0 video host
 
 # Volcengine API (ByteDance)
 VOLCENGINE_API_KEY = "your_volcengine_api_key_here"
