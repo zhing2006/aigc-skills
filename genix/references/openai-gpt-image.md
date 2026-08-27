@@ -95,8 +95,6 @@ The script omits `size` from the API call when it's `auto`, so the default just 
 
 `background=transparent` works on `gpt-image-2` since 2026-08-20 (preview), on both text-to-image and image edit, at no extra cost. `gpt-image-1.5` and `gpt-image-1` support it too. The alpha channel is built into generation rather than cut out afterwards, so it holds up better on glass, smoke, and fine strands of hair than a background-removal tool would.
 
-> Two endpoint caveats. First, parts of OpenAI's own API *reference* still carry the pre-preview text claiming `gpt-image-2` rejects `transparent` — the image-generation *guide* and the 2026-08-20 announcement supersede it. Second, this is confirmed for `api.openai.com`; Azure OpenAI deployments (`USE_AZURE_OPENAI=true`) gate image features behind their own `api-version`, so a transparent request there may come back rejected even though the parameter is correct. If Azure refuses it, raise `AZURE_OPENAI_API_VERSION` or fall back to the direct OpenAI endpoint.
-
 ### Prompting for transparency
 
 **Do not mention the background in the prompt.** The `background` parameter handles it; describing a backdrop ("on a white surface", "studio background") fights the parameter and the model may paint one anyway. Describe only the subject, then add framing cues like `"sticker die-cut style"` or `"isolated product shot"` if you want tight cropping.
