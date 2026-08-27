@@ -62,7 +62,10 @@ async def generate_3d_model(
     Args:
         prompt: Text prompt for text-to-3d generation
         image: Single image path for image-to-3d generation
-        images: Multiple image paths for multiview-to-3d generation (front, left, back, right)
+        images: Multiple image paths for multiview-to-3d generation, in the order
+            front (0°), left (90°), back (180°), right (270°). "left"/"right" are the
+            character's own sides, not the viewer's: in the left image the face points
+            to the image's left edge, in the right image it points to the right edge
         negative_prompt: Negative prompt (text-to-3d only)
         model_version: Model version to use
         texture_quality: Texture quality (standard/detailed)
@@ -321,7 +324,12 @@ async def main():
         type=str,
         nargs="+",
         default=None,
-        help="Multiple image paths for multiview-to-3d (order: front, left, back, right)",
+        help=(
+            "Multiple image paths for multiview-to-3d, in order: front (0deg), "
+            "left (90deg), back (180deg), right (270deg). 'left'/'right' are the "
+            "character's own sides, NOT the viewer's -- in the left image the face "
+            "points to the image's left edge, in the right image to the right edge"
+        ),
     )
     parser.add_argument(
         "--negative-prompt",

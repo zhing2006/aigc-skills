@@ -43,7 +43,7 @@ Text/Image/Multi-view to 3D model generation using Tripo API.
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `-i`, `--image` | None | Single image path for image-to-3d generation |
-| `--images` | None | Multiple image paths for multiview-to-3d (order: front, left, back, right) |
+| `--images` | None | Multiple image paths for multiview-to-3d (order: front 0°, left 90°, back 180°, right 270°; left/right are the character's own sides — see [Multiview Image Order](#important-multiview-image-order)) |
 | `--negative-prompt` | `low quality, blurry, deformed, extra limbs, multiple heads` | Negative prompt (text-to-3d only) |
 | `-m`, `--model` | `v3.1-20260211` | Model version |
 | `--texture-quality` | `standard` | Texture quality (standard/detailed) |
@@ -103,12 +103,24 @@ If no `--format` is specified, the output is `.glb`. Always include the extensio
 
 ## Important: Multiview Image Order
 
-The `--images` parameter requires images in the order: **front, left, back, right**. This is from the **character's own perspective** (the character's left arm side), not the observer's perspective.
+The `--images` parameter requires images in the order: **front, left, back, right**.
 
-- front = 0° (facing the camera)
-- left = 90° (character's left side)
-- back = 180° (character's back)
-- right = 270° (character's right side)
+`left` / `right` are named from the **character's own perspective** — `left` is the view of the character's **left arm side**, `right` is the view of the character's **right arm side**. They are NOT the observer's left/right. Getting this backwards mirrors the model, so verify before submitting.
+
+| Order | View | Angle | Where the face points in the image |
+|-------|------|-------|------------------------------------|
+| 1 | front | 0° | Face toward the camera |
+| 2 | left | 90° | Face toward the **left edge** of the image |
+| 3 | back | 180° | Back of the head toward the camera |
+| 4 | right | 270° | Face toward the **right edge** of the image |
+
+**How to tell the side views apart** — use the face direction, not the label on the file:
+
+- In the `left` image (character's left side), the character's nose points to the image's left edge. The visible arm is the **left** arm.
+- In the `right` image (character's right side), the character's nose points to the image's right edge. The visible arm is the **right** arm.
+- Cross-check with the front view: in `front`, the character's left arm appears on the **right** half of the image (mirror-facing), and that same arm is the one facing the camera in `left`.
+
+Reading the four images in order therefore walks the camera around the character in one consistent direction (0° → 90° → 180° → 270°).
 
 Front view is required. You may omit other views but must provide at least 2 images.
 
@@ -160,13 +172,18 @@ Front view is required. You may omit other views but must provide at least 2 ima
 
 1. **Provide Consistent Views**:
    - Use the same lighting and scale across all images
-   - Order: front (required), left, back, right
+   - Order: front (required), left, back, right — at 0° / 90° / 180° / 270° around the character
 
 2. **Minimum: Front View Required**:
    - Additional views improve accuracy
    - 4 views (front, left, back, right) give best results
 
-3. **Keep Subject Centered**:
+3. **Verify Left vs. Right Before Submitting**:
+   - `left` / `right` follow the character's own body, not the viewer's
+   - Check the face direction: nose toward the image's left edge = `left`, toward the right edge = `right`
+   - See [Important: Multiview Image Order](#important-multiview-image-order) for the full check
+
+4. **Keep Subject Centered**:
    - Object should be in the center of each image
    - Maintain consistent positioning
 
