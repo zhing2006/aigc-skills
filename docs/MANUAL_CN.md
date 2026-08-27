@@ -320,6 +320,8 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 > "创建一个卡通机器人吉祥物，透明背景，用作贴纸"
 
+alpha 通道是原生生成的，而非事后抠图，所以玻璃、烟雾、细发丝这些难处理的边缘表现更好。`gpt-image-2` 上的透明背景目前仍是 preview 功能——Claude 会先提示两个已知瑕疵（不透明区域的 alpha 是 253 而非 255、边缘有一圈淡灰色 halo），并询问是否启用客户端 alpha 修正。
+
 #### 图像编辑
 
 > "编辑这张照片，把天空换成戏剧性的日落"
@@ -331,10 +333,12 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 **支持的选项**：
 
-- 模型：`gpt-image-1.5`（最佳）、`gpt-image-1`、`gpt-image-1-mini`
-- 尺寸：`1024x1024`、`1536x1024`（横版）、`1024x1536`（竖版）
+- 模型：`gpt-image-2`（默认）、`gpt-image-1.5`、`gpt-image-1`、`gpt-image-1-mini`
+- 尺寸：
+  - `gpt-image-2`：任意 `宽x高`，两边均需为 16 的倍数、长短边比例在 1:3~3:1 之间、长边不超过 `3840`、总像素 655,360~8,294,400（因此 4K `3840x2160` 可用；超过 2560x1440 为实验性）
+  - `gpt-image-1.x`：`1024x1024`、`1536x1024`（横版）、`1024x1536`（竖版）
 - 质量：`auto`、`high`、`medium`、`low`
-- 背景：`auto`、`transparent`、`opaque`
+- 背景：`auto`、`transparent`、`opaque`——`transparent` 需要 PNG 或 WebP 输出，在 `gpt-image-2` 上为 preview 功能
 
 ---
 

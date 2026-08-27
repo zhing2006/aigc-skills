@@ -29,17 +29,18 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 | ------ | ------- | ----------- |
 | `-i`, `--images` | None | Input image file paths for editing (max 16) |
 | `-m`, `--model` | `gpt-image-2` | Model to use |
-| `-s`, `--size` | `auto` | Output size (auto omits the param so routing decides) |
+| `-s`, `--size` | `auto` | Output size (`auto` omits the param so the model decides) |
 | `-q`, `--quality` | `auto` | Image quality |
 | `-f`, `--format` | `png` | Output format |
-| `-b`, `--background` | `auto` | Background type |
+| `-b`, `--background` | `auto` | Background type (`transparent` requires png or webp) |
+| `--normalize-alpha` | off | Clip near-opaque alpha (252-254) back to 255 (png/webp only) |
 | `-n`, `--number` | `1` | Number of images to generate (1-10) |
 | `-o`, `--output` | `generated_image.png` | Output file path |
 
 ## Supported Models
 
-- `gpt-image-2` - Next-generation, default (recommended: improved text rendering, multilingual, neutral color fidelity, up to 4K, ~2x faster)
-- `gpt-image-1.5` - Previous flagship; choose this when you need parameter-level transparent background support
+- `gpt-image-2` - Next-generation, default (recommended: improved text rendering, multilingual, neutral color fidelity, custom sizes up to 4K, ~2x faster)
+- `gpt-image-1.5` - Previous flagship
 - `gpt-image-1` - Standard
 - `gpt-image-1-mini` - Lightweight
 
@@ -56,15 +57,20 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 
 ### gpt-image-2
 
-- `auto` only (default)
+Accepts `auto` (default) or any custom `WIDTHxHEIGHT` that satisfies all of:
 
-gpt-image-2 uses an intelligent routing layer that chooses the size for you; explicit `WxH` values are rejected by the API. To bias the aspect ratio, describe it in the prompt instead:
+| Constraint | Value |
+| ---------- | ----- |
+| Edge multiple | Both width and height divisible by `16` |
+| Aspect ratio | Between `1:3` and `3:1` (inclusive) |
+| Long edge | At most `3840px` |
+| Total pixels | Between `655,360` and `8,294,400` |
 
-- `"square composition"` / `"square 1:1"`
-- `"portrait composition"` / `"vertical 9:16"`
-- `"wide landscape"` / `"16:9 cinematic"`
+Common choices: `1024x1024` (square), `1536x1024` / `2048x1152` (landscape), `1024x1536` (portrait), `2048x2048`, `3840x2160` (4K).
 
-The script omits `size` from the API call when it's `auto`, so the default just works.
+Anything above `3,686,400` pixels (the 2560x1440 threshold) is marked experimental by OpenAI — the script prints a warning but still submits the request. Generation is slower and more likely to fail at those sizes.
+
+The script omits `size` from the API call when it's `auto`, so the default just works. With `auto`, bias the aspect ratio via the prompt (e.g. `"portrait composition"`, `"wide landscape"`).
 
 ## Supported Quality
 
@@ -87,20 +93,43 @@ The script omits `size` from the API call when it's `auto`, so the default just 
 - `transparent` - Transparent background (requires png or webp)
 - `opaque` - Solid background
 
-**Note on `gpt-image-2`**: OpenAI's official docs state that `background=transparent` is not supported on `gpt-image-2`, though some proxy endpoints may still accept it. Recommended: with `gpt-image-2`, leave `-b` at `auto` and instead describe transparency in the prompt itself (e.g. "transparent background, isolated subject on alpha channel, no backdrop"). The model will decide whether to output an alpha channel. If you need a guaranteed parameter-level transparent PNG, use `gpt-image-1.5` with `-b transparent`.
+`background=transparent` works on `gpt-image-2` since 2026-08-20 (preview), on both text-to-image and image edit, at no extra cost. `gpt-image-1.5` and `gpt-image-1` support it too. The alpha channel is built into generation rather than cut out afterwards, so it holds up better on glass, smoke, and fine strands of hair than a background-removal tool would.
+
+> Two endpoint caveats. First, parts of OpenAI's own API *reference* still carry the pre-preview text claiming `gpt-image-2` rejects `transparent` — the image-generation *guide* and the 2026-08-20 announcement supersede it. Second, this is confirmed for `api.openai.com`; Azure OpenAI deployments (`USE_AZURE_OPENAI=true`) gate image features behind their own `api-version`, so a transparent request there may come back rejected even though the parameter is correct. If Azure refuses it, raise `AZURE_OPENAI_API_VERSION` or fall back to the direct OpenAI endpoint.
+
+### Prompting for transparency
+
+**Do not mention the background in the prompt.** The `background` parameter handles it; describing a backdrop ("on a white surface", "studio background") fights the parameter and the model may paint one anyway. Describe only the subject, then add framing cues like `"sticker die-cut style"` or `"isolated product shot"` if you want tight cropping.
+
+### Known preview defects
+
+Two issues are widely reported during the preview (community-reported, not officially acknowledged — OpenAI may fix them at any time):
+
+1. **Opaque regions are not fully opaque.** Alpha in solid areas comes back as 252-254 (usually 253) instead of 255, so a very dark or very light backdrop bleeds through when the asset is composited. `--normalize-alpha` fixes this by clipping alpha ≥ 250 up to 255. It is a no-op when the image already contains a 255 pixel or is semi-transparent throughout, so it never flattens intentional soft edges.
+2. **Grey halo at the edges.** The RGB layer under the cutout carries a grey border slightly wider than the alpha mask. This is *not* fixed by `--normalize-alpha`. If it shows up, either re-run with a prompt that puts a deliberate outline on the subject, or erode the alpha mask by 1-2px in an image editor.
+
+**Workflow requirement**: before running the script with `-b transparent`, tell the user about both defects and ask whether to add `--normalize-alpha`. Do not enable it silently.
+
+### Transparency in edit mode
+
+Passing an RGBA image to `-i` and asking the model to preserve the see-through areas does not work — edit output is a hard cutout, and the input's alpha is not carried over. Generate transparent assets from scratch instead of editing an existing transparent PNG.
+
+### Output path must carry alpha
+
+The output extension is used verbatim, so `-b transparent -o sticker.jpg` is rejected. Use a `.png` or `.webp` path. A mismatch between `--format` and the output extension (e.g. `-f webp -o out.png`) only prints a warning — the bytes written match `--format`, not the filename.
 
 ## Model-Specific Notes
 
 | Aspect | gpt-image-2 | gpt-image-1.5 |
 | ------ | ----------- | ------------- |
 | Default in this skill | Yes | No |
-| Recommended `--size` | `auto` (only accepted value; routing decides) | `1024x1024` or pick from fixed set |
-| Size flexibility | `auto` only — bias via prompt | 3 fixed sizes + auto |
-| Max resolution | Routing-controlled (up to 4K) | 1536 long edge |
+| Recommended `--size` | `auto`, or any `WxH` meeting the constraints | `1024x1024` or pick from fixed set |
+| Size flexibility | Any 16-multiple size within ratio/pixel limits | 3 fixed sizes + auto |
+| Max resolution | `3840x2160` (above 2560x1440 experimental) | 1536 long edge |
 | Response shape | b64_json or url (auto-handled) | b64_json |
-| `background=transparent` | Officially unsupported (use prompt) | Supported |
+| `background=transparent` | Supported (preview; png/webp) | Supported |
 | `input_fidelity` | Disabled (always high) | Configurable |
-| Strengths | Text rendering, multilingual, neutral colors, reasoning | Mature, broader parameter support |
+| Strengths | Text rendering, multilingual, neutral colors, reasoning, custom sizes | Mature, stable transparency |
 
 ## Prompt Best Practices
 
@@ -185,12 +214,12 @@ A [medium] of [subject] in [environment], [specific visual characteristics]. [Li
 
 ## Examples
 
-> Examples that pass an explicit `-s WxH` use `-m gpt-image-1.5` because gpt-image-2 only accepts `-s auto`. For gpt-image-2, omit `-s` and describe the desired aspect ratio in the prompt (e.g. "portrait composition", "wide landscape").
+> All examples below use the default `gpt-image-2`. Sizes must be 16-multiples within the ratio and pixel limits documented above; omit `-s` to let the model choose.
 
 ### Photorealistic Portrait
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A high-resolution photograph of a young woman with freckles, standing in a sunlit wheat field during golden hour. She has windswept auburn hair, wearing a vintage floral dress. Soft warm lighting with lens flare, shallow depth of field, 85mm portrait lens aesthetic." -m gpt-image-1.5 -s 1024x1536 -q high -o portrait.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A high-resolution photograph of a young woman with freckles, standing in a sunlit wheat field during golden hour. She has windswept auburn hair, wearing a vintage floral dress. Soft warm lighting with lens flare, shallow depth of field, 85mm portrait lens aesthetic." -s 1024x1536 -q high -o portrait.png
 ```
 
 ### Product Photography
@@ -202,39 +231,51 @@ A [medium] of [subject] in [environment], [specific visual characteristics]. [Li
 ### Landscape Scene
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A majestic mountain range at sunrise with mist rolling through the valleys. Vibrant orange and pink sky reflected in a still alpine lake. Wide-angle composition, landscape orientation, National Geographic photography style." -m gpt-image-1.5 -s 1536x1024 -q high -o mountain.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A majestic mountain range at sunrise with mist rolling through the valleys. Vibrant orange and pink sky reflected in a still alpine lake. Wide-angle composition, landscape orientation, National Geographic photography style." -s 1536x1024 -q high -o mountain.png
 ```
 
-### Illustration with Transparent Background (gpt-image-2, prompt-driven)
-
-Note: gpt-image-2 only accepts `-s auto` (the default), so don't pass `-s WxH`. Aspect ratio and transparency are both expressed in the prompt.
+### 4K Landscape
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration, clean lines, vibrant colors, transparent background, isolated subject on alpha channel, no backdrop, sticker format." -m gpt-image-2 -f png -o robot_sticker.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A vast desert canyon at dusk, layered sandstone walls in ochre and violet, a thin river catching the last light at the canyon floor. Ultra-wide vista, high dynamic range, large-format landscape photography." -s 3840x2160 -q high -o canyon_4k.png
 ```
 
-### Illustration with Transparent Background (gpt-image-1.5, parameter-guaranteed)
+### Illustration with Transparent Background
+
+The `-b transparent` parameter handles the background — note that the prompt says nothing about a backdrop.
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration style, clean lines, vibrant colors, transparent PNG sticker format." -m gpt-image-1.5 -s 1024x1024 -b transparent -f png -o robot_sticker.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration, clean bold outlines, vibrant teal and orange palette, sticker die-cut style." -s 1024x1024 -b transparent -f png -o robot_sticker.png
+```
+
+With the preview alpha defect worked around (ask the user before adding this flag):
+
+```bash
+{python} {skill_dir}/scripts/openai-gpt-image.py "A cute cartoon robot mascot waving hello, simple flat design illustration, clean bold outlines, vibrant teal and orange palette, sticker die-cut style." -s 1024x1024 -b transparent -f png --normalize-alpha -o robot_sticker.png
+```
+
+### Transparent Product Cutout for Compositing
+
+```bash
+{python} {skill_dir}/scripts/openai-gpt-image.py "A matte black stainless steel travel mug with a brushed metal lid, three-quarter view, soft studio key light from upper left with a gentle falloff down the body, crisp specular highlight along the left edge." -s 1536x1024 -q high -b transparent -f png --normalize-alpha -o mug_cutout.png
 ```
 
 ### Icon Design
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A modern app icon for a music streaming service. Minimalist design with a stylized sound wave, gradient from purple to blue, rounded corners, flat design style, square composition." -q high -o music_icon.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A modern app icon for a music streaming service. Minimalist design with a stylized sound wave, gradient from purple to blue, rounded corners, flat design style." -s 1024x1024 -q high -o music_icon.png
 ```
 
 ### Image Editing with References
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "Edit this photo by adding a dramatic sunset sky with orange and purple clouds. Keep the foreground subject exactly as shown, wide landscape composition." -i original_photo.jpg -o sunset_edit.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "Edit this photo by adding a dramatic sunset sky with orange and purple clouds. Keep the foreground subject exactly as shown." -i original_photo.jpg -s 1536x1024 -o sunset_edit.png
 ```
 
 ### Multiple Image Generation
 
 ```bash
-{python} {skill_dir}/scripts/openai-gpt-image.py "A variety of colorful tropical cocktails in different glass shapes, each with unique garnishes, overhead view, summer party aesthetic, square composition." -n 4 -o cocktails.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "A variety of colorful tropical cocktails in different glass shapes, each with unique garnishes, overhead view, summer party aesthetic." -s 1024x1024 -n 4 -o cocktails.png
 ```
 
 ## Environment Variables

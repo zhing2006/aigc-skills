@@ -318,7 +318,9 @@ Best for: Precise editing, transparent backgrounds, text in images
 
 #### With Transparent Background
 
-> "Create a cartoon robot mascot on transparent background for use as a sticker"
+> "Create a cartoon robot mascot with a transparent background for use as a sticker"
+
+The alpha channel is generated natively rather than cut out afterwards, so it holds up on glass, smoke, and fine hair. Transparency on `gpt-image-2` is still a preview feature — Claude will warn you about two known defects (opaque areas coming back at alpha 253 instead of 255, and a faint grey edge halo) and ask whether to apply the client-side alpha fix.
 
 #### Image Editing
 
@@ -331,10 +333,12 @@ Best for: Precise editing, transparent backgrounds, text in images
 
 **Supported Options**:
 
-- Models: `gpt-image-1.5` (best), `gpt-image-1`, `gpt-image-1-mini`
-- Sizes: `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait)
+- Models: `gpt-image-2` (default), `gpt-image-1.5`, `gpt-image-1`, `gpt-image-1-mini`
+- Sizes:
+  - `gpt-image-2`: any `WIDTHxHEIGHT` with both edges divisible by 16, ratio between 1:3 and 3:1, long edge up to `3840`, and 655,360-8,294,400 total pixels (so 4K `3840x2160` works; above 2560x1440 is experimental)
+  - `gpt-image-1.x`: `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait)
 - Quality: `auto`, `high`, `medium`, `low`
-- Background: `auto`, `transparent`, `opaque`
+- Background: `auto`, `transparent`, `opaque` — `transparent` requires PNG or WebP output and is a preview feature on `gpt-image-2`
 
 ---
 

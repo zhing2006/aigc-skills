@@ -4,19 +4,26 @@ OpenAI GPT Image - Text/Image to Image Generation
 Supported models: gpt-image-2 (default), gpt-image-1.5, gpt-image-1, gpt-image-1-mini
 Supported sizes:
   - gpt-image-1.x: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait), auto
-  - gpt-image-2: auto only (size is chosen by the model's routing layer; explicit
-    sizes are rejected). Bias aspect ratio via the prompt instead.
+  - gpt-image-2: any WxH where both edges are multiples of 16, the long:short
+    ratio is at most 3:1, the long edge is at most 3840, and the total pixel
+    count is between 655,360 and 8,294,400. Above 2560x1440 is experimental.
+    "auto" (default) lets the routing layer decide.
 Supported quality: auto, high, medium, low
 Max input images: 16 (for image edit)
 
-Note: gpt-image-2 does not accept input_fidelity (always treated as high) and
-officially does not support background=transparent (transparency can still be
-requested via the prompt; the model decides whether to emit an alpha channel).
+Notes:
+  - gpt-image-2 does not accept input_fidelity (always treated as high).
+  - background=transparent is supported on gpt-image-2 since 2026-08 (preview),
+    on both generate and edit, and requires output_format png or webp.
+  - During the preview, opaque regions come back with alpha 252-254 instead of
+    255 and edges can carry a grey halo. Pass --normalize-alpha to clip the
+    near-opaque alpha back to 255.
 """
 
 import argparse
 import asyncio
 import base64
+import io
 import os
 import sys
 from pathlib import Path
@@ -34,16 +41,31 @@ SUPPORTED_FORMATS = ["png", "jpeg", "webp"]
 SUPPORTED_BACKGROUNDS = ["auto", "transparent", "opaque"]
 MAX_INPUT_IMAGES = 16
 
+# gpt-image-2 size constraints (see module docstring)
+GPT_IMAGE_2_EDGE_MULTIPLE = 16
+GPT_IMAGE_2_MAX_EDGE = 3840
+GPT_IMAGE_2_MAX_RATIO = 3.0
+GPT_IMAGE_2_MIN_PIXELS = 655_360
+GPT_IMAGE_2_MAX_PIXELS = 8_294_400  # 3840x2160
+GPT_IMAGE_2_EXPERIMENTAL_PIXELS = 3_686_400  # above 2560x1440 is experimental
+
+# Alpha at or above this value is treated as "meant to be fully opaque".
+ALPHA_OPAQUE_THRESHOLD = 250
+
+# Output formats that carry an alpha channel
+ALPHA_FORMATS = ("png", "webp")
+
+JPEG_SUFFIXES = (".jpg", ".jpeg")
+SUFFIX_TO_FORMAT = {".png": "png", ".jpg": "jpeg", ".jpeg": "jpeg", ".webp": "webp"}
+
 
 def validate_size(model: str, size: str) -> None:
     """Validate the size parameter against the model's supported set."""
+    if size == "auto":
+        return
+
     if model == "gpt-image-2":
-        if size != "auto":
-            raise ValueError(
-                f"gpt-image-2 only supports size='auto' (routing layer decides). "
-                f"Got: {size}. Bias aspect ratio via the prompt instead "
-                f"(e.g. 'portrait composition', 'wide landscape', 'square 1:1')."
-            )
+        validate_gpt_image_2_size(size)
         return
 
     if model.startswith("gpt-image-1"):
@@ -56,6 +78,95 @@ def validate_size(model: str, size: str) -> None:
     raise ValueError(f"Unknown model for size validation: {model}")
 
 
+def validate_gpt_image_2_size(size: str) -> None:
+    """Validate an explicit WxH size against gpt-image-2's constraints."""
+    # No leniency on whitespace: the size string is forwarded to the API verbatim,
+    # so anything we accept here has to be something the API accepts too.
+    parts = size.lower().split("x")
+    if len(parts) != 2 or not all(p.isdigit() for p in parts):
+        raise ValueError(
+            f"Invalid size for gpt-image-2: {size}. Expected 'auto' or 'WIDTHxHEIGHT' "
+            f"(e.g. 1536x864)."
+        )
+
+    width, height = (int(p) for p in parts)
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Invalid size for gpt-image-2: {size}. Both edges must be positive.")
+
+    if width % GPT_IMAGE_2_EDGE_MULTIPLE or height % GPT_IMAGE_2_EDGE_MULTIPLE:
+        raise ValueError(
+            f"Invalid size for gpt-image-2: {size}. Both edges must be multiples of "
+            f"{GPT_IMAGE_2_EDGE_MULTIPLE}."
+        )
+
+    long_edge, short_edge = max(width, height), min(width, height)
+    if long_edge > GPT_IMAGE_2_MAX_EDGE:
+        raise ValueError(
+            f"Invalid size for gpt-image-2: {size}. The long edge must be at most "
+            f"{GPT_IMAGE_2_MAX_EDGE}px."
+        )
+
+    if long_edge / short_edge > GPT_IMAGE_2_MAX_RATIO:
+        raise ValueError(
+            f"Invalid size for gpt-image-2: {size}. The aspect ratio must be between "
+            f"1:3 and 3:1."
+        )
+
+    pixels = width * height
+    if pixels < GPT_IMAGE_2_MIN_PIXELS:
+        raise ValueError(
+            f"Invalid size for gpt-image-2: {size} ({pixels:,} pixels). At least "
+            f"{GPT_IMAGE_2_MIN_PIXELS:,} pixels are required."
+        )
+    if pixels > GPT_IMAGE_2_MAX_PIXELS:
+        raise ValueError(
+            f"Invalid size for gpt-image-2: {size} ({pixels:,} pixels). At most "
+            f"{GPT_IMAGE_2_MAX_PIXELS:,} pixels are supported."
+        )
+
+    if pixels > GPT_IMAGE_2_EXPERIMENTAL_PIXELS:
+        print(
+            f"Warning: {size} is {pixels:,} pixels, above the "
+            f"{GPT_IMAGE_2_EXPERIMENTAL_PIXELS:,} (2560x1440) threshold OpenAI marks as "
+            f"experimental. Generation may be slower or fail."
+        )
+
+
+def clip_alpha(image_bytes: bytes, output_format: str) -> bytes:
+    """
+    Clip near-opaque alpha back to 255.
+
+    During the gpt-image-2 transparency preview, regions that should be fully
+    opaque come back with alpha 252-254, which lets the backdrop bleed through
+    when the asset is composited. Returns the bytes unchanged when the image has
+    no alpha channel or already looks clean.
+    """
+    from PIL import Image
+
+    with Image.open(io.BytesIO(image_bytes)) as img:
+        if img.mode != "RGBA":
+            return image_bytes
+
+        alpha = img.getchannel("A")
+        _, high = alpha.getextrema()
+        if high == 255 or high < ALPHA_OPAQUE_THRESHOLD:
+            # Nothing to clip: already fully opaque somewhere, or genuinely
+            # semi-transparent throughout (clipping would alter the artwork).
+            return image_bytes
+
+        img.putalpha(alpha.point(lambda a: 255 if a >= ALPHA_OPAQUE_THRESHOLD else a))
+        buffer = io.BytesIO()
+        if output_format == "webp":
+            # Pillow's WebP encoder is lossy by default, which would degrade the
+            # entire RGB layer for the sake of an alpha-only fix. exact=True also
+            # keeps the RGB values hidden under fully transparent pixels.
+            img.save(buffer, format="WEBP", lossless=True, exact=True)
+        else:
+            img.save(buffer, format="PNG")
+        print(f"Normalized alpha: clipped max alpha {high} -> 255")
+        return buffer.getvalue()
+
+
 async def generate_image(
     prompt: str,
     images: list[str] | None = None,
@@ -66,6 +177,7 @@ async def generate_image(
     background: str = "auto",
     n: int = 1,
     output_path: str | None = None,
+    normalize_alpha: bool = False,
 ) -> list[Path]:
     """
     Generate image(s) using OpenAI GPT Image API.
@@ -76,13 +188,15 @@ async def generate_image(
         model: Model to use (gpt-image-2, gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
         size: Output size. "auto" (default) omits the param so the model decides.
               For gpt-image-1.x: 1024x1024, 1536x1024, 1024x1536, auto.
-              For gpt-image-2: only "auto" is accepted; the routing layer chooses.
-              Bias aspect ratio via the prompt for gpt-image-2.
+              For gpt-image-2: any WxH within the documented constraints (both
+              edges multiples of 16, ratio 1:3-3:1, long edge <= 3840,
+              655,360-8,294,400 pixels).
         quality: Image quality (auto, high, medium, low)
         output_format: Output format (png, jpeg, webp)
         background: Background type (auto, transparent, opaque)
         n: Number of images to generate (1-10)
         output_path: Output file path (optional)
+        normalize_alpha: Clip near-opaque alpha (252-254) back to 255
 
     Returns:
         List of paths to generated image files
@@ -90,6 +204,8 @@ async def generate_image(
     if model not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model}. Supported: {SUPPORTED_MODELS}")
 
+    # Normalize before validating, since the validated value is what gets sent.
+    size = size.strip().lower()
     validate_size(model, size)
 
     if quality not in SUPPORTED_QUALITY:
@@ -108,8 +224,27 @@ async def generate_image(
         raise ValueError(f"Invalid n value: {n}. Must be between 1 and 10")
 
     # Transparent background requires png or webp
-    if background == "transparent" and output_format == "jpeg":
+    if background == "transparent" and output_format not in ALPHA_FORMATS:
         raise ValueError("Transparent background requires png or webp format, not jpeg")
+
+    # The output extension is used verbatim, so reconcile it with --format here:
+    # a .jpg name would strip the alpha channel in many viewers.
+    if output_path:
+        out_suffix = Path(output_path).suffix.lower()
+        if background == "transparent" and out_suffix in JPEG_SUFFIXES:
+            raise ValueError(
+                f"Transparent background cannot be saved as {out_suffix}. "
+                f"Use a .png or .webp output path."
+            )
+        expected_format = SUFFIX_TO_FORMAT.get(out_suffix)
+        if expected_format and expected_format != output_format:
+            print(
+                f"Warning: output path ends in {out_suffix} but --format is "
+                f"{output_format}; the file will contain {output_format} data."
+            )
+
+    if normalize_alpha and output_format not in ALPHA_FORMATS:
+        print(f"Warning: --normalize-alpha has no effect with --format {output_format}.")
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -190,6 +325,9 @@ async def generate_image(
             else:
                 raise ValueError(f"Image response item {i} has neither b64_json nor url")
 
+            if normalize_alpha and output_format in ALPHA_FORMATS:
+                image_bytes = await asyncio.to_thread(clip_alpha, image_bytes, output_format)
+
             async with aiofiles.open(file_path, "wb") as f:
                 await f.write(image_bytes)
 
@@ -231,8 +369,8 @@ async def main():
         help=(
             "Output size (default: auto - omit to let model decide). "
             "gpt-image-1.x accepts: 1024x1024, 1536x1024, 1024x1536, auto. "
-            "gpt-image-2 only accepts auto (routing layer chooses); "
-            "bias aspect ratio via the prompt instead."
+            "gpt-image-2 accepts any WIDTHxHEIGHT with both edges multiples of 16, "
+            "ratio 1:3-3:1, long edge <= 3840, and 655,360-8,294,400 total pixels."
         ),
     )
     parser.add_argument(
@@ -255,7 +393,15 @@ async def main():
         type=str,
         default="auto",
         choices=SUPPORTED_BACKGROUNDS,
-        help="Background type (default: auto)",
+        help="Background type (default: auto). transparent requires png or webp",
+    )
+    parser.add_argument(
+        "--normalize-alpha",
+        action="store_true",
+        help=(
+            "Clip near-opaque alpha (252-254) back to 255, working around a known "
+            "gpt-image-2 transparency preview defect. Only affects png and webp"
+        ),
     )
     parser.add_argument(
         "-n", "--number",
@@ -283,6 +429,7 @@ async def main():
             background=args.background,
             n=args.number,
             output_path=args.output,
+            normalize_alpha=args.normalize_alpha,
         )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
