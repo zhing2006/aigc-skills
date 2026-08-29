@@ -262,7 +262,7 @@ extension** — the model infers which from the prompt, so word it explicitly
 (see [Video editing](#video-editing)).
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为主角，人物外观严格参考图片1；第一视角运镜参考视频1，但不复用其中的人物和场景；音乐节奏参考音频1。人物A在雨后街道缓慢向前行走，镜头平稳跟随，动作与音乐节拍自然同步。" --ref-image character.png --ref-video https://example.com/scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "将@图片1中的人物定义为人物A，人物外观严格参考@图片1；第一视角运镜参考@视频1，但不复用其中的人物和场景；音乐节奏参考@音频1。人物A在雨后街道缓慢向前行走，镜头平稳跟随，动作与音乐节拍自然同步。" --ref-image character.png --ref-video https://example.com/scene.mp4 --ref-audio bgm.mp3 -a 16:9 -d 11 -o result.mp4
 ```
 
 **Note**: First frame mode and multi-modal reference mode are mutually exclusive.
@@ -277,7 +277,7 @@ The prompt is optional but strongly recommended to fix the subject and setting;
 without it the model has nothing but the audio to work from.
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "画面随音频1的鼓点切换：中景，霓虹灯下的雨夜街道，光斑随节拍明暗起伏，镜头平稳横移。" --ref-audio drums.mp3 -a 21:9 -d 12 -o rhythm.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "画面随@音频1的鼓点切换：中景，霓虹灯下的雨夜街道，光斑随节拍明暗起伏，镜头平稳横移。" --ref-audio drums.mp3 -a 21:9 -d 12 -o rhythm.mp4
 ```
 
 On the 2.0 series this errors out — audio there must accompany at least one reference
@@ -288,8 +288,24 @@ image or video.
 Use the first-party
 [Volcengine Seedance prompt guide](https://www.volcengine.com/docs/82379/2222480),
 the [Seedance 2.5 prompt guide](https://www.volcengine.com/docs/82379/2607689),
-and [ByteDance product examples](https://seed.bytedance.com/zh/seedance2_0)
+and the official ByteDance product examples for
+[Seedance 2.0](https://seed.bytedance.com/zh/blog/official-launch-of-seedance-2-0)
+and [Seedance 2.5](https://seed.bytedance.com/en/blog/one-take-creation-flexible-referencing-introducing-seedance-2-5)
 instead of generic prompt collections.
+
+### Reference asset syntax (required)
+
+**For this skill, prefix every multi-modal reference asset mentioned in the
+prompt with `@`.** Use `@图片1`, `@视频1`, and `@音频1` (or `@Image 1`,
+`@Video 1`, and `@Audio 1` in English). Do not emit bare forms such as `图片1`,
+`视频1`, or `音频1`. Official Seedance 2.0 and 2.5 product prompts use this
+explicit mention syntax; follow it consistently even though some API request
+samples show bare material names.
+
+Number each media type independently in its CLI argument order: the first
+`--ref-image` is `@图片1`, the first `--ref-video` is `@视频1`, and the first
+`--ref-audio` is `@音频1`. The `@` prefix belongs in the prompt only; do not add
+it to file paths, URLs, `asset://` IDs, or CLI options.
 
 ### Prompt length and language
 
@@ -308,13 +324,14 @@ All models accept Chinese and English. Beyond that:
 | Task | Recommended wording |
 | ---- | ------------------- |
 | Text / first-frame video | `Subject + action + scene + shot/camera + audio + style/quality + constraints` |
-| Multi-modal reference | `Reference image/video/audio N for one named property, then describe the new video` |
-| Edit a video | `Strictly edit Video N: change X to Y; preserve A/B/C` |
-| Extend a video | `Extend Video N forward/backward: next action or story beat` |
+| Multi-modal reference | `Reference @Image N, @Video N, or @Audio N for one named property, then describe the new video` |
+| Edit a video | `Strictly edit @Video N: change X to Y; preserve A/B/C` |
+| Extend a video | `Extend @Video N forward/backward: next action or story beat` |
 
-For an edit or extension, say `视频1` rather than `参考视频1`. The official
-guide warns that the latter can be interpreted as a new reference-generation
-task.
+For an edit or extension, use the action directly with `@视频1`, such as
+`严格编辑@视频1` or `向后延长@视频1`, rather than saying `参考@视频1`. The
+official guide warns that the latter can be interpreted as a new
+reference-generation task.
 
 ### Write directing instructions
 
@@ -322,12 +339,12 @@ Treat the prompt as a compact directing specification, not a pile of style
 adjectives:
 
 1. **Bind every subject.** With ordered references, consistently use
-   `人物A@图片1`, `产品@图片2`, `视频1`, and `音频1`. Do not alternate between
-   names, pronouns, and vague phrases such as "the other person".
-2. **Assign one responsibility to each asset.** For example: image 1 anchors
-   the face, image 2 anchors clothing, video 1 supplies movement, and audio 1
-   supplies voice or rhythm. Put the most important reference first and avoid
-   conflicting inputs.
+   `人物A（@图片1）`, `产品（@图片2）`, `@视频1`, and `@音频1`. Do not alternate
+   between names, pronouns, and vague phrases such as "the other person".
+2. **Assign one responsibility to each asset.** For example: `@图片1` anchors
+   the face, `@图片2` anchors clothing, `@视频1` supplies movement, and
+   `@音频1` supplies voice or rhythm. Put the most important reference first
+   and avoid conflicting inputs.
 3. **Storyboard in event order.** For complex video, use `镜头1`, `镜头2`,
    `镜头3`. Within each shot write the camera/cut, action and expression,
    spatial change, then audio. Prefer natural pacing; exact intervals such as
@@ -367,12 +384,13 @@ Number images, videos, and audio in their respective argument order. Define the
 identity and role of every important input:
 
 ```text
-将人物A@图片1定义为女剑客，将人物B@图片2定义为蒙面守卫。人物外观分别严格参考对应图片。
-动作节奏参考视频1，但不复用视频1中的人物和场景；鼓点节奏参考音频1。
+将@图片1中的人物定义为人物A（女剑客），将@图片2中的人物定义为人物B（蒙面守卫）。
+人物外观分别严格参考对应图片。动作节奏参考@视频1，但不复用@视频1中的人物和场景；
+鼓点节奏参考@音频1。
 ```
 
 - For one person, prefer one clean face close-up plus one full-body styling
-  image: `人物A的面部参考图片1，服装和体型参考图片2`.
+  image: `人物A的面部参考@图片1，服装和体型参考@图片2`.
 - Avoid a multi-view contact sheet for a person; the views may be read as
   separate subjects. Clean single-person images are more reliable.
 - The official guide recommends roughly 4-5 purposeful assets for a complex
@@ -387,7 +405,7 @@ identity and role of every important input:
 Use a **Change + Preserve** instruction:
 
 ```text
-严格编辑视频1：将桌上的透明香水瓶替换为图片1中的面霜罐，保持原视频的手部动作、运镜、
+严格编辑@视频1：将桌上的透明香水瓶替换为@图片1中的面霜罐，保持原视频的手部动作、运镜、
 灯光、背景、时长和音频不变；面霜罐的大小、透视、遮挡和桌面接触阴影与原场景一致。
 ```
 
@@ -513,7 +531,7 @@ once; this reduces but cannot guarantee elimination of duplication.
 ### Multi-modal Reference (Product Ad)
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "将人物A@图片1定义为模特，将产品@图片2定义为面霜罐，人物与产品外观严格参考对应图片。镜头1：清新简约的影棚中景缓慢推近，人物A右手自然拿起产品并将标签朝向镜头。镜头2：切至人物A近景，她保持产品位置稳定并说：'这款面霜质地轻盈，一抹就吸收。' 保持人物面部、产品包装和标签一致，不生成额外字幕或水印。" --ref-image model.jpg --ref-image product.jpg -a 9:16 -d 10 -o product_ad.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "将@图片1中的人物定义为人物A（模特），将@图片2中的产品定义为面霜罐，人物与产品外观严格参考对应图片。镜头1：清新简约的影棚中景缓慢推近，人物A右手自然拿起产品并将标签朝向镜头。镜头2：切至人物A近景，她保持产品位置稳定并说：'这款面霜质地轻盈，一抹就吸收。' 保持人物面部、产品包装和标签一致，不生成额外字幕或水印。" --ref-image model.jpg --ref-image product.jpg -a 9:16 -d 10 -o product_ad.mp4
 ```
 
 ### With Web Search Enhancement
@@ -552,7 +570,7 @@ compositing. Use it on both sides of an edit/extend chain. Play it with VLC, mpv
 IINA, or ffplay — many consumer players cannot.
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "严格编辑视频1：将桌上的透明香水瓶替换为图片1中的面霜罐，保持原视频的手部动作、运镜、灯光、背景、时长和音频不变。" --ref-video https://example.com/product_shot.mov --ref-image cream_jar.png -d -1 --output-format mov -o product_edit.mov
+{python} {skill_dir}/scripts/volcengine-seedance.py "严格编辑@视频1：将桌上的透明香水瓶替换为@图片1中的面霜罐，保持原视频的手部动作、运镜、灯光、背景、时长和音频不变。" --ref-video https://example.com/product_shot.mov --ref-image cream_jar.png -d -1 --output-format mov -o product_edit.mov
 ```
 
 ### Audio-Driven Video (Seedance 2.5)
@@ -560,7 +578,7 @@ IINA, or ffplay — many consumer players cannot.
 Audio alone is a valid input on 2.5 — no reference image or video required.
 
 ```bash
-{python} {skill_dir}/scripts/volcengine-seedance.py "画面随音频1的鼓点切换：中景，霓虹灯下的雨夜街道，光斑随节拍明暗起伏，镜头平稳横移，冷色调，赛博朋克质感。" --ref-audio drums.mp3 -a 21:9 -d 12 -o rhythm.mp4
+{python} {skill_dir}/scripts/volcengine-seedance.py "画面随@音频1的鼓点切换：中景，霓虹灯下的雨夜街道，光斑随节拍明暗起伏，镜头平稳横移，冷色调，赛博朋克质感。" --ref-audio drums.mp3 -a 21:9 -d 12 -o rhythm.mp4
 ```
 
 ### Priority and Timeout
