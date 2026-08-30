@@ -12,6 +12,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from tripo3d import TripoClient, TaskStatus
@@ -37,12 +38,49 @@ SUPPORTED_FORMATS = ["GLTF", "USDZ", "FBX", "OBJ", "STL", "3MF"]
 SUPPORTED_TEXTURE_QUALITY = ["standard", "detailed"]
 SUPPORTED_GEOMETRY_QUALITY = ["standard", "detailed"]
 DEFAULT_NEGATIVE_PROMPT = "low quality, blurry, deformed, extra limbs, multiple heads"
+MULTIVIEW_ORDER = ("front", "left", "back", "right")
+MISSING_MULTIVIEW_SLOT = "-"
+
+
+def parse_multiview_slot(value: str) -> str | None:
+    """Convert the CLI placeholder for an omitted multiview image to None."""
+    return None if value == MISSING_MULTIVIEW_SLOT else value
+
+
+def validate_multiview_images(
+    images: list[str | None],
+) -> list[str | None]:
+    """Validate and normalize Tripo's fixed [front, left, back, right] slots."""
+    if len(images) != len(MULTIVIEW_ORDER):
+        raise ValueError(
+            "Multiview mode requires exactly 4 image slots in the order "
+            "front, left, back, right; use '-' for an omitted non-front view"
+        )
+
+    normalized = [image if image else None for image in images]
+    if normalized[0] is None:
+        raise ValueError("The front image is required for multiview mode")
+    if sum(image is not None for image in normalized) < 2:
+        raise ValueError("Multiview mode requires at least 2 images")
+
+    return normalized
+
+
+async def build_multiview_files(
+    client: Any,
+    images: list[str | None],
+) -> list[dict[str, Any]]:
+    """Serialize four validated multiview slots without shifting omitted views."""
+    return [
+        await client._image_to_file_content(image) if image is not None else {}
+        for image in images
+    ]
 
 
 async def generate_3d_model(
     prompt: str | None = None,
     image: str | None = None,
-    images: list[str] | None = None,
+    images: list[str | None] | None = None,
     negative_prompt: str | None = None,
     model_version: str = "v3.1-20260211",
     texture_quality: str = "standard",
@@ -62,10 +100,11 @@ async def generate_3d_model(
     Args:
         prompt: Text prompt for text-to-3d generation
         image: Single image path for image-to-3d generation
-        images: Multiple image paths for multiview-to-3d generation, in the order
-            front (0°), left (90°), back (180°), right (270°). "left"/"right" are the
-            character's own sides, not the viewer's: in the left image the face points
-            to the image's left edge, in the right image it points to the right edge
+        images: Exactly four multiview slots in the order front (0°), left (90°),
+            back (180°), right (270°). Use None for an omitted non-front view. At
+            least two slots must contain images. "left"/"right" are the character's
+            own sides, not the viewer's: in the left image the face points to the
+            image's left edge, in the right image it points to the right edge
         negative_prompt: Negative prompt (text-to-3d only)
         model_version: Model version to use
         texture_quality: Texture quality (standard/detailed)
@@ -93,13 +132,14 @@ async def generate_3d_model(
     is_p1 = model_version == "P1-20260311"
 
     # Determine mode
-    if images:
+    if images is not None:
         mode = "multiview"
         if model_version not in SUPPORTED_MULTIVIEW_VERSIONS:
             raise ValueError(
                 f"Unsupported version for multiview: {model_version}. "
                 f"Supported: {SUPPORTED_MULTIVIEW_VERSIONS}"
             )
+        images = validate_multiview_images(images)
     elif image:
         mode = "image"
     elif prompt:
@@ -144,8 +184,10 @@ async def generate_3d_model(
         if not image_path.exists():
             raise FileNotFoundError(f"Image file not found: {image}")
 
-    if images:
+    if images is not None:
         for img in images:
+            if img is None:
+                continue
             img_path = Path(img)
             if not img_path.exists():
                 raise FileNotFoundError(f"Image file not found: {img}")
@@ -184,11 +226,7 @@ async def generate_3d_model(
             if enable_image_autofix:
                 task_data["enable_image_autofix"] = True
         else:  # multiview
-            file_tokens = []
-            for img in images:
-                file_tokens.append(
-                    await client._image_to_file_content(img) if img else {}
-                )
+            file_tokens = await build_multiview_files(client, images)
             task_data = {"type": "multiview_to_model", "files": file_tokens}
 
         # --- Common params (all models) ---
@@ -321,14 +359,15 @@ async def main():
     )
     parser.add_argument(
         "--images",
-        type=str,
-        nargs="+",
+        type=parse_multiview_slot,
+        nargs=4,
         default=None,
+        metavar=("FRONT", "LEFT", "BACK", "RIGHT"),
         help=(
-            "Multiple image paths for multiview-to-3d, in order: front (0deg), "
-            "left (90deg), back (180deg), right (270deg). 'left'/'right' are the "
-            "character's own sides, NOT the viewer's -- in the left image the face "
-            "points to the image's left edge, in the right image to the right edge"
+            "Exactly four multiview slots in order: front (0deg), left (90deg), "
+            "back (180deg), right (270deg); use '-' for an omitted non-front view "
+            "and provide at least two images. 'left'/'right' are the character's own "
+            "sides, NOT the viewer's"
         ),
     )
     parser.add_argument(

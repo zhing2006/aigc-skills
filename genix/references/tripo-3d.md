@@ -7,6 +7,7 @@ Text/Image/Multi-view to 3D model generation using Tripo API.
 - [Usage](#usage)
 - [Modes](#modes)
 - [Supported Model Versions](#supported-model-versions)
+- [Multiview Image Order](#important-multiview-image-order)
 - [Prompt Best Practices](#prompt-best-practices)
 - [Examples](#examples)
 - [Tripo Convert](#tripo-convert)
@@ -43,7 +44,7 @@ Text/Image/Multi-view to 3D model generation using Tripo API.
 | Option | Default | Description |
 | ------ | ------- | ----------- |
 | `-i`, `--image` | None | Single image path for image-to-3d generation |
-| `--images` | None | Multiple image paths for multiview-to-3d (order: front 0°, left 90°, back 180°, right 270°; left/right are the character's own sides — see [Multiview Image Order](#important-multiview-image-order)) |
+| `--images` | None | Exactly four multiview slots: front 0°, left 90°, back 180°, right 270°. Use `-` for an omitted non-front view and provide at least two images. Left/right are the character's own sides — see [Multiview Image Order](#important-multiview-image-order) |
 | `--negative-prompt` | `low quality, blurry, deformed, extra limbs, multiple heads` | Negative prompt (text-to-3d only) |
 | `-m`, `--model` | `v3.1-20260211` | Model version |
 | `--texture-quality` | `standard` | Texture quality (standard/detailed) |
@@ -103,7 +104,17 @@ If no `--format` is specified, the output is `.glb`. Always include the extensio
 
 ## Important: Multiview Image Order
 
-The `--images` parameter requires images in the order: **front, left, back, right**.
+The Tripo v2 API requires exactly four `files` slots in the order **front, left, back, right**. The CLI preserves those slots through `--images FRONT LEFT BACK RIGHT`.
+
+- Use `-` for each omitted non-front view; do not remove its slot or move later views forward.
+- The front slot is required, and at least two slots must contain images.
+- Before submitting through another wrapper, verify that the serialized `files` array still contains four items. An omitted view must serialize as `{}`.
+
+For example, to submit only front and back views:
+
+```bash
+{python} {skill_dir}/scripts/tripo-3d.py --images front.jpg - back.jpg - -o ./output
+```
 
 `left` / `right` are named from the **character's own perspective** — `left` is the view of the character's **left arm side**, `right` is the view of the character's **right arm side**. They are NOT the observer's left/right. Getting this backwards mirrors the model, so verify before submitting.
 
@@ -119,10 +130,10 @@ The `--images` parameter requires images in the order: **front, left, back, righ
 - In the `left` image (character's left side), the character's nose points to the image's left edge. The visible arm is the **left** arm.
 - In the `right` image (character's right side), the character's nose points to the image's right edge. The visible arm is the **right** arm.
 - Cross-check with the front view: in `front`, the character's left arm appears on the **right** half of the image (mirror-facing), and that same arm is the one facing the camera in `left`.
+- For asymmetric characters, use hair, clothing, or accessories to confirm the physical side and check that adjacent slots rotate continuously by 90° around the character.
+- A mirrored copy does not provide a new independent viewpoint; do not count it toward the two-image minimum.
 
 Reading the four images in order therefore walks the camera around the character in one consistent direction (0° → 90° → 180° → 270°).
-
-Front view is required. You may omit other views but must provide at least 2 images.
 
 ## Prompt Best Practices
 
@@ -175,7 +186,8 @@ Front view is required. You may omit other views but must provide at least 2 ima
    - Order: front (required), left, back, right — at 0° / 90° / 180° / 270° around the character
 
 2. **Minimum: Front View Required**:
-   - Additional views improve accuracy
+   - Keep all four positional slots even when a non-front view is missing; use `-` as its CLI placeholder
+   - At least one additional independent view is required
    - 4 views (front, left, back, right) give best results
 
 3. **Verify Left vs. Right Before Submitting**:
