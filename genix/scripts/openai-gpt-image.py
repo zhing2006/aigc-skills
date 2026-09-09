@@ -1,23 +1,32 @@
 """
 OpenAI GPT Image - Text/Image to Image Generation
 
-Supported models: gpt-image-2 (default), gpt-image-1.5, gpt-image-1, gpt-image-1-mini
+Supported models:
+  - gpt-image-2.5-flare (default): fastest model for high-quality everyday
+    generation. OpenAI's recommended default; higher quality than gpt-image-2
+    at roughly half the latency, same token rates.
+  - gpt-image-2.5-sunburst: most capable model for generation and editing;
+    use it when editing precision matters most. Slower than flare.
+  - gpt-image-2: previous generation, still supported.
+  - gpt-image-1.5, gpt-image-1, gpt-image-1-mini: deprecated by OpenAI
+    (shutdown 2026-12-01 / 2026-10-23 / 2026-12-01, replacement gpt-image-2).
 Supported sizes:
   - gpt-image-1.x: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait), auto
-  - gpt-image-2: any WxH where both edges are multiples of 16, the long:short
-    ratio is at most 3:1, the long edge is at most 3840, and the total pixel
-    count is between 655,360 and 8,294,400. Above 2560x1440 is experimental.
-    "auto" (default) lets the routing layer decide.
-Supported quality: auto, high, medium, low
+  - gpt-image-2 / gpt-image-2.5: any WxH where both edges are multiples of 16,
+    the long:short ratio is at most 3:1, the long edge is at most 3840, and the
+    total pixel count is between 655,360 and 8,294,400. Above 2560x1440 is
+    experimental. "auto" (default) lets the routing layer decide.
+Supported quality: auto, high, medium, low; xhigh and max on gpt-image-2.5 only
 Max input images: 16 (for image edit)
 
 Notes:
-  - gpt-image-2 does not accept input_fidelity (always treated as high).
-  - background=transparent is supported on gpt-image-2 since 2026-08 (preview),
-    on both generate and edit, and requires output_format png or webp.
-  - During the preview, opaque regions come back with alpha 252-254 instead of
-    255 and edges can carry a grey halo. Pass --normalize-alpha to clip the
-    near-opaque alpha back to 255.
+  - gpt-image-2 and gpt-image-2.5 do not accept input_fidelity (always high).
+  - background=transparent / opaque are fully supported on gpt-image-2.5. On
+    gpt-image-2, transparent is still a preview (since 2026-08). Transparent
+    output requires output_format png or webp.
+  - During the gpt-image-2 preview, opaque regions come back with alpha 252-254
+    instead of 255 and edges can carry a grey halo. Pass --normalize-alpha to
+    clip the near-opaque alpha back to 255.
 """
 
 import argparse
@@ -29,19 +38,42 @@ import sys
 from pathlib import Path
 
 import aiofiles
-import httpx
+import httpx2
 from dotenv import load_dotenv
 from openai import AsyncOpenAI, AsyncAzureOpenAI
 
 
-SUPPORTED_MODELS = ["gpt-image-2", "gpt-image-1.5", "gpt-image-1", "gpt-image-1-mini"]
+MODEL_GPT_IMAGE_2 = "gpt-image-2"
+MODEL_GPT_IMAGE_2_5_FLARE = "gpt-image-2.5-flare"
+MODEL_GPT_IMAGE_2_5_SUNBURST = "gpt-image-2.5-sunburst"
+DEFAULT_MODEL = MODEL_GPT_IMAGE_2_5_FLARE
+
+SUPPORTED_MODELS = [
+    MODEL_GPT_IMAGE_2_5_FLARE,
+    MODEL_GPT_IMAGE_2_5_SUNBURST,
+    MODEL_GPT_IMAGE_2,
+    "gpt-image-1.5",
+    "gpt-image-1",
+    "gpt-image-1-mini",
+]
+# gpt-image-2.5 exclusives: quality xhigh / max
+GPT_IMAGE_2_5_MODELS = {MODEL_GPT_IMAGE_2_5_FLARE, MODEL_GPT_IMAGE_2_5_SUNBURST}
+GPT_IMAGE_2_5_ONLY_QUALITY = {"xhigh", "max"}
+# Models that share gpt-image-2's arbitrary WxH size rules
+ARBITRARY_SIZE_MODELS = GPT_IMAGE_2_5_MODELS | {MODEL_GPT_IMAGE_2}
+# OpenAI shutdown dates; the replacement for all three is gpt-image-2
+DEPRECATED_MODELS = {
+    "gpt-image-1": "2026-10-23",
+    "gpt-image-1-mini": "2026-12-01",
+    "gpt-image-1.5": "2026-12-01",
+}
 GPT_IMAGE_1_X_SIZES = ["1024x1024", "1536x1024", "1024x1536", "auto"]
-SUPPORTED_QUALITY = ["auto", "high", "medium", "low"]
+SUPPORTED_QUALITY = ["auto", "max", "xhigh", "high", "medium", "low"]
 SUPPORTED_FORMATS = ["png", "jpeg", "webp"]
 SUPPORTED_BACKGROUNDS = ["auto", "transparent", "opaque"]
 MAX_INPUT_IMAGES = 16
 
-# gpt-image-2 size constraints (see module docstring)
+# gpt-image-2 / gpt-image-2.5 size constraints (see module docstring)
 GPT_IMAGE_2_EDGE_MULTIPLE = 16
 GPT_IMAGE_2_MAX_EDGE = 3840
 GPT_IMAGE_2_MAX_RATIO = 3.0
@@ -64,8 +96,8 @@ def validate_size(model: str, size: str) -> None:
     if size == "auto":
         return
 
-    if model == "gpt-image-2":
-        validate_gpt_image_2_size(size)
+    if model in ARBITRARY_SIZE_MODELS:
+        validate_gpt_image_2_size(model, size)
         return
 
     if model.startswith("gpt-image-1"):
@@ -78,49 +110,53 @@ def validate_size(model: str, size: str) -> None:
     raise ValueError(f"Unknown model for size validation: {model}")
 
 
-def validate_gpt_image_2_size(size: str) -> None:
-    """Validate an explicit WxH size against gpt-image-2's constraints."""
+def validate_gpt_image_2_size(model: str, size: str) -> None:
+    """Validate an explicit WxH size against the gpt-image-2 family's constraints.
+
+    gpt-image-2.5-flare and gpt-image-2.5-sunburst share these rules with
+    gpt-image-2; `model` is only used to label the error messages.
+    """
     # No leniency on whitespace: the size string is forwarded to the API verbatim,
     # so anything we accept here has to be something the API accepts too.
     parts = size.lower().split("x")
     if len(parts) != 2 or not all(p.isdigit() for p in parts):
         raise ValueError(
-            f"Invalid size for gpt-image-2: {size}. Expected 'auto' or 'WIDTHxHEIGHT' "
+            f"Invalid size for {model}: {size}. Expected 'auto' or 'WIDTHxHEIGHT' "
             f"(e.g. 1536x864)."
         )
 
     width, height = (int(p) for p in parts)
     if width <= 0 or height <= 0:
-        raise ValueError(f"Invalid size for gpt-image-2: {size}. Both edges must be positive.")
+        raise ValueError(f"Invalid size for {model}: {size}. Both edges must be positive.")
 
     if width % GPT_IMAGE_2_EDGE_MULTIPLE or height % GPT_IMAGE_2_EDGE_MULTIPLE:
         raise ValueError(
-            f"Invalid size for gpt-image-2: {size}. Both edges must be multiples of "
+            f"Invalid size for {model}: {size}. Both edges must be multiples of "
             f"{GPT_IMAGE_2_EDGE_MULTIPLE}."
         )
 
     long_edge, short_edge = max(width, height), min(width, height)
     if long_edge > GPT_IMAGE_2_MAX_EDGE:
         raise ValueError(
-            f"Invalid size for gpt-image-2: {size}. The long edge must be at most "
+            f"Invalid size for {model}: {size}. The long edge must be at most "
             f"{GPT_IMAGE_2_MAX_EDGE}px."
         )
 
     if long_edge / short_edge > GPT_IMAGE_2_MAX_RATIO:
         raise ValueError(
-            f"Invalid size for gpt-image-2: {size}. The aspect ratio must be between "
+            f"Invalid size for {model}: {size}. The aspect ratio must be between "
             f"1:3 and 3:1."
         )
 
     pixels = width * height
     if pixels < GPT_IMAGE_2_MIN_PIXELS:
         raise ValueError(
-            f"Invalid size for gpt-image-2: {size} ({pixels:,} pixels). At least "
+            f"Invalid size for {model}: {size} ({pixels:,} pixels). At least "
             f"{GPT_IMAGE_2_MIN_PIXELS:,} pixels are required."
         )
     if pixels > GPT_IMAGE_2_MAX_PIXELS:
         raise ValueError(
-            f"Invalid size for gpt-image-2: {size} ({pixels:,} pixels). At most "
+            f"Invalid size for {model}: {size} ({pixels:,} pixels). At most "
             f"{GPT_IMAGE_2_MAX_PIXELS:,} pixels are supported."
         )
 
@@ -170,7 +206,7 @@ def clip_alpha(image_bytes: bytes, output_format: str) -> bytes:
 async def generate_image(
     prompt: str,
     images: list[str] | None = None,
-    model: str = "gpt-image-2",
+    model: str = DEFAULT_MODEL,
     size: str = "auto",
     quality: str = "auto",
     output_format: str = "png",
@@ -185,13 +221,15 @@ async def generate_image(
     Args:
         prompt: Text prompt for image generation (max 32000 characters)
         images: List of local image file paths for editing (max 16)
-        model: Model to use (gpt-image-2, gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
+        model: Model to use (gpt-image-2.5-flare, gpt-image-2.5-sunburst,
+               gpt-image-2, gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
         size: Output size. "auto" (default) omits the param so the model decides.
               For gpt-image-1.x: 1024x1024, 1536x1024, 1024x1536, auto.
-              For gpt-image-2: any WxH within the documented constraints (both
-              edges multiples of 16, ratio 1:3-3:1, long edge <= 3840,
-              655,360-8,294,400 pixels).
-        quality: Image quality (auto, high, medium, low)
+              For gpt-image-2 / gpt-image-2.5: any WxH within the documented
+              constraints (both edges multiples of 16, ratio 1:3-3:1, long edge
+              <= 3840, 655,360-8,294,400 pixels).
+        quality: Image quality (auto, high, medium, low; xhigh and max on
+                 gpt-image-2.5 only)
         output_format: Output format (png, jpeg, webp)
         background: Background type (auto, transparent, opaque)
         n: Number of images to generate (1-10)
@@ -204,12 +242,24 @@ async def generate_image(
     if model not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model}. Supported: {SUPPORTED_MODELS}")
 
+    if model in DEPRECATED_MODELS:
+        print(
+            f"Warning: {model} is scheduled for shutdown on {DEPRECATED_MODELS[model]}; "
+            f"OpenAI recommends {MODEL_GPT_IMAGE_2} as the replacement."
+        )
+
     # Normalize before validating, since the validated value is what gets sent.
     size = size.strip().lower()
     validate_size(model, size)
 
     if quality not in SUPPORTED_QUALITY:
         raise ValueError(f"Unsupported quality: {quality}. Supported: {SUPPORTED_QUALITY}")
+
+    if quality in GPT_IMAGE_2_5_ONLY_QUALITY and model not in GPT_IMAGE_2_5_MODELS:
+        raise ValueError(
+            f"Quality '{quality}' is only supported by {sorted(GPT_IMAGE_2_5_MODELS)}; "
+            f"{model} tops out at 'high'."
+        )
 
     if output_format not in SUPPORTED_FORMATS:
         raise ValueError(f"Unsupported format: {output_format}. Supported: {SUPPORTED_FORMATS}")
@@ -265,8 +315,7 @@ async def generate_image(
 
     output_files: list[Path] = []
 
-    # Build kwargs; omit `size` when auto so the routing layer / server default
-    # picks it. gpt-image-2 in particular only accepts auto.
+    # Build kwargs; omit `size` when auto so the server default applies.
     common_kwargs: dict = {
         "model": model,
         "prompt": prompt,
@@ -299,9 +348,18 @@ async def generate_image(
         # Text to image mode
         response = await client.images.generate(**common_kwargs)
 
+    # Billing is per token and OpenAI's cost calculator does not cover
+    # gpt-image-2.5, so surface the actual consumption.
+    usage = getattr(response, "usage", None)
+    if usage is not None:
+        print(
+            f"Tokens: input={getattr(usage, 'input_tokens', '?')}, "
+            f"output={getattr(usage, 'output_tokens', '?')}"
+        )
+
     # Save generated images. The API may return either b64_json or url depending
     # on endpoint/model (Azure's gpt-image-2 routing sometimes returns url).
-    http_client: "httpx.AsyncClient | None" = None
+    http_client: "httpx2.AsyncClient | None" = None
     try:
         for i, image_data in enumerate(response.data):
             if output_path:
@@ -318,7 +376,7 @@ async def generate_image(
                 image_bytes = base64.b64decode(image_data.b64_json)
             elif getattr(image_data, "url", None):
                 if http_client is None:
-                    http_client = httpx.AsyncClient(timeout=120)
+                    http_client = httpx2.AsyncClient(timeout=120)
                 resp = await http_client.get(image_data.url)
                 resp.raise_for_status()
                 image_bytes = resp.content
@@ -358,9 +416,13 @@ async def main():
     parser.add_argument(
         "-m", "--model",
         type=str,
-        default="gpt-image-2",
+        default=DEFAULT_MODEL,
         choices=SUPPORTED_MODELS,
-        help="Model to use (default: gpt-image-2)",
+        help=(
+            f"Model to use (default: {DEFAULT_MODEL}). gpt-image-2.5-flare is the "
+            f"fast everyday model, gpt-image-2.5-sunburst the most capable one for "
+            f"precise edits; gpt-image-1.x are deprecated by OpenAI"
+        ),
     )
     parser.add_argument(
         "-s", "--size",
@@ -369,8 +431,9 @@ async def main():
         help=(
             "Output size (default: auto - omit to let model decide). "
             "gpt-image-1.x accepts: 1024x1024, 1536x1024, 1024x1536, auto. "
-            "gpt-image-2 accepts any WIDTHxHEIGHT with both edges multiples of 16, "
-            "ratio 1:3-3:1, long edge <= 3840, and 655,360-8,294,400 total pixels."
+            "gpt-image-2 and gpt-image-2.5 accept any WIDTHxHEIGHT with both edges "
+            "multiples of 16, ratio 1:3-3:1, long edge <= 3840, and "
+            "655,360-8,294,400 total pixels."
         ),
     )
     parser.add_argument(
@@ -378,7 +441,10 @@ async def main():
         type=str,
         default="auto",
         choices=SUPPORTED_QUALITY,
-        help="Image quality (default: auto)",
+        help=(
+            "Image quality (default: auto). xhigh and max are only accepted by "
+            "gpt-image-2.5-flare / gpt-image-2.5-sunburst; other models top out at high"
+        ),
     )
     parser.add_argument(
         "-f", "--format",

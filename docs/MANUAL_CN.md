@@ -227,6 +227,11 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 - **DashScope 万相 3.0 视频**：使用 `wan3.0-video`（以及高速版 `wan3.0-video-prime`）的全能参考视频生成——文生视频、首帧/首尾帧、多模态参考，以及本技能集中独有的 **文档生视频**（pptx/pdf/docx/xlsx/md，≤50 页）与 **网页生视频**。最长 30 秒、帧率固定 30fps，支持 `adaptive` 自适应构图与 `-d -1` 智能时长
 - **新增环境变量**：可选的 `DASHSCOPE_WORKSPACE_ID`（业务空间 ID）。公共域名 `https://dashscope.aliyuncs.com` 即可调用万相 3.0，因此该变量仅在需要走业务空间专属域名时设置；`DASHSCOPE_VIDEO_BASE_URL` 同时支持 `{WorkspaceId}` 占位符以指向非北京地域。复用 `DASHSCOPE_API_KEY`
 
+### v0.5.10 新功能
+
+- **GPT Image 2.5**：`gpt-image-2.5-flare` 成为 OpenAI 图像的新默认模型——质量高于 `gpt-image-2`，延迟约为其一半；`gpt-image-2.5-sunburst` 则面向精确编辑与主体保持。两者沿用最高 4K 的自定义尺寸，并正式支持透明背景
+- **`xhigh` 与 `max` 质量档**：在 `high` 之上新增两档，用于小字与高密度版面，仅 2.5 模型可用。更慢、每张消耗更多 token；脚本现在会打印每次调用的 token 用量
+
 ---
 
 ## 技能概览
@@ -310,7 +315,7 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 ### OpenAI GPT Image
 
-最适合：精确编辑、透明背景、图片中的文字
+最适合：快速日常生成（Flare）、精确编辑（Sunburst）、透明背景、图片中的文字
 
 #### 基础文生图
 
@@ -320,7 +325,7 @@ MINIMAX_API_BASE = "https://api.minimaxi.com"                     # 可选
 
 > "创建一个卡通机器人吉祥物，透明背景，用作贴纸"
 
-alpha 通道是原生生成的，而非事后抠图，所以玻璃、烟雾、细发丝这些难处理的边缘表现更好。`gpt-image-2` 上的透明背景目前仍是 preview 功能——Claude 会先提示两个已知瑕疵（不透明区域的 alpha 是 253 而非 255、边缘有一圈淡灰色 halo），并询问是否启用客户端 alpha 修正。
+alpha 通道是原生生成的，而非事后抠图，所以玻璃、烟雾、细发丝这些难处理的边缘表现更好。在 `gpt-image-2.5` 上透明背景是正式功能；Claude 会检查生成文件的 alpha 通道，若本应不透明的区域出现轻微半透明（alpha 250-254），会直接修正已有文件而不是重新生成；烟雾、玻璃这类本就半透明的素材不会被处理。`gpt-image-2` 上的透明背景仍是 preview 功能——Claude 会先提示两个已知瑕疵（不透明区域的 alpha 是 253 而非 255、边缘有一圈淡灰色 halo），并询问是否启用修正。
 
 #### 图像编辑
 
@@ -333,12 +338,12 @@ alpha 通道是原生生成的，而非事后抠图，所以玻璃、烟雾、�
 
 **支持的选项**：
 
-- 模型：`gpt-image-2`（默认）、`gpt-image-1.5`、`gpt-image-1`、`gpt-image-1-mini`
+- 模型：`gpt-image-2.5-flare`（默认；最快，质量高于 gpt-image-2）、`gpt-image-2.5-sunburst`（最强，精确编辑）、`gpt-image-2`，以及已弃用的 `gpt-image-1.5` / `gpt-image-1` / `gpt-image-1-mini`（OpenAI 下线日期 2026-12-01 / 2026-10-23 / 2026-12-01）
 - 尺寸：
-  - `gpt-image-2`：任意 `宽x高`，两边均需为 16 的倍数、长短边比例在 1:3~3:1 之间、长边不超过 `3840`、总像素 655,360~8,294,400（因此 4K `3840x2160` 可用；超过 2560x1440 为实验性）
+  - `gpt-image-2` / `gpt-image-2.5`：任意 `宽x高`，两边均需为 16 的倍数、长短边比例在 1:3~3:1 之间、长边不超过 `3840`、总像素 655,360~8,294,400（因此 4K `3840x2160` 可用；超过 2560x1440 为实验性）
   - `gpt-image-1.x`：`1024x1024`、`1536x1024`（横版）、`1024x1536`（竖版）
-- 质量：`auto`、`high`、`medium`、`low`
-- 背景：`auto`、`transparent`、`opaque`——`transparent` 需要 PNG 或 WebP 输出，在 `gpt-image-2` 上为 preview 功能
+- 质量：`auto`、`high`、`medium`、`low`，另有仅 `gpt-image-2.5` 支持的 `xhigh` 与 `max`（更慢、每张消耗更多 token）
+- 背景：`auto`、`transparent`、`opaque`——`transparent` 需要 PNG 或 WebP 输出；在 `gpt-image-2.5` 上为正式支持，在 `gpt-image-2` 上仍是 preview 功能
 
 ---
 

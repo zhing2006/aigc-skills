@@ -227,6 +227,11 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 - **DashScope Wan 3.0 Video**: All-in-one reference video generation with `wan3.0-video` (and the high-speed `wan3.0-video-prime`) — Text-to-Video, First/Last Frame, Multi-modal Reference, and, uniquely in this skill set, **Document-to-Video** (pptx/pdf/docx/xlsx/md, ≤50 pages) and **Webpage-to-Video**. Up to 30 seconds at a fixed 30fps, with `adaptive` framing and `-d -1` auto duration
 - **New Environment Variable**: optional `DASHSCOPE_WORKSPACE_ID` (business-space ID). The shared `https://dashscope.aliyuncs.com` host serves Wan 3.0, so this is only needed for a business-space domain; `DASHSCOPE_VIDEO_BASE_URL` also accepts a `{WorkspaceId}` placeholder for non-Beijing regions. Reuses `DASHSCOPE_API_KEY`
 
+### New Features in v0.5.10
+
+- **GPT Image 2.5**: `gpt-image-2.5-flare` is the new default OpenAI image model — higher quality than `gpt-image-2` at about half the latency — and `gpt-image-2.5-sunburst` is available for precision editing and subject preservation. Both take the same custom sizes up to 4K and fully support transparent backgrounds
+- **`xhigh` and `max` Quality**: Two tiers above `high` for fine print and dense layouts, on the 2.5 models only. Slower and more tokens per image; the script now prints the token usage of every call
+
 ---
 
 ## Skills Overview
@@ -234,7 +239,7 @@ The environment file has been renamed from `.env` to `.genix.env` to avoid confl
 | Skill | Provider | Input | Output | Use Case |
 | ----- | -------- | ----- | ------ | -------- |
 | Nano Banana | Google | Text, Images | Image | High-quality image generation, style transfer, Image Search grounding |
-| GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds |
+| GPT Image | OpenAI | Text, Images | Image | Image generation, editing, transparent backgrounds (GPT Image 2.5 Flare / Sunburst) |
 | Seedream | Volcengine | Text, Images | Image | Chinese/English text rendering, multi-image fusion, group generation |
 | Qwen Image 3.0 | DashScope | Text, 1-3 Images | Image | Text rendering, precise editing, multi-image fusion (invite-only) |
 | Seedance | Volcengine | Text, Image, Video, Audio | Video | Multi-modal video generation with audio (default). 2.5 for 30-second takes, audio-only input and up to 1080p; 2.0 for 4K |
@@ -310,7 +315,7 @@ Ask your AI assistant:
 
 ### OpenAI GPT Image
 
-Best for: Precise editing, transparent backgrounds, text in images
+Best for: Fast everyday generation (Flare), precise editing (Sunburst), transparent backgrounds, text in images
 
 #### Basic Text-to-Image
 
@@ -320,7 +325,7 @@ Best for: Precise editing, transparent backgrounds, text in images
 
 > "Create a cartoon robot mascot with a transparent background for use as a sticker"
 
-The alpha channel is generated natively rather than cut out afterwards, so it holds up on glass, smoke, and fine hair. Transparency on `gpt-image-2` is still a preview feature — Claude will warn you about two known defects (opaque areas coming back at alpha 253 instead of 255, and a faint grey edge halo) and ask whether to apply the client-side alpha fix.
+The alpha channel is generated natively rather than cut out afterwards, so it holds up on glass, smoke, and fine hair. On `gpt-image-2.5` transparency is a regular feature; Claude checks the delivered file's alpha channel and, if areas that should be solid come back slightly translucent (alpha 250-254), clips the existing file in place instead of regenerating. Subjects that are translucent by design, such as smoke or glass, are left alone. Transparency on `gpt-image-2` is still a preview feature — there Claude will warn you about two known defects (opaque areas coming back at alpha 253 instead of 255, and a faint grey edge halo) and ask whether to apply the fix.
 
 #### Image Editing
 
@@ -333,12 +338,12 @@ The alpha channel is generated natively rather than cut out afterwards, so it ho
 
 **Supported Options**:
 
-- Models: `gpt-image-2` (default), `gpt-image-1.5`, `gpt-image-1`, `gpt-image-1-mini`
+- Models: `gpt-image-2.5-flare` (default; fastest, higher quality than gpt-image-2), `gpt-image-2.5-sunburst` (most capable, precision editing), `gpt-image-2`, plus the deprecated `gpt-image-1.5` / `gpt-image-1` / `gpt-image-1-mini` (OpenAI shutdown 2026-12-01 / 2026-10-23 / 2026-12-01)
 - Sizes:
-  - `gpt-image-2`: any `WIDTHxHEIGHT` with both edges divisible by 16, ratio between 1:3 and 3:1, long edge up to `3840`, and 655,360-8,294,400 total pixels (so 4K `3840x2160` works; above 2560x1440 is experimental)
+  - `gpt-image-2` / `gpt-image-2.5`: any `WIDTHxHEIGHT` with both edges divisible by 16, ratio between 1:3 and 3:1, long edge up to `3840`, and 655,360-8,294,400 total pixels (so 4K `3840x2160` works; above 2560x1440 is experimental)
   - `gpt-image-1.x`: `1024x1024`, `1536x1024` (landscape), `1024x1536` (portrait)
-- Quality: `auto`, `high`, `medium`, `low`
-- Background: `auto`, `transparent`, `opaque` — `transparent` requires PNG or WebP output and is a preview feature on `gpt-image-2`
+- Quality: `auto`, `high`, `medium`, `low`, plus `xhigh` and `max` on `gpt-image-2.5` only (slower, more tokens per image)
+- Background: `auto`, `transparent`, `opaque` — `transparent` requires PNG or WebP output; fully supported on `gpt-image-2.5`, still a preview feature on `gpt-image-2`
 
 ---
 
