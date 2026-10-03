@@ -18,7 +18,7 @@ AIGC generation skills for Claude Code and similar AI tools.
 | **Video** | DashScope HappyHorse | Text-to-Video, Image-to-Video, Reference-to-Video, Video Edit (physically realistic) |
 | **Video** | Google Veo | Text-to-Video, Image-to-Video |
 | **Video** | OpenAI Sora | Text-to-Video, Image-to-Video |
-| **Audio** | ElevenLabs | Text-to-Speech, Sound Effects |
+| **Audio** | ElevenLabs | Text-to-Speech (Eleven v4 / v4 Turbo), Sound Effects |
 | **Audio** | DashScope Qwen-Audio-TTS 3.0 | WebSocket Text-to-Speech, Voice Design, Voice Clone |
 | **Audio** | Volcengine | Text-to-Speech (streaming, voice instructions, dialects), Voice Design, Voice Clone, Voice Management |
 | **Music** | ElevenLabs | Text-to-Music (instrumental/vocal) |

@@ -18,7 +18,7 @@
 | **视频** | DashScope HappyHorse | 文生视频、图生视频、参考生视频、视频编辑（物理真实） |
 | **视频** | Google Veo | 文生视频、图生视频 |
 | **视频** | OpenAI Sora | 文生视频、图生视频 |
-| **音频** | ElevenLabs | 文字转语音、音效生成 |
+| **音频** | ElevenLabs | 文字转语音（Eleven v4 / v4 Turbo）、音效生成 |
 | **音频** | DashScope 千问音频 TTS 3.0 | WebSocket 文字转语音、音色设计、音色克隆 |
 | **音频** | Volcengine | 文字转语音（流式、语音指令、方言）、音色设计、音色克隆、音色管理 |
 | **音乐** | ElevenLabs | 文生音乐（纯乐器/带人声） |

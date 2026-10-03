@@ -1,7 +1,8 @@
 """
 ElevenLabs Text-to-Speech - Text to Speech Generation
 
-Supported models: eleven_v3, eleven_multilingual_v2, eleven_flash_v2_5
+Supported models: eleven_v4, eleven_v4_turbo, eleven_v3,
+                  eleven_multilingual_v2, eleven_flash_v2_5
 Supported output formats: MP3, PCM, Opus
 Features: Voice search, voice settings (stability, similarity, speed)
 """
@@ -19,10 +20,20 @@ from elevenlabs.types import VoiceSettings
 
 
 SUPPORTED_MODELS = [
+    "eleven_v4",
+    "eleven_v4_turbo",
     "eleven_v3",
     "eleven_multilingual_v2",
     "eleven_flash_v2_5",
 ]
+V4_MODELS = {"eleven_v4", "eleven_v4_turbo"}
+MODEL_CHARACTER_LIMITS = {
+    "eleven_v4": 10_000,
+    "eleven_v4_turbo": 10_000,
+    "eleven_v3": 5_000,
+    "eleven_multilingual_v2": 10_000,
+    "eleven_flash_v2_5": 40_000,
+}
 SUPPORTED_OUTPUT_FORMATS = [
     "mp3_22050_32",
     "mp3_44100_64",
@@ -35,7 +46,7 @@ SUPPORTED_OUTPUT_FORMATS = [
     "opus_48000_64",
     "opus_48000_128",
 ]
-DEFAULT_MODEL = "eleven_multilingual_v2"
+DEFAULT_MODEL = "eleven_v4"
 DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel
 DEFAULT_VOICE_NAME = "Rachel"
 
@@ -92,7 +103,7 @@ async def generate_speech(
         output_format: Audio output format
         stability: Voice stability (0-1)
         similarity_boost: Voice similarity (0-1)
-        speed: Speech speed (0.7-1.2)
+        speed: Speech speed (0.7-1.2, unsupported by v4 models)
         output_path: Output file path (optional)
 
     Returns:
@@ -101,11 +112,20 @@ async def generate_speech(
     if model_id not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model: {model_id}. Supported: {SUPPORTED_MODELS}")
 
+    if not text.strip():
+        raise ValueError("Text must not be empty")
+    character_limit = MODEL_CHARACTER_LIMITS[model_id]
+    if len(text) > character_limit:
+        raise ValueError(
+            f"Text exceeds the {character_limit:,}-character limit for {model_id}. "
+            "Split it into shorter requests."
+        )
+
     if output_format not in SUPPORTED_OUTPUT_FORMATS:
         raise ValueError(f"Unsupported output format: {output_format}. Supported: {SUPPORTED_OUTPUT_FORMATS}")
 
     if stability is not None:
-        if stability < 0 or stability > 1:
+        if not 0 <= stability <= 1:
             raise ValueError("Stability must be between 0 and 1")
         # For eleven_v3, snap to nearest valid value (0.0, 0.5, 1.0)
         if model_id == "eleven_v3":
@@ -116,11 +136,17 @@ async def generate_speech(
                 labels = {0.0: "Creative", 0.5: "Natural", 1.0: "Robust"}
                 print(f"Note: Stability {original} adjusted to {stability} ({labels[stability]}) for eleven_v3")
 
-    if similarity_boost is not None and (similarity_boost < 0 or similarity_boost > 1):
+    if similarity_boost is not None and not 0 <= similarity_boost <= 1:
         raise ValueError("Similarity boost must be between 0 and 1")
 
-    if speed is not None and (speed < 0.7 or speed > 1.2):
-        raise ValueError("Speed must be between 0.7 and 1.2")
+    if speed is not None:
+        if model_id in V4_MODELS:
+            raise ValueError(
+                f"{model_id} does not support --speed. Use audio tags and punctuation "
+                "to guide pacing, or select --model eleven_multilingual_v2 for speed control."
+            )
+        if not 0.7 <= speed <= 1.2:
+            raise ValueError("Speed must be between 0.7 and 1.2")
 
     api_key = os.environ.get("ELEVENLABS_API_KEY")
     if not api_key:
@@ -150,11 +176,14 @@ async def generate_speech(
     # Build voice settings if any provided
     voice_settings = None
     if stability is not None or similarity_boost is not None or speed is not None:
-        voice_settings = VoiceSettings(
-            stability=stability if stability is not None else 0.5,
-            similarity_boost=similarity_boost if similarity_boost is not None else 0.75,
-            speed=speed if speed is not None else 1.0,
-        )
+        settings = {
+            "stability": stability if stability is not None else 0.5,
+            "similarity_boost": similarity_boost if similarity_boost is not None else 0.75,
+        }
+        # V4 accepts stability and similarity only; even a default speed is unsupported.
+        if model_id not in V4_MODELS:
+            settings["speed"] = speed if speed is not None else 1.0
+        voice_settings = VoiceSettings(**settings)
 
     # Determine file extension from format
     if output_format.startswith("mp3"):
@@ -243,7 +272,7 @@ async def main():
         "--speed",
         type=float,
         default=None,
-        help="Speech speed (0.7-1.2, default: 1.0)",
+        help="Speech speed for v3/v2 models only (0.7-1.2, default: 1.0); unsupported by v4",
     )
     parser.add_argument(
         "-o", "--output",

@@ -708,19 +708,24 @@ Best for: Narration, dialogue, voice-overs, character voices
 
 > "Generate speech saying 'Hello' with a British male narrator voice"
 
-#### Emotional Expression (V3 Model)
+#### Emotional Expression (V4 Default)
 
 > "Generate speech with emotional tags: '[excited] Oh my gosh, I can't believe we won!'"
+
+See [Prompt Best Practices](../genix/references/elevenlabs-text-speech.md#prompt-best-practices) for script preservation, experimental tags, pronunciation, and normalization. This script uses one voice per request; speaker labels do not switch voices. Maintenance checks do not authorize paid audio samples.
 
 **Supported Options**:
 
 - Models:
-  - `eleven_v3`: Most expressive, 70+ languages, audio tags support
-  - `eleven_multilingual_v2`: Natural speech, 29 languages (default)
+  - `eleven_v4`: Highest quality, 90+ languages, audio tags, 10K characters (default)
+  - `eleven_v4_turbo`: Expressive, low-latency speech, 90+ languages, 10K characters
+  - `eleven_v3`: Previous expressive model, 70+ languages, audio tags, 5K characters
+  - `eleven_multilingual_v2`: Natural speech, 29 languages, 10K characters
   - `eleven_flash_v2_5`: Ultra-low latency ~75ms
 - Voice Selection: By ID or search query (e.g., "British female calm")
-- Voice Settings: Stability (0-1), Similarity (0-1), Speed (0.7-1.2)
-- Audio Tags (V3 only): `[excited]`, `[whispers]`, `[sad]`, `[British accent]`, etc.
+- Voice Settings: Stability (0-1), Similarity (0-1); Speed (0.7-1.2) for v3/v2 models only
+- V4 migration: `--speed` is rejected for both v4 models. Use audio tags and punctuation for pacing, or explicitly select `-m eleven_multilingual_v2` to keep numeric speed control. V4 does not support SSML.
+- Audio Tags (V4 / V4 Turbo / V3): `[excited]`, `[whispers]`, `[sad]`, `[British accent]`, etc.
 - Formats:
   - MP3: `mp3_22050_32`, `mp3_44100_64`, `mp3_44100_128`, `mp3_44100_192`
   - PCM: `pcm_16000`, `pcm_22050`, `pcm_44100`, `pcm_48000`

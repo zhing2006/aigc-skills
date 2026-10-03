@@ -42,7 +42,7 @@ The `{python}` placeholder in commands refers to the Genix virtual environment P
 - [Volcengine Voice Design](references/volcengine-voice-design.md)
 - [Volcengine Voice Clone](references/volcengine-voice-clone.md)
 - [ElevenLabs Sound Effects](references/elevenlabs-sound-effect.md)
-- [ElevenLabs Text to Speech](references/elevenlabs-text-speech.md)
+- [ElevenLabs Text to Speech (v4 / v4 Turbo)](references/elevenlabs-text-speech.md)
 
 ## Video Generation Skills
 

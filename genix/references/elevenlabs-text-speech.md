@@ -1,17 +1,18 @@
 # ElevenLabs Text-to-Speech
 
-Text-to-Speech generation using ElevenLabs API with voice search support.
+Text-to-Speech generation using ElevenLabs API with voice search support. Defaults to Eleven v4, with v4 Turbo available for lower latency.
 
 ## Contents
 
 - [Usage](#usage)
 - [Supported Models](#supported-models)
 - [Voice Selection](#voice-selection)
-- [Text Formatting Best Practices](#text-formatting-best-practices)
+- [Prompt Best Practices](#prompt-best-practices)
 - [Voice Search Best Practices](#voice-search-best-practices)
 - [Voice Settings](#voice-settings)
 - [Examples](#examples)
 - [Environment Variables](#environment-variables)
+- [Official References](#official-references)
 
 ## Usage
 
@@ -31,22 +32,28 @@ Text-to-Speech generation using ElevenLabs API with voice search support.
 | ------ | ------- | ----------- |
 | `-v`, `--voice-id` | `21m00Tcm4TlvDq8ikWAM` | Voice ID to use |
 | `-s`, `--voice-search` | None | Search query to find a voice |
-| `-m`, `--model` | `eleven_multilingual_v2` | Model for speech generation |
+| `-m`, `--model` | `eleven_v4` | Model for speech generation |
 | `-f`, `--format` | `mp3_44100_128` | Output audio format |
 | `--stability` | None | Voice stability (0-1) |
 | `--similarity` | None | Voice similarity boost (0-1) |
-| `--speed` | None | Speech speed (0.7-1.2) |
+| `--speed` | None | Speech speed (0.7-1.2), v3/v2 models only |
 | `-o`, `--output` | `generated_speech.<ext>` | Output file path |
 
 ## Supported Models
 
 | Model | Description |
 | ----- | ----------- |
-| `eleven_v3` | Most expressive, emotionally rich, 70+ languages, 5K chars |
-| `eleven_multilingual_v2` | Natural speech, 29 languages, 10K chars (default) |
-| `eleven_flash_v2_5` | Ultra-low latency ~75ms, 32 languages |
+| `eleven_v4` | Highest quality, expressive speech, 90+ languages, 10K chars (default) |
+| `eleven_v4_turbo` | Expressive, low-latency speech, 90+ languages, 10K chars |
+| `eleven_v3` | Previous expressive model, 70+ languages, 5K chars |
+| `eleven_multilingual_v2` | Natural speech, 29 languages, 10K chars |
+| `eleven_flash_v2_5` | Ultra-low latency ~75ms, 32 languages, 40K chars |
 
-**Note**: If the user does not specify model, use `eleven_multilingual_v2` as default.
+**Default**: If the user does not specify a model, use `eleven_v4`. Existing workflows can explicitly select `-m eleven_multilingual_v2`, `-m eleven_v3`, or `-m eleven_flash_v2_5`.
+
+Empty text and text above the selected model's character limit are rejected before calling the API. Split longer text into shorter requests; the script does not automatically chunk it.
+
+**V4 migration**: V4 models accept stability and similarity settings, but do not support speed, style, or SSML. The script rejects `--speed` with either v4 model; choose a v3/v2 model if numeric speed control is required. This command generates one voice per request and saves the audio to a file.
 
 ## Voice Selection
 
@@ -85,11 +92,33 @@ If neither `-v` nor `-s` is provided, uses Rachel (21m00Tcm4TlvDq8ikWAM).
 | Matilda | `XrExE9yKIg1WjnnlVkGX` | Female | American | Warm audiobook |
 | Daniel | `onwK4e9ZLuTAKqWW03F9` | Male | British | Deep news |
 
-## Text Formatting Best Practices
+## Prompt Best Practices
 
-### Audio Tags (Eleven v3 Only)
+The official guide now focuses on [Prompting Eleven v4](https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices#prompting-eleven-v4); its v3 section refers to the same techniques.
 
-Eleven v3 supports bracketed audio tags for emotional and tonal control. These tags are embedded directly in the text.
+### Preparing Supplied Dialogue
+
+Keep supplied words and meaning, including laughter and narration. Add context-appropriate auditory tags beside the relevant phrase; do not move narration into brackets. Avoid visual directions.
+
+Original:
+
+```text
+哈哈，原来你也在这里！
+```
+
+Enhanced:
+
+```text
+[laughs] 哈哈，原来你也在这里！
+```
+
+Do not delete onomatopoeia when adding tags; removing words requires a rewriting request.
+
+### Audio Tags (Eleven v4 / v4 Turbo / v3)
+
+Eleven v4, v4 Turbo, and v3 support bracketed audio tags for emotional and tonal control. Embed tags directly in the text; v4 is the recommended default.
+
+Treat the following tags as examples, not an API enum or guaranteed effects. Accent and character cues are experimental.
 
 **Emotion Tags:**
 
@@ -130,7 +159,7 @@ Eleven v3 supports bracketed audio tags for emotional and tonal control. These t
 | `[matter-of-fact]` | Straightforward |
 | `[mischievously]` | Playful, sneaky |
 
-**Accent Tags:**
+**Accent Tags (Experimental):**
 
 | Tag | Effect |
 | --- | ------ |
@@ -139,13 +168,17 @@ Eleven v3 supports bracketed audio tags for emotional and tonal control. These t
 | `[Southern US accent]` | Southern American accent |
 | `[strong X accent]` | Emphasized accent (replace X) |
 
-**Character Tags:**
+**Character Tags (Exploratory Prompt Examples):**
 
 | Tag | Effect |
 | --- | ------ |
 | `[pirate voice]` | Pirate character |
 | `[evil scientist voice]` | Villain archetype |
 | `[childlike tone]` | Young, innocent |
+
+### Vocal Delivery and Sound Effects
+
+Use explicit voice descriptions to avoid confusing delivery with sound effects. Optional environmental cues such as `[applause]` belong in sound-design requests; do not add them during ordinary dialogue enhancement.
 
 ### Audio Tag Examples
 
@@ -170,6 +203,8 @@ It was a VERY long day [sighs] ... nobody listens anymore.
 | `—` (dash) | Brief pause |
 | `?` / `!` | Natural intonation |
 
+These cues do not specify exact pause durations. V4 and v3 do not support SSML `<break>` tags.
+
 ### Tag Layering
 
 Tags can be combined for nuanced delivery:
@@ -180,29 +215,27 @@ Tags can be combined for nuanced delivery:
 [excited] [British accent] Brilliant! Absolutely brilliant!
 ```
 
-### Important Notes
+### Pronunciation and Normalization
 
-1. **V3 only**: Audio tags work best with `eleven_v3` model
-2. **Voice compatibility**: Some tags work better with certain voices
-3. **Test first**: Results vary by voice, test before production use
-4. **No SSML breaks**: V3 does not support `<break>` tags, use punctuation instead
-5. **Remove onomatopoeia**: When using vocal expression tags, remove corresponding onomatopoeia from text
-
-**Example - Avoid duplication:**
+V4 supports inline `/IPA/` for selected difficult words; include stress marks. Results vary by voice.
 
 ```text
-# Wrong - duplicates the laugh effect
-[laughs] Haha, that's so funny!
-
-# Correct - tag handles the laugh
-[laughs] That's so funny!
-
-# Wrong - duplicates the sigh
-[sighs] Hahhh... I'm so tired.
-
-# Correct - tag handles the sigh
-[sighs] I'm so tired.
+Please say /həˈləʊ/ after the tone.
 ```
+
+Normalize numbers, dates and abbreviations only when preparing a spoken adaptation; clarify ambiguous locale or currency. Keep verbatim scripts unchanged.
+
+The script forwards `text` unchanged. It has no normalization switch or pronunciation-dictionary option; prepare any authorized spoken adaptation before calling it. Inline IPA is documented for `eleven_v4`; do not assume it works identically on the other model choices.
+
+### Voice and Speaker Selection
+
+Choose a voice suited to the intended delivery. Tags can guide a voice beyond its usual style, but results still depend on the voice.
+
+The current script sends one `voice_id` per Text-to-Speech request. Writing `Speaker 1:` and `Speaker 2:` in `text` does not assign separate voices and may be read aloud. ElevenLabs offers a separate [Text to Dialogue API](https://elevenlabs.io/docs/overview/capabilities/text-to-dialogue) for multiple voices; this script does not expose it. Do not present the official multi-speaker examples as commands supported by this script.
+
+### Validation and Paid Calls
+
+For documentation or code maintenance, use local checks or mocked requests. Do not spend API credits on samples, comparisons, or retries without explicit user authorization covering that work. A request to update the integration is not a request to synthesize audio. When generation is authorized, stay within the requested scope and provide links to every output for listening.
 
 ## Voice Search Best Practices
 
@@ -255,7 +288,7 @@ Controls emotional range and consistency:
 | `0.5` | Natural | Closest to original voice recording |
 | `1.0` | Robust | Highly stable, less responsive to audio tags |
 
-Other values are automatically adjusted to the nearest valid value.
+For v3 only, other values are automatically adjusted to the nearest valid value. V4 models accept values throughout the 0-1 range without this adjustment.
 
 ### Similarity (0-1)
 
@@ -266,7 +299,9 @@ Controls adherence to original voice characteristics:
 
 ### Speed (0.7-1.2)
 
-Controls speech velocity:
+Available for `eleven_v3`, `eleven_multilingual_v2`, and `eleven_flash_v2_5` only. V4 models reject `--speed`, including `--speed 1.0`; use audio tags and punctuation to guide pacing instead.
+
+Controls speech velocity on the supported models:
 
 - **0.7**: Slower speech
 - **1.0**: Normal speed (default)
@@ -303,10 +338,28 @@ Controls speech velocity:
 ### TTS with Custom Voice Settings
 
 ```bash
-{python} {skill_dir}/scripts/elevenlabs-text-speech.py "This is a very important announcement." --stability 0.8 --similarity 0.9 --speed 0.9 -o announcement.mp3
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "This is a very important announcement." --stability 0.8 --similarity 0.9 -o announcement.mp3
 ```
 
-### Low-Latency Streaming Model
+### Emotional Speech with V4
+
+```bash
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "[excited] We did it! [laughs] I can hardly believe it." -m eleven_v4 -o excited.mp3
+```
+
+### Low-Latency V4 Turbo
+
+```bash
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "[cheerfully] How can I help you today?" -m eleven_v4_turbo -o quick.mp3
+```
+
+### Legacy Model with Numeric Speed Control
+
+```bash
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "This is a very important announcement." -m eleven_multilingual_v2 --speed 0.9 -o slower.mp3
+```
+
+### Flash Model
 
 ```bash
 {python} {skill_dir}/scripts/elevenlabs-text-speech.py "Quick response needed." -m eleven_flash_v2_5 -o quick.mp3
@@ -320,4 +373,16 @@ Controls speech velocity:
 
 ## Environment Variables
 
-Requires `ELEVENLABS_API_KEY` to be set in `.env` file.
+Requires `ELEVENLABS_API_KEY`. The CLI loads `.genix.env` from the current working directory, or uses the process environment.
+
+## Official References
+
+Verified on 2026-10-03. Both v4 models were also checked through `GET /v1/models` and short generations through the existing Text-to-Speech endpoint.
+
+- [Eleven v4 release announcement (2026-09-28)](https://elevenlabs.io/blog/eleven-v4)
+- [V4 model settings and migration behavior](https://elevenlabs.io/docs/overview/capabilities/text-to-speech/eleven-v4)
+- [Models and character limits](https://elevenlabs.io/docs/overview/models)
+- [Text-to-Speech API](https://elevenlabs.io/docs/api-reference/text-to-speech/convert)
+- [Prompting Eleven v4](https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices#prompting-eleven-v4)
+- [Prompting Eleven v3](https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices#prompting-eleven-v3)
+- [Audio tag model support](https://elevenlabs.io/docs/help-center/product/core-capabilities/text-to-speech/how-do-audio-tags-work-with-eleven-v3-and-v4)
