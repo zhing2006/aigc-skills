@@ -724,7 +724,10 @@ alpha 通道是原生生成的，而非事后抠图，所以玻璃、烟雾、�
   - `eleven_flash_v2_5`：超低延迟 ~75ms
 - 声音选择：通过 ID 或搜索查询（如 "British female calm"）
 - 声音设置：稳定性（0-1）、相似度（0-1）；语速（0.7-1.2）仅适用于 v3/v2 模型
-- V4 迁移：两个 v4 模型均不接受 `--speed`，请使用音频标签和标点引导节奏；需要数值语速控制时显式指定 `-m eleven_multilingual_v2`。V4 不支持 SSML。
+- 风格：`--style`（0-1）控制原始音色的风格夸张程度；数值风格控制可选择 `-m eleven_multilingual_v2`
+- 上下文：`--previous-text` 提供前一段文本以改善衔接，不会重复朗读该文本
+- 语言：`--language-code` 指定语言，例如 `en` 或 `zh`；省略时自动检测。`eleven_multilingual_v2` 不支持此参数
+- V4 迁移：两个 v4 模型均不接受 `--speed` 和 `--style`，请使用音频标签和标点引导表现方式；需要数值语速或风格控制时显式指定 `-m eleven_multilingual_v2`。V4 不支持 SSML。
 - 音频标签（V4 / V4 Turbo / V3）：`[excited]`、`[whispers]`、`[sad]`、`[British accent]` 等
 - 格式：
   - MP3：`mp3_22050_32`、`mp3_44100_64`、`mp3_44100_128`、`mp3_44100_192`

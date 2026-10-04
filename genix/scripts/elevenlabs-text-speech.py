@@ -4,7 +4,8 @@ ElevenLabs Text-to-Speech - Text to Speech Generation
 Supported models: eleven_v4, eleven_v4_turbo, eleven_v3,
                   eleven_multilingual_v2, eleven_flash_v2_5
 Supported output formats: MP3, PCM, Opus
-Features: Voice search, voice settings (stability, similarity, speed)
+Features: Voice search, voice settings (stability, similarity, speed, style),
+          previous-text context, language selection
 """
 
 import argparse
@@ -91,6 +92,9 @@ async def generate_speech(
     similarity_boost: float | None = None,
     speed: float | None = None,
     output_path: str | None = None,
+    previous_text: str | None = None,
+    style: float | None = None,
+    language_code: str | None = None,
 ) -> Path:
     """
     Generate speech using ElevenLabs Text-to-Speech API.
@@ -105,6 +109,9 @@ async def generate_speech(
         similarity_boost: Voice similarity (0-1)
         speed: Speech speed (0.7-1.2, unsupported by v4 models)
         output_path: Output file path (optional)
+        previous_text: Preceding text for continuity; not spoken in this request
+        style: Voice style exaggeration (0-1, unsupported by v4 models)
+        language_code: Language code (e.g., en, zh; unsupported by multilingual_v2)
 
     Returns:
         Path to the generated audio file
@@ -138,6 +145,25 @@ async def generate_speech(
 
     if similarity_boost is not None and not 0 <= similarity_boost <= 1:
         raise ValueError("Similarity boost must be between 0 and 1")
+
+    if style is not None:
+        if model_id in V4_MODELS:
+            raise ValueError(
+                f"{model_id} does not support --style. Use audio tags to guide delivery, "
+                "or select --model eleven_multilingual_v2 for style exaggeration."
+            )
+        if not 0 <= style <= 1:
+            raise ValueError("Style must be between 0 and 1")
+
+    if language_code is not None:
+        language_code = language_code.strip().lower()
+        if not language_code:
+            raise ValueError("Language code must not be empty")
+        if model_id == "eleven_multilingual_v2":
+            raise ValueError(
+                "eleven_multilingual_v2 does not support --language-code. "
+                "Omit it for automatic language detection, or select --model eleven_v4."
+            )
 
     if speed is not None:
         if model_id in V4_MODELS:
@@ -175,7 +201,7 @@ async def generate_speech(
 
     # Build voice settings if any provided
     voice_settings = None
-    if stability is not None or similarity_boost is not None or speed is not None:
+    if any(value is not None for value in (stability, similarity_boost, speed, style)):
         settings = {
             "stability": stability if stability is not None else 0.5,
             "similarity_boost": similarity_boost if similarity_boost is not None else 0.75,
@@ -183,6 +209,8 @@ async def generate_speech(
         # V4 accepts stability and similarity only; even a default speed is unsupported.
         if model_id not in V4_MODELS:
             settings["speed"] = speed if speed is not None else 1.0
+        if style is not None:
+            settings["style"] = style
         voice_settings = VoiceSettings(**settings)
 
     # Determine file extension from format
@@ -203,12 +231,18 @@ async def generate_speech(
     print(f"Generating speech (voice: {voice_name}, model: {model_id}, format: {output_format})...")
 
     # Generate speech
+    request_fields = {}
+    if previous_text is not None:
+        request_fields["previous_text"] = previous_text
+    if language_code is not None:
+        request_fields["language_code"] = language_code
     audio = client.text_to_speech.convert(
         text=text,
         voice_id=voice_id,
         model_id=model_id,
         output_format=output_format,
         voice_settings=voice_settings,
+        **request_fields,
     )
 
     # Write audio to file
@@ -275,6 +309,24 @@ async def main():
         help="Speech speed for v3/v2 models only (0.7-1.2, default: 1.0); unsupported by v4",
     )
     parser.add_argument(
+        "--previous-text",
+        type=str,
+        default=None,
+        help="Preceding text for speech continuity (context only, not spoken)",
+    )
+    parser.add_argument(
+        "--style",
+        type=float,
+        default=None,
+        help="Voice style exaggeration (0-1); unsupported by v4",
+    )
+    parser.add_argument(
+        "--language-code",
+        type=str,
+        default=None,
+        help="Language code (e.g., en, zh); unsupported by eleven_multilingual_v2",
+    )
+    parser.add_argument(
         "-o", "--output",
         type=str,
         default=None,
@@ -298,6 +350,9 @@ async def main():
             similarity_boost=args.similarity,
             speed=args.speed,
             output_path=args.output,
+            previous_text=args.previous_text,
+            style=args.style,
+            language_code=args.language_code,
         )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

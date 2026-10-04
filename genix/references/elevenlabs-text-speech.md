@@ -10,6 +10,7 @@ Text-to-Speech generation using ElevenLabs API with voice search support. Defaul
 - [Prompt Best Practices](#prompt-best-practices)
 - [Voice Search Best Practices](#voice-search-best-practices)
 - [Voice Settings](#voice-settings)
+- [Context and Language](#context-and-language)
 - [Examples](#examples)
 - [Environment Variables](#environment-variables)
 - [Official References](#official-references)
@@ -37,6 +38,9 @@ Text-to-Speech generation using ElevenLabs API with voice search support. Defaul
 | `--stability` | None | Voice stability (0-1) |
 | `--similarity` | None | Voice similarity boost (0-1) |
 | `--speed` | None | Speech speed (0.7-1.2), v3/v2 models only |
+| `--style` | None | Voice style exaggeration (0-1), unsupported by v4 models |
+| `--previous-text` | None | Preceding text for continuity; context only, not spoken |
+| `--language-code` | None | Language code, e.g. `en` or `zh`; unsupported by `eleven_multilingual_v2` |
 | `-o`, `--output` | `generated_speech.<ext>` | Output file path |
 
 ## Supported Models
@@ -53,7 +57,7 @@ Text-to-Speech generation using ElevenLabs API with voice search support. Defaul
 
 Empty text and text above the selected model's character limit are rejected before calling the API. Split longer text into shorter requests; the script does not automatically chunk it.
 
-**V4 migration**: V4 models accept stability and similarity settings, but do not support speed, style, or SSML. The script rejects `--speed` with either v4 model; choose a v3/v2 model if numeric speed control is required. This command generates one voice per request and saves the audio to a file.
+**V4 migration**: V4 models accept stability and similarity settings, but do not support speed, style, or SSML. The script rejects `--speed` and `--style` with either v4 model; choose a v3/v2 model if numeric speed control is required, or `eleven_multilingual_v2` for style exaggeration. This command generates one voice per request and saves the audio to a file.
 
 ## Voice Selection
 
@@ -307,6 +311,24 @@ Controls speech velocity on the supported models:
 - **1.0**: Normal speed (default)
 - **1.2**: Faster speech
 
+### Style (0-1)
+
+`--style` controls how strongly the original speaker's delivery is exaggerated. It maps to `voice_settings.style`, not a free-form style prompt. Higher values can increase latency and reduce stability; start with `0` or a low value. When omitted, the script leaves this field unset.
+
+V4 models reject `--style`, including `--style 0`. Use audio tags for expressive delivery with v4, or select `-m eleven_multilingual_v2` for numeric style exaggeration.
+
+## Context and Language
+
+### Previous Text
+
+Pass `--previous-text` with the text preceding the current segment to help maintain continuity across separately generated clips. It maps to the top-level `previous_text` request field. Only the positional `text` is spoken; previous text supplies context and is not prepended to the output. The script does not automatically split text or concatenate audio.
+
+### Language Code
+
+Pass `--language-code en` or `--language-code zh` to request a language for speech generation and text normalization. The script trims whitespace, lowercases the code, and sends it as the top-level `language_code` request field. Omit it for automatic language detection.
+
+The script rejects blank codes and `--language-code` with `eleven_multilingual_v2`, which does not support this parameter. Per the [Create speech API](https://elevenlabs.io/docs/api-reference/text-to-speech/convert), codes unsupported by the selected model are ignored by the API; a code does not add language support to a model.
+
 ## Supported Output Formats
 
 **MP3**: `mp3_22050_32`, `mp3_44100_64`, `mp3_44100_128`, `mp3_44100_192`
@@ -363,6 +385,24 @@ Controls speech velocity on the supported models:
 
 ```bash
 {python} {skill_dir}/scripts/elevenlabs-text-speech.py "Quick response needed." -m eleven_flash_v2_5 -o quick.mp3
+```
+
+### Continue from Previous Text
+
+```bash
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Then we set off toward the mountains." --previous-text "At dawn, we packed our bags." -o next_segment.mp3
+```
+
+### Select a Language
+
+```bash
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "Welcome to today's program." --language-code en -o english.mp3
+```
+
+### Legacy Model with Style Exaggeration
+
+```bash
+{python} {skill_dir}/scripts/elevenlabs-text-speech.py "What a wonderful surprise!" -m eleven_multilingual_v2 --style 0.3 -o expressive.mp3
 ```
 
 ### High Quality Output

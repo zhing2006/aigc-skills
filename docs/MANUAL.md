@@ -724,7 +724,10 @@ See [Prompt Best Practices](../genix/references/elevenlabs-text-speech.md#prompt
   - `eleven_flash_v2_5`: Ultra-low latency ~75ms
 - Voice Selection: By ID or search query (e.g., "British female calm")
 - Voice Settings: Stability (0-1), Similarity (0-1); Speed (0.7-1.2) for v3/v2 models only
-- V4 migration: `--speed` is rejected for both v4 models. Use audio tags and punctuation for pacing, or explicitly select `-m eleven_multilingual_v2` to keep numeric speed control. V4 does not support SSML.
+- Style: `--style` (0-1) controls voice style exaggeration; use `-m eleven_multilingual_v2` for numeric style control
+- Context: `--previous-text` supplies the preceding segment for continuity without speaking it again
+- Language: `--language-code` selects a language, e.g. `en` or `zh`; omit it for automatic detection. Unsupported by `eleven_multilingual_v2`
+- V4 migration: `--speed` and `--style` are rejected for both v4 models. Use audio tags and punctuation for delivery, or explicitly select `-m eleven_multilingual_v2` for numeric speed/style control. V4 does not support SSML.
 - Audio Tags (V4 / V4 Turbo / V3): `[excited]`, `[whispers]`, `[sad]`, `[British accent]`, etc.
 - Formats:
   - MP3: `mp3_22050_32`, `mp3_44100_64`, `mp3_44100_128`, `mp3_44100_192`
