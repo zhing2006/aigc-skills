@@ -50,6 +50,8 @@ Text-to-Image and Image-to-Image generation using OpenAI's GPT Image models.
 
 Both 2.5 models were released on 2026-09-08 (snapshot suffix `-2026-09-08`). The script accepts the aliases only, which track OpenAI's latest snapshot. It prints a warning when a deprecated model is used.
 
+For compatible API gateways that require a provider prefix, the script also accepts `openai/gpt-image-2.5-flare` and `openai/gpt-image-2.5-sunburst`. These variants use the same size and quality validation as their unprefixed counterparts, including `xhigh` / `max`. The full model name is sent to the API unchanged; configure `OPENAI_API_BASE` and `OPENAI_API_KEY` for a gateway that supports it.
+
 **Note**: If the user does not specify a model, use `gpt-image-2.5-flare` as default.
 
 ### Choosing between Flare and Sunburst
@@ -94,7 +96,7 @@ The script omits `size` from the API call when it's `auto`, so the default just 
 - `medium` - Medium quality
 - `low` - Low quality
 
-`xhigh` and `max` exist only on `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`; the script rejects them on every other model.
+`xhigh` and `max` exist only on `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst` (including their `openai/` variants); the script rejects them on every other model.
 
 **Note**: If the user does not specify quality, use `auto` as default.
 
@@ -298,6 +300,15 @@ Iterate on composition at `low`, then re-run the approved prompt at `high`:
 ```bash
 {python} {skill_dir}/scripts/openai-gpt-image.py "A cozy reading nook by a rain-streaked window, oversized armchair, stacked books, a steaming mug on the sill. Warm lamp light, soft focus, editorial interior photography." -q low -o nook_draft.png
 {python} {skill_dir}/scripts/openai-gpt-image.py "A cozy reading nook by a rain-streaked window, oversized armchair, stacked books, a steaming mug on the sill. Warm lamp light, soft focus, editorial interior photography." -q high -o nook_final.png
+```
+
+### Provider-Prefixed Variants
+
+When `OPENAI_API_BASE` points to a compatible gateway supporting these model names:
+
+```bash
+{python} {skill_dir}/scripts/openai-gpt-image.py "A cozy reading nook, warm lamp light, editorial interior photography." -m openai/gpt-image-2.5-flare -o nook.png
+{python} {skill_dir}/scripts/openai-gpt-image.py "Change only the label text to 'Summer Blend'. Keep everything else unchanged." -m openai/gpt-image-2.5-sunburst -i product.png -q max -o product_relabel.png
 ```
 
 ### Precision Edit with Sunburst

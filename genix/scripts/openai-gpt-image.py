@@ -7,6 +7,8 @@ Supported models:
     at roughly half the latency, same token rates.
   - gpt-image-2.5-sunburst: most capable model for generation and editing;
     use it when editing precision matters most. Slower than flare.
+  - openai/gpt-image-2.5-flare, openai/gpt-image-2.5-sunburst: prefixed
+    variants for compatible API gateways; sent to the API unchanged.
   - gpt-image-2: previous generation, still supported.
   - gpt-image-1.5, gpt-image-1, gpt-image-1-mini: deprecated by OpenAI
     (shutdown 2026-12-01 / 2026-10-23 / 2026-12-01, replacement gpt-image-2).
@@ -46,18 +48,27 @@ from openai import AsyncOpenAI, AsyncAzureOpenAI
 MODEL_GPT_IMAGE_2 = "gpt-image-2"
 MODEL_GPT_IMAGE_2_5_FLARE = "gpt-image-2.5-flare"
 MODEL_GPT_IMAGE_2_5_SUNBURST = "gpt-image-2.5-sunburst"
+MODEL_OPENAI_GPT_IMAGE_2_5_FLARE = "openai/gpt-image-2.5-flare"
+MODEL_OPENAI_GPT_IMAGE_2_5_SUNBURST = "openai/gpt-image-2.5-sunburst"
 DEFAULT_MODEL = MODEL_GPT_IMAGE_2_5_FLARE
 
 SUPPORTED_MODELS = [
     MODEL_GPT_IMAGE_2_5_FLARE,
     MODEL_GPT_IMAGE_2_5_SUNBURST,
+    MODEL_OPENAI_GPT_IMAGE_2_5_FLARE,
+    MODEL_OPENAI_GPT_IMAGE_2_5_SUNBURST,
     MODEL_GPT_IMAGE_2,
     "gpt-image-1.5",
     "gpt-image-1",
     "gpt-image-1-mini",
 ]
 # gpt-image-2.5 exclusives: quality xhigh / max
-GPT_IMAGE_2_5_MODELS = {MODEL_GPT_IMAGE_2_5_FLARE, MODEL_GPT_IMAGE_2_5_SUNBURST}
+GPT_IMAGE_2_5_MODELS = {
+    MODEL_GPT_IMAGE_2_5_FLARE,
+    MODEL_GPT_IMAGE_2_5_SUNBURST,
+    MODEL_OPENAI_GPT_IMAGE_2_5_FLARE,
+    MODEL_OPENAI_GPT_IMAGE_2_5_SUNBURST,
+}
 GPT_IMAGE_2_5_ONLY_QUALITY = {"xhigh", "max"}
 # Models that share gpt-image-2's arbitrary WxH size rules
 ARBITRARY_SIZE_MODELS = GPT_IMAGE_2_5_MODELS | {MODEL_GPT_IMAGE_2}
@@ -222,7 +233,8 @@ async def generate_image(
         prompt: Text prompt for image generation (max 32000 characters)
         images: List of local image file paths for editing (max 16)
         model: Model to use (gpt-image-2.5-flare, gpt-image-2.5-sunburst,
-               gpt-image-2, gpt-image-1.5, gpt-image-1, gpt-image-1-mini)
+               gpt-image-2, gpt-image-1.5, gpt-image-1, gpt-image-1-mini).
+               Both 2.5 models also accept an openai/ prefix, sent unchanged.
         size: Output size. "auto" (default) omits the param so the model decides.
               For gpt-image-1.x: 1024x1024, 1536x1024, 1024x1536, auto.
               For gpt-image-2 / gpt-image-2.5: any WxH within the documented
@@ -421,7 +433,8 @@ async def main():
         help=(
             f"Model to use (default: {DEFAULT_MODEL}). gpt-image-2.5-flare is the "
             f"fast everyday model, gpt-image-2.5-sunburst the most capable one for "
-            f"precise edits; gpt-image-1.x are deprecated by OpenAI"
+            f"precise edits. Both accept an openai/ prefix for compatible API "
+            f"gateways (sent unchanged); gpt-image-1.x are deprecated by OpenAI"
         ),
     )
     parser.add_argument(
